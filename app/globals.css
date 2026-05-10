@@ -1,26 +1,60 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+
+  --rt-bg: #080808;
+  --rt-surface: #141414;
+  --rt-surface-elevated: #1f1f1f;
+  --rt-border: #2a2a2a;
+  --rt-border-hover: #3a3a3a;
+  --rt-text: #fafafa;
+  --rt-text-muted: #a3a3a3;
+  --rt-text-disabled: #525252;
+  --rt-brand: #e50914;
+  --rt-brand-hover: #f40612;
+  --rt-success: #22c55e;
+  --rt-warning: #f59e0b;
+  --rt-danger: #ef4444;
+
+  --background: var(--rt-bg);
+  --foreground: var(--rt-text);
 }
 
 @theme inline {
+  --color-bg: var(--rt-bg);
+  --color-surface: var(--rt-surface);
+  --color-surface-elevated: var(--rt-surface-elevated);
+  --color-border: var(--rt-border);
+  --color-border-hover: var(--rt-border-hover);
+  --color-text: var(--rt-text);
+  --color-text-muted: var(--rt-text-muted);
+  --color-text-disabled: var(--rt-text-disabled);
+  --color-brand: var(--rt-brand);
+  --color-brand-hover: var(--rt-brand-hover);
+  --color-success: var(--rt-success);
+  --color-warning: var(--rt-warning);
+  --color-danger: var(--rt-danger);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  outline-color: var(--rt-brand);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--rt-brand) 35%, transparent);
+  color: #ffffff;
 }
