@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { MovieCatalogProvider } from "./components/MovieCatalogProvider";
+import { ToastProvider } from "./components/ToastProvider";
 import "./globals.css";
+import "react-toastify/dist/ReactToastify.css";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -23,7 +26,10 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-bg text-text font-sans">{children}</body>
+      <body className="min-h-full bg-bg text-text font-sans">
+        <MovieCatalogProvider>{children}</MovieCatalogProvider>
+        <ToastProvider />
+      </body>
     </html>
   );
 }

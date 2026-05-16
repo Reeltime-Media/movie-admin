@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { clearAdminToken, getAdminToken } from "../lib/api";
 
 const navItems = [
   { label: "Dashboard", href: "/" },
-  { label: "Catalog", href: "/catalog" },
+  { label: "Movies", href: "/movie" },
   { label: "Series", href: "/series" },
   { label: "Users", href: "/users" },
   { label: "Payments", href: "/payments" },
@@ -20,6 +22,21 @@ export function AdminShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!getAdminToken()) {
+      router.replace("/login");
+    }
+    const handleAuthCleared = () => router.replace("/login");
+    window.addEventListener("reeltime-admin-auth-cleared", handleAuthCleared);
+    return () => window.removeEventListener("reeltime-admin-auth-cleared", handleAuthCleared);
+  }, [router]);
+
+  const handleSignOut = () => {
+    clearAdminToken();
+    router.push("/login");
+  };
 
   return (
     <div className="min-h-screen bg-bg text-text">
@@ -37,7 +54,8 @@ export function AdminShell({
 
           <nav className="mt-8 space-y-1">
             {navItems.map((item) => {
-              const active = pathname === item.href;
+              const active =
+                pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
 
               return (
                 <Link
@@ -65,7 +83,7 @@ export function AdminShell({
           <div className="mt-8 rounded-md border border-border bg-bg p-4">
             <div className="text-[12px] font-bold">Client parity</div>
             <p className="mt-1.5 text-[11px] leading-relaxed text-text-muted">
-              Catalog, pricing, and subscription states mirror the current Reeltime client.
+              Movies, pricing, and subscription states mirror the current Reeltime client.
             </p>
           </div>
         </aside>
@@ -82,18 +100,13 @@ export function AdminShell({
                 </h1>
               </div>
               <div className="flex items-center gap-2">
-                <Link
-                  href="/login"
+                <button
+                  type="button"
+                  onClick={handleSignOut}
                   className="rounded-md border border-border bg-surface px-3 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
                 >
                   Sign out
-                </Link>
-                <Link
-                  href="/catalog/new"
-                  className="rounded-md bg-brand px-3 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
-                >
-                  Add title
-                </Link>
+                </button>
               </div>
             </div>
           </header>

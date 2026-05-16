@@ -3,9 +3,9 @@
 :root {
   color-scheme: dark;
 
-  --rt-bg: #080808;
-  --rt-surface: #141414;
-  --rt-surface-elevated: #1f1f1f;
+  --rt-bg: #050505;
+  --rt-surface: #101010;
+  --rt-surface-elevated: #181818;
   --rt-border: #2a2a2a;
   --rt-border-hover: #3a3a3a;
   --rt-text: #fafafa;

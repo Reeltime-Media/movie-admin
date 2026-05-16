@@ -1,17 +1,95 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { AdminCard } from "./components/AdminCard";
 import { AdminShell } from "./components/AdminShell";
-import {
-  catalog,
-  moderationQueue,
-  revenueMix,
-  stats,
-  statusClasses,
-  users,
-} from "./lib/adminData";
+import { DashboardMoviesPreview } from "./components/DashboardMoviesPreview";
+import { useMovieCatalog } from "./components/MovieCatalogProvider";
+import { getAdminDashboardSummary, listUsers, type ApiDashboardSummary, type ApiUser } from "./lib/api";
+import { statusClasses } from "./lib/adminData";
 
 export default function Home() {
+  const { movies, isLoading: moviesLoading } = useMovieCatalog();
+  const [users, setUsers] = useState<ApiUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+  const [summary, setSummary] = useState<ApiDashboardSummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void Promise.all([
+        listUsers()
+          .then(setUsers)
+          .catch(() => setUsers([]))
+          .finally(() => setUsersLoading(false)),
+        getAdminDashboardSummary()
+          .then((data) => {
+            setSummary(data);
+            setSummaryError(null);
+          })
+          .catch((err) => {
+            setSummary(null);
+            setSummaryError(err instanceof Error ? err.message : "Could not load dashboard summary");
+          })
+          .finally(() => setSummaryLoading(false)),
+      ]);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const movieCount = movies.filter((m) => m.type === "Movie").length;
+  const seriesCount = movies.filter((m) => m.type === "Series").length;
+  const pendingTranscodes = movies.filter(
+    (m) => m.transcodeStatus === "pending" || m.transcodeStatus === "processing",
+  ).length;
+
+  const stats = [
+    {
+      label: "Total users",
+      value: summaryLoading && usersLoading ? "--" : String(summary?.users.total ?? users.length),
+      delta: `${summary?.users.active ?? users.filter((user) => user.is_active).length} active accounts`,
+      tone: "text-text-muted",
+    },
+    {
+      label: "Movies",
+      value: summaryLoading && moviesLoading ? "--" : String(summary?.content.movies ?? movieCount),
+      delta: `${summary?.content.published ?? movies.filter((m) => m.status === "Published").length} published`,
+      tone: "text-text-muted",
+    },
+    {
+      label: "Series",
+      value: summaryLoading && moviesLoading ? "--" : String(summary?.content.series ?? seriesCount),
+      delta: "All series",
+      tone: "text-text-muted",
+    },
+    {
+      label: "Pending transcodes",
+      value: summaryLoading && moviesLoading ? "--" : String(summary?.transcodes.pending ?? pendingTranscodes),
+      delta: (summary?.transcodes.processing ?? 0) > 0 ? "Processing now" : "Queue clear",
+      tone: (summary?.transcodes.pending ?? pendingTranscodes) > 0 ? "text-warning" : "text-success",
+    },
+  ];
+
+  const moderationQueue = movies
+    .filter((m) => m.status === "Review")
+    .slice(0, 5)
+    .map((m) => ({
+      title: m.title,
+      detail: `${m.type} · ${m.genre || "No genre"}`,
+      owner: m.owner,
+      due: "Needs review",
+    }));
+
   return (
     <AdminShell>
+      {summaryError ? (
+        <div className="mb-4 rounded-md border border-warning/30 bg-warning/10 p-3 text-[12px] text-warning">
+          {summaryError}
+        </div>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
           <div key={stat.label} className="rounded-lg border border-border bg-surface p-5">
@@ -24,144 +102,114 @@ export default function Home() {
         ))}
       </div>
 
-      <section className="mt-6 overflow-hidden rounded-xl border border-border bg-surface-elevated">
-        <div
-          className="p-6 md:p-8"
-          style={{
-            background:
-              "linear-gradient(120deg, rgba(229,9,20,0.22), rgba(31,31,31,0.96) 42%, rgba(8,8,8,1))",
-          }}
-        >
-          <div className="max-w-2xl">
-            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">
-              Featured campaign
-            </div>
-            <h2 className="mt-2 text-[30px] font-extrabold tracking-[-0.04em] md:text-[38px]">
-              Promote The Last Drive across rentals this week.
-            </h2>
-            <p className="mt-3 max-w-[62ch] text-[13px] leading-relaxed text-text-muted">
-              The client highlights this title as a staff pick. Keep pricing, poster placement, and
-              purchase callouts aligned from the admin console.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <button className="rounded-md bg-brand px-4 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover">
-                Schedule promo
-              </button>
-              <button className="rounded-md border border-border bg-bg/60 px-4 py-2.5 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text">
-                Preview client card
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(340px,0.85fr)]">
-        <AdminCard title="Catalog management" action="View all" actionHref="/catalog">
-          <div className="-mx-5 overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left">
-              <thead>
-                <tr className="border-b border-border text-[11px] uppercase tracking-widest text-text-disabled">
-                  <th className="px-5 pb-3 font-bold">Title</th>
-                  <th className="px-5 pb-3 font-bold">Type</th>
-                  <th className="px-5 pb-3 font-bold">Price</th>
-                  <th className="px-5 pb-3 font-bold">Views</th>
-                  <th className="px-5 pb-3 font-bold">Rating</th>
-                  <th className="px-5 pb-3 font-bold">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {catalog.map((item) => (
-                  <tr key={item.title} className="text-[13px]">
-                    <td className="px-5 py-4 font-bold">{item.title}</td>
-                    <td className="px-5 py-4 text-text-muted">{item.type}</td>
-                    <td className="px-5 py-4 text-text-muted">{item.price}</td>
-                    <td className="px-5 py-4 text-text-muted">{item.views}</td>
-                    <td className="px-5 py-4 text-text-muted">{item.rating}</td>
-                    <td className="px-5 py-4">
-                      <span className={statusClasses(item.status)}>{item.status}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </AdminCard>
+        <DashboardMoviesPreview />
 
-        <AdminCard title="Publishing queue" action="Open queue">
+        <AdminCard title="Publishing queue" action="Open queue" actionHref="/movie">
           <div className="space-y-3">
-            {moderationQueue.map((item) => (
-              <div key={item.title} className="rounded-md border border-border bg-bg p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-[13px] font-bold">{item.title}</div>
-                    <div className="mt-1 text-[12px] text-text-muted">{item.detail}</div>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-warning/15 px-2 py-1 text-[10px] font-bold text-warning">
-                    {item.due}
-                  </span>
-                </div>
-                <div className="mt-3 text-[11px] font-semibold text-text-disabled">
-                  Owner: {item.owner}
-                </div>
+            {moderationQueue.length === 0 ? (
+              <div className="rounded-md border border-dashed border-border bg-bg px-4 py-8 text-center">
+                <p className="text-[13px] font-semibold text-text">Queue is clear</p>
+                <p className="mt-1 text-[12px] text-text-muted">
+                  No titles are waiting for review.
+                </p>
               </div>
-            ))}
+            ) : (
+              moderationQueue.map((item) => (
+                <div key={item.title} className="rounded-md border border-border bg-bg p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-[13px] font-bold">{item.title}</div>
+                      <div className="mt-1 text-[12px] text-text-muted">{item.detail}</div>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-warning/15 px-2 py-1 text-[10px] font-bold text-warning">
+                      {item.due}
+                    </span>
+                  </div>
+                  <div className="mt-3 text-[11px] font-semibold text-text-disabled">
+                    Owner: {item.owner}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </AdminCard>
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-3">
-        <AdminCard title="Revenue mix">
+        <AdminCard title="Content status">
           <div className="space-y-5">
-            {revenueMix.map((item) => (
-              <div key={item.label}>
-                <div className="flex items-center justify-between text-[12px]">
-                  <span className="font-bold">{item.label}</span>
-                  <span className="text-text-muted">
-                    {item.amount} · {item.share}
-                  </span>
+            {(["Published", "Draft", "Review", "Scheduled"] as const).map((status) => {
+              const count = movies.filter((m) => m.status === status).length;
+              const total = movies.length || 1;
+              const pct = Math.round((count / total) * 100);
+              return (
+                <div key={status}>
+                  <div className="flex items-center justify-between text-[12px]">
+                    <span className="font-bold">
+                      <span className={statusClasses(status)}>{status}</span>
+                    </span>
+                    <span className="text-text-muted">
+                      {count} title{count !== 1 ? "s" : ""} · {pct}%
+                    </span>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-bg">
+                    <div className="h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
+                  </div>
                 </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-bg">
-                  <div className={`h-full rounded-full bg-brand ${item.bar}`} />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </AdminCard>
 
         <AdminCard title="Audience">
           <div className="space-y-3">
-            {users.map((user) => (
-              <div
-                key={user.name}
-                className="flex items-center justify-between gap-3 rounded-md border border-border bg-bg px-4 py-3"
-              >
-                <div>
-                  <div className="text-[13px] font-bold">{user.name}</div>
-                  <div className="mt-0.5 text-[11px] text-text-muted">
-                    {user.plan} · {user.library}
+            {usersLoading ? (
+              <p className="text-[13px] text-text-muted">Loading users...</p>
+            ) : users.length === 0 ? (
+              <p className="text-[13px] text-text-muted">No users found.</p>
+            ) : (
+              users.slice(0, 5).map((user) => (
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between gap-3 rounded-md border border-border bg-bg px-4 py-3"
+                >
+                  <div>
+                    <div className="text-[13px] font-bold">{user.full_name || "Unnamed user"}</div>
+                    <div className="mt-0.5 text-[11px] text-text-muted">
+                      {user.role} · {user.email}
+                    </div>
                   </div>
+                  <span
+                    className={[
+                      "rounded-full px-2 py-1 text-[10px] font-bold uppercase",
+                      user.is_active ? "bg-success/15 text-success" : "bg-text-disabled/25 text-text-muted",
+                    ].join(" ")}
+                  >
+                    {user.is_active ? "Active" : "Inactive"}
+                  </span>
                 </div>
-                <div className="text-[12px] font-bold text-text-muted">{user.spend}</div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </AdminCard>
 
         <AdminCard title="Quick controls">
           <div className="space-y-3">
             {[
-              "Update rental pricing",
-              "Review uploaded posters",
-              "Publish weekly series episode",
-              "Send subscriber campaign",
+              { label: "Upload new title", href: "/movie/new" },
+              { label: "Update pricing", href: "/payments" },
+              { label: "Review publishing queue", href: "/movie" },
+              { label: "Open reports", href: "/reports" },
             ].map((action) => (
-              <button
-                key={action}
+              <Link
+                key={action.label}
+                href={action.href}
                 className="flex w-full items-center justify-between rounded-md border border-border bg-bg px-4 py-3 text-left text-[13px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
               >
-                {action}
+                {action.label}
                 <span className="text-brand">Open</span>
-              </button>
+              </Link>
             ))}
           </div>
         </AdminCard>

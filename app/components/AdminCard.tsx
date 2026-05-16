@@ -5,11 +5,13 @@ export function AdminCard({
   children,
   action,
   actionHref,
+  actionOnClick,
 }: {
   title: string;
   children: React.ReactNode;
   action?: string;
   actionHref?: string;
+  actionOnClick?: () => void;
 }) {
   return (
     <section className="rounded-lg border border-border bg-surface">
@@ -23,7 +25,11 @@ export function AdminCard({
             {action}
           </Link>
         ) : action ? (
-          <button className="text-[12px] font-semibold text-text-muted transition-colors hover:text-text">
+          <button
+            type="button"
+            onClick={actionOnClick}
+            className="text-[12px] font-semibold text-text-muted transition-colors hover:text-text"
+          >
             {action}
           </button>
         ) : null}

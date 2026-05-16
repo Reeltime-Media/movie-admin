@@ -1,6 +1,34 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "react-toastify";
+import { loginAdmin } from "../lib/api";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      await loginAdmin(String(fd.get("email") || ""), String(fd.get("password") || ""));
+      toast.success("Signed in successfully");
+      router.push("/");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Sign in failed";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <main className="flex min-h-screen bg-bg text-text">
       <section className="relative hidden w-[44%] flex-col justify-between overflow-hidden border-r border-border p-10 lg:flex">
@@ -53,11 +81,11 @@ export default function LoginPage() {
                 Welcome back
               </h2>
               <p className="mt-2 text-[13px] leading-relaxed text-text-muted">
-                Use your Reeltime staff account to access catalog and payment tools.
+                Use your Reeltime staff account to access movies and payment tools.
               </p>
             </div>
 
-            <form className="mt-6 space-y-4" action="/" method="get">
+            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
               <label className="block">
                 <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">
                   Work email
@@ -91,7 +119,7 @@ export default function LoginPage() {
                   <input
                     type="checkbox"
                     name="remember"
-                    className="h-3.5 w-3.5 rounded border-border bg-bg accent-[var(--rt-brand)]"
+                    className="h-3.5 w-3.5 rounded border-border bg-bg accent-brand"
                   />
                   Keep me signed in
                 </label>
@@ -105,16 +133,18 @@ export default function LoginPage() {
 
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full rounded-md bg-brand py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-brand-hover"
               >
-                Sign in
+                {isSubmitting ? "Signing in..." : "Sign in"}
               </button>
             </form>
 
-            <div className="mt-5 rounded-md border border-border bg-bg p-3 text-[12px] leading-relaxed text-text-muted">
-              Demo mode: submitting this form opens the dashboard until real authentication is
-              connected.
-            </div>
+            {error ? (
+              <div className="mt-5 rounded-md border border-warning/30 bg-warning/10 p-3 text-[12px] leading-relaxed text-warning">
+                {error}
+              </div>
+            ) : null}
           </div>
         </div>
       </section>
