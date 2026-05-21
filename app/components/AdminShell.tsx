@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { clearAdminToken, getAdminToken } from "../lib/api";
+import { useUploadProgress } from "./UploadProgressContext";
 
 const navItems = [
   { label: "Dashboard", href: "/" },
@@ -11,6 +12,7 @@ const navItems = [
   { label: "Series", href: "/series" },
   { label: "Users", href: "/users" },
   { label: "Payments", href: "/payments" },
+  { label: "Transcode", href: "/transcode" },
   { label: "Reports", href: "/reports", badge: "New" },
 ];
 
@@ -23,6 +25,11 @@ export function AdminShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { jobs, dismissJob } = useUploadProgress();
+  const [uploadsOpen, setUploadsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const activeJobs = jobs.filter((j) => j.status === "uploading");
 
   useEffect(() => {
     if (!getAdminToken()) {
@@ -32,6 +39,17 @@ export function AdminShell({
     window.addEventListener("reeltime-admin-auth-cleared", handleAuthCleared);
     return () => window.removeEventListener("reeltime-admin-auth-cleared", handleAuthCleared);
   }, [router]);
+
+  useEffect(() => {
+    if (!uploadsOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setUploadsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [uploadsOpen]);
 
   const handleSignOut = () => {
     clearAdminToken();
@@ -79,13 +97,6 @@ export function AdminShell({
               );
             })}
           </nav>
-
-          <div className="mt-8 rounded-md border border-border bg-bg p-4">
-            <div className="text-[12px] font-bold">Client parity</div>
-            <p className="mt-1.5 text-[11px] leading-relaxed text-text-muted">
-              Movies, pricing, and subscription states mirror the current Reeltime client.
-            </p>
-          </div>
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
@@ -99,7 +110,115 @@ export function AdminShell({
                   {title}
                 </h1>
               </div>
+
               <div className="flex items-center gap-2">
+                {/* Upload progress dropdown */}
+                {jobs.length > 0 ? (
+                  <div ref={dropdownRef} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setUploadsOpen((o) => !o)}
+                      className="flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
+                    >
+                      {activeJobs.length > 0 ? (
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand" />
+                      ) : (
+                        <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                      )}
+                      <span className="max-w-32 truncate">
+                        {activeJobs.length > 1
+                          ? `${activeJobs.length} uploading`
+                          : activeJobs.length === 1
+                            ? activeJobs[0].title
+                            : "Uploads"}
+                      </span>
+                      {activeJobs.length === 1 ? (
+                        <span className="tabular-nums font-bold text-text">
+                          {activeJobs[0].percent}%
+                        </span>
+                      ) : null}
+                      <span className="text-text-disabled">{uploadsOpen ? "▲" : "▼"}</span>
+                    </button>
+
+                    {uploadsOpen ? (
+                      <div className="absolute right-0 top-full z-50 mt-1.5 w-80 rounded-lg border border-border bg-surface shadow-2xl">
+                        <div className="border-b border-border px-4 py-2.5">
+                          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-disabled">
+                            Upload jobs
+                          </span>
+                        </div>
+                        <div className="max-h-72 overflow-y-auto p-2">
+                          {jobs.map((job) => (
+                            <div
+                              key={job.id}
+                              className="rounded-md px-3 py-3 hover:bg-surface-elevated"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="truncate text-[13px] font-semibold text-text" title={job.title}>
+                                    {job.title}
+                                  </p>
+                                  <p className="truncate text-[11px] text-text-muted">{job.label}</p>
+                                </div>
+                                <div className="flex shrink-0 items-center gap-2">
+                                  {job.status === "uploading" && (
+                                    <span className="tabular-nums text-[12px] font-bold text-text-muted">
+                                      {job.percent}%
+                                    </span>
+                                  )}
+                                  {job.status === "done" && (
+                                    <span className="text-[12px] font-bold text-success">Done</span>
+                                  )}
+                                  {job.status === "error" && (
+                                    <span className="text-[12px] font-bold text-danger">Error</span>
+                                  )}
+                                  {job.status !== "uploading" ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => dismissJob(job.id)}
+                                      aria-label="Dismiss"
+                                      className="text-[16px] leading-none text-text-disabled hover:text-text"
+                                    >
+                                      ×
+                                    </button>
+                                  ) : null}
+                                </div>
+                              </div>
+                              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-elevated">
+                                <div
+                                  className={[
+                                    "h-full rounded-full transition-all duration-300",
+                                    job.status === "error"
+                                      ? "bg-danger"
+                                      : job.status === "done"
+                                        ? "bg-success"
+                                        : "bg-brand",
+                                  ].join(" ")}
+                                  style={{ width: `${job.percent}%` }}
+                                />
+                              </div>
+                              {job.status === "error" && job.errorMsg ? (
+                                <p className="mt-1 text-[11px] text-danger">{job.errorMsg}</p>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                        {jobs.some((j) => j.status !== "uploading") ? (
+                          <div className="border-t border-border px-4 py-2">
+                            <button
+                              type="button"
+                              onClick={() => jobs.filter((j) => j.status !== "uploading").forEach((j) => dismissJob(j.id))}
+                              className="text-[12px] text-text-disabled hover:text-text-muted"
+                            >
+                              Dismiss completed
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
                 <button
                   type="button"
                   onClick={handleSignOut}

@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { AdminPagination } from "../components/AdminPagination";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
 import { MovieManagementTable } from "./MovieManagementTable";
 import type { ListFilter } from "./movieListTypes";
+
+const TABLE_PAGE_SIZE = 25;
 
 const tabs: { key: ListFilter; label: string }[] = [
   { key: "all", label: "All" },
@@ -29,6 +32,7 @@ function tableTitleForFilter(f: ListFilter): string {
 export function MovieManagementSection() {
   const { movies, isLoading, error, refreshMovies } = useMovieCatalog();
   const [listFilter, setListFilter] = useState<ListFilter>("all");
+  const [page, setPage] = useState(1);
 
   const entries = useMemo(() => {
     switch (listFilter) {
@@ -42,6 +46,21 @@ export function MovieManagementSection() {
         return movies;
     }
   }, [movies, listFilter]);
+
+  const pages = Math.max(1, Math.ceil(entries.length / TABLE_PAGE_SIZE));
+
+  const paginatedEntries = useMemo(() => {
+    const start = (page - 1) * TABLE_PAGE_SIZE;
+    return entries.slice(start, start + TABLE_PAGE_SIZE);
+  }, [entries, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [listFilter]);
+
+  useEffect(() => {
+    if (page > pages) setPage(pages);
+  }, [page, pages]);
 
   return (
     <>
@@ -90,10 +109,20 @@ export function MovieManagementSection() {
       </div>
 
       <MovieManagementTable
-        entries={entries}
+        entries={paginatedEntries}
         tableTitle={tableTitleForFilter(listFilter)}
         listFilter={listFilter}
       />
+      {entries.length > 0 ? (
+        <AdminPagination
+          page={page}
+          pages={pages}
+          total={entries.length}
+          pageSize={TABLE_PAGE_SIZE}
+          isLoading={isLoading}
+          onPageChange={setPage}
+        />
+      ) : null}
     </>
   );
 }

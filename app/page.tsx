@@ -20,8 +20,8 @@ export default function Home() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       void Promise.all([
-        listUsers()
-          .then(setUsers)
+        listUsers({ page: 1, pageSize: 8 })
+          .then((res) => setUsers(res.items))
           .catch(() => setUsers([]))
           .finally(() => setUsersLoading(false)),
         getAdminDashboardSummary()

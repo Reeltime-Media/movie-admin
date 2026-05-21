@@ -56,6 +56,15 @@ function MovieFormFields({
           required
         />
       </label>
+      <label className="block sm:col-span-2">
+        <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">Description</span>
+        <textarea
+          className={`${inputClass} min-h-20 resize-y`}
+          value={draft.description ?? ""}
+          onChange={(e) => set("description", e.target.value || null)}
+          placeholder="Brief synopsis shown on the movie page…"
+        />
+      </label>
       <label className="block">
         <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">Type</span>
         <select
@@ -154,6 +163,7 @@ function MovieFormFields({
 function toDraft(entry: CatalogEntry): Omit<CatalogEntry, "id"> {
   return {
     title: entry.title,
+    description: entry.description,
     type: entry.type,
     price: entry.price,
     views: entry.views,

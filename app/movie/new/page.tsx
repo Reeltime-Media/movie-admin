@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../../components/AdminCard";
 import { AdminShell } from "../../components/AdminShell";
@@ -19,6 +19,7 @@ import {
   uploadFileToPresignedUrl,
 } from "../../lib/api";
 import { TrailerPreview } from "../../components/TrailerPreview";
+import { useUploadProgress } from "../../components/UploadProgressContext";
 import { formatGenres } from "../../lib/genres";
 import {
   defaultSeasons,
@@ -91,8 +92,8 @@ export default function NewCatalogTitlePage() {
   const [detailsError, setDetailsError] = useState<string | null>(null);
   const [seasonsError, setSeasonsError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const [uploadStatus, setUploadStatus] = useState<string>("");
+  const { jobs, startJob, updateJob, setJobLabel, finishJob, failJob } = useUploadProgress();
+  const jobIdRef = useRef<string | null>(null);
 
   const isSeries = contentType === "Series";
   const stepLabelList = isSeries ? seriesStepLabels : movieStepLabels;
@@ -153,8 +154,6 @@ export default function NewCatalogTitlePage() {
     if (!genre) return;
 
     setSubmitError(null);
-    setUploadProgress(null);
-    setUploadStatus("");
 
     const status: Status = intent === "draft" ? "Draft" : parseStatus(String(fd.get("status")));
 
@@ -172,50 +171,54 @@ export default function NewCatalogTitlePage() {
         return;
       }
 
+      const movieJobId = `movie-${title}-${Date.now()}`;
+      jobIdRef.current = movieJobId;
+      startJob(movieJobId, title, "Starting upload…");
       setIsSubmitting(true);
-      try {
-        setUploadProgress(0);
-        setUploadStatus("Starting upload…");
-        const upload = await startMovieUpload({
-          videoContentType: video.type || "video/mp4",
-          posterContentType: posterImage?.type,
-        });
+      router.push("/movie");
 
-        if (posterImage && upload.poster_upload_url) {
-          setUploadStatus("Uploading poster…");
-          await uploadFileToPresignedUrl(upload.poster_upload_url, posterImage);
+      void (async () => {
+        try {
+          const upload = await startMovieUpload({
+            videoContentType: video.type || "video/mp4",
+            posterContentType: posterImage?.type,
+          });
+
+          if (posterImage && upload.poster_upload_url) {
+            setJobLabel(movieJobId, "Uploading poster…");
+            await uploadFileToPresignedUrl(upload.poster_upload_url, posterImage);
+          }
+
+          setJobLabel(movieJobId, "Uploading video…");
+          await uploadFileToPresignedUrl(upload.video_upload_url, video, (pct) => updateJob(movieJobId, pct));
+
+          setJobLabel(movieJobId, "Saving…");
+          await completeMovieUpload({
+            contentId: upload.content_id,
+            sourceKey: upload.source_key,
+            title,
+            priceUsd: parseMoney(String(fd.get("price") || "")),
+            description: String(fd.get("description") || "").trim(),
+            genres,
+            releaseYear: parseOptionalNumber(fd.get("releaseYear")),
+            rating: String(fd.get("rating") || "").trim(),
+            runtime: String(fd.get("runtime") || "").trim(),
+            status: toApiStatus(status),
+            posterKey: upload.poster_key,
+            trailerUrl: String(fd.get("trailerUrl") || "").trim(),
+          });
+
+          finishJob(movieJobId);
+          await refreshMovies();
+          toast.success(intent === "draft" ? "Draft saved" : "Movie uploaded successfully");
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Upload failed";
+          failJob(movieJobId, message);
+          toast.error(message);
+        } finally {
+          setIsSubmitting(false);
         }
-
-        setUploadStatus("Uploading video…");
-        await uploadFileToPresignedUrl(upload.video_upload_url, video, setUploadProgress);
-
-        setUploadStatus("Saving…");
-        await completeMovieUpload({
-          contentId: upload.content_id,
-          sourceKey: upload.source_key,
-          title,
-          priceUsd: parseMoney(String(fd.get("price") || "")),
-          description: String(fd.get("description") || "").trim(),
-          genres,
-          releaseYear: parseOptionalNumber(fd.get("releaseYear")),
-          rating: String(fd.get("rating") || "").trim(),
-          runtime: String(fd.get("runtime") || "").trim(),
-          status: toApiStatus(status),
-          posterKey: upload.poster_key,
-          trailerUrl: String(fd.get("trailerUrl") || "").trim(),
-        });
-
-        await refreshMovies();
-        toast.success(intent === "draft" ? "Draft saved" : "Movie uploaded successfully");
-        router.push("/movie");
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Upload failed";
-        setSubmitError(message);
-        toast.error(message);
-      } finally {
-        setIsSubmitting(false);
-        setUploadStatus("");
-      }
+      })();
       return;
     }
 
@@ -235,58 +238,64 @@ export default function NewCatalogTitlePage() {
       return;
     }
 
+    const seriesJobId = `series-${title}-${Date.now()}`;
+    jobIdRef.current = seriesJobId;
+    startJob(seriesJobId, title, "Creating series…");
     setIsSubmitting(true);
-    try {
-      setUploadStatus("Creating series…");
-      const series = await createSeries({
-        title,
-        monthlyPriceUsd: parseMoney(String(fd.get("price") || "0")),
-        description: String(fd.get("description") || "").trim() || undefined,
-        genres,
-        releaseYear: parseOptionalNumber(fd.get("releaseYear")),
-        rating: String(fd.get("rating") || "").trim() || undefined,
-        poster: seriesPosterFile ?? undefined,
-      });
+    router.push("/movie");
 
-      const allEpisodes = seasonPayload.flatMap((s) =>
-        s.episodes.map((ep) => ({ season: s, ep })),
-      );
-      const episodesWithVideo = allEpisodes.filter((x) => x.ep.videoFile);
-      let done = 0;
+    void (async () => {
+      try {
+        const series = await createSeries({
+          title,
+          monthlyPriceUsd: "6.99",
+          description: String(fd.get("description") || "").trim() || undefined,
+          genres,
+          releaseYear: parseOptionalNumber(fd.get("releaseYear")),
+          rating: String(fd.get("rating") || "").trim() || undefined,
+          trailerUrl: String(fd.get("trailerUrl") || "").trim() || undefined,
+          poster: seriesPosterFile ?? undefined,
+        });
 
-      for (const { season, ep } of episodesWithVideo) {
-        setUploadStatus(`Uploading S${season.number}E${ep.number} – ${ep.title}…`);
-        setUploadProgress(Math.round((done / episodesWithVideo.length) * 100));
-        await addEpisodeApi(
-          series.slug,
-          {
-            title: ep.title,
-            seasonNumber: season.number,
-            episodeNumber: ep.number,
-            description: undefined,
-            runtime: ep.runtime || undefined,
-            status: toApiStatus(status),
-          },
-          ep.videoFile!,
-          ep.posterFile,
+        const allEpisodes = seasonPayload.flatMap((s) =>
+          s.episodes.map((ep) => ({ season: s, ep })),
         );
-        done++;
-      }
+        const episodesWithVideo = allEpisodes.filter((x) => x.ep.videoFile);
+        let done = 0;
 
-      setUploadProgress(100);
-      await refreshMovies();
-      toast.success(intent === "draft" ? "Series saved as draft" : "Series created successfully");
-      router.push("/movie");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Series creation failed";
-      setSubmitError(message);
-      toast.error(message);
-    } finally {
-      setIsSubmitting(false);
-      setUploadProgress(null);
-      setUploadStatus("");
-    }
+        for (const { season, ep } of episodesWithVideo) {
+          setJobLabel(seriesJobId, `Uploading S${season.number}E${ep.number} – ${ep.title}…`);
+          updateJob(seriesJobId, Math.round((done / episodesWithVideo.length) * 100));
+          await addEpisodeApi(
+            series.slug,
+            {
+              title: ep.title,
+              seasonNumber: season.number,
+              episodeNumber: ep.number,
+              description: undefined,
+              runtime: ep.runtime || undefined,
+              status: toApiStatus(status),
+            },
+            ep.videoFile!,
+            ep.posterFile,
+          );
+          done++;
+        }
+
+        finishJob(seriesJobId);
+        await refreshMovies();
+        toast.success(intent === "draft" ? "Series saved as draft" : "Series created successfully");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Series creation failed";
+        failJob(seriesJobId, message);
+        toast.error(message);
+      } finally {
+        setIsSubmitting(false);
+      }
+    })();
   };
+
+  const currentJob = jobIdRef.current ? (jobs.find((j) => j.id === jobIdRef.current) ?? null) : null;
 
   const showDetails = (contentType === "Movie" && step === 1) || (contentType === "Series" && step === 2);
   const showSeasonsStep = contentType === "Series" && step === 1;
@@ -460,9 +469,25 @@ export default function NewCatalogTitlePage() {
                 </select>
               </Field>
 
-              <Field label={isSeries ? "Monthly price (USD)" : "Price (USD)"}>
-                <input name="price" placeholder={isSeries ? "9.99" : "2.99"} className={textInputClass} />
-              </Field>
+              {!isSeries && (
+                <Field label="Price (USD)">
+                  <input name="price" placeholder="2.99" className={textInputClass} />
+                </Field>
+              )}
+
+              <div className="md:col-span-2">
+                <Field label="Trailer URL" hint="Paste a YouTube URL. The trailer is linked, not uploaded.">
+                  <input
+                    name="trailerUrl"
+                    type="url"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    className={textInputClass}
+                    value={trailerUrl}
+                    onChange={(e) => setTrailerUrl(e.target.value)}
+                  />
+                </Field>
+                <TrailerPreview url={trailerUrl} />
+              </div>
 
               <div className="md:col-span-2">
                 <Field label="Description">
@@ -532,15 +557,21 @@ export default function NewCatalogTitlePage() {
             {submitError ? (
               <p className="mt-4 text-[12px] font-semibold text-warning">{submitError}</p>
             ) : null}
-            {uploadProgress !== null ? (
+            {currentJob && currentJob.status !== "done" ? (
               <div className="mt-4 rounded-md border border-border bg-bg p-3">
                 <div className="mb-2 flex items-center justify-between text-[12px] font-semibold text-text-muted">
-                  <span>{uploadStatus || "Uploading…"}</span>
-                  <span>{uploadProgress}%</span>
+                  <span>{currentJob.label}</span>
+                  <span className="tabular-nums">{currentJob.percent}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-surface-elevated">
-                  <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${uploadProgress}%` }} />
+                  <div
+                    className={`h-full rounded-full transition-all ${currentJob.status === "error" ? "bg-danger" : "bg-brand"}`}
+                    style={{ width: `${currentJob.percent}%` }}
+                  />
                 </div>
+                {currentJob.status === "error" && currentJob.errorMsg ? (
+                  <p className="mt-1 text-[11px] text-danger">{currentJob.errorMsg}</p>
+                ) : null}
               </div>
             ) : null}
 
@@ -599,15 +630,21 @@ export default function NewCatalogTitlePage() {
             {submitError ? (
               <p className="mt-4 text-[12px] font-semibold text-warning">{submitError}</p>
             ) : null}
-            {uploadProgress !== null ? (
+            {currentJob && currentJob.status !== "done" ? (
               <div className="mt-4 rounded-md border border-border bg-bg p-3">
                 <div className="mb-2 flex items-center justify-between text-[12px] font-semibold text-text-muted">
-                  <span>{uploadStatus || "Uploading…"}</span>
-                  <span>{uploadProgress}%</span>
+                  <span>{currentJob.label}</span>
+                  <span className="tabular-nums">{currentJob.percent}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-surface-elevated">
-                  <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${uploadProgress}%` }} />
+                  <div
+                    className={`h-full rounded-full transition-all ${currentJob.status === "error" ? "bg-danger" : "bg-brand"}`}
+                    style={{ width: `${currentJob.percent}%` }}
+                  />
                 </div>
+                {currentJob.status === "error" && currentJob.errorMsg ? (
+                  <p className="mt-1 text-[11px] text-danger">{currentJob.errorMsg}</p>
+                ) : null}
               </div>
             ) : null}
 

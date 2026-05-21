@@ -21,6 +21,11 @@
   --foreground: var(--rt-text);
 }
 
+@keyframes slide {
+  0%   { left: -40%; }
+  100% { left: 100%; }
+}
+
 @theme inline {
   --color-bg: var(--rt-bg);
   --color-surface: var(--rt-surface);

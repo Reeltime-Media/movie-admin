@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
+import { AdminPagination } from "../components/AdminPagination";
 import { AdminShell } from "../components/AdminShell";
-import { listUsers, type ApiUser } from "../lib/api";
+import { getAdminDashboardSummary, listUsers, type ApiUser } from "../lib/api";
+
+const PAGE_SIZE = 20;
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
@@ -16,14 +19,32 @@ function formatDate(value: string) {
 
 export default function UsersPage() {
   const [users, setUsers] = useState<ApiUser[]>([]);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [summaryTotal, setSummaryTotal] = useState<number | null>(null);
+  const [summaryAdmins, setSummaryAdmins] = useState<number | null>(null);
+  const [summaryActive, setSummaryActive] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadUsers = async () => {
+  const loadUsers = async (targetPage = page) => {
     setIsLoading(true);
     setError(null);
     try {
-      setUsers(await listUsers());
+      const [res, summary] = await Promise.all([
+        listUsers({ page: targetPage, pageSize: PAGE_SIZE }),
+        getAdminDashboardSummary().catch(() => null),
+      ]);
+      setUsers(res.items);
+      setPage(res.page);
+      setPages(res.pages);
+      setTotal(res.total);
+      if (summary) {
+        setSummaryTotal(summary.users.total);
+        setSummaryAdmins(summary.users.admins);
+        setSummaryActive(summary.users.active);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not load users.";
       setError(message);
@@ -35,31 +56,28 @@ export default function UsersPage() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      void loadUsers();
+      void loadUsers(page);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [page]);
 
-  const stats = useMemo(
-    () => [
-      {
-        label: "Total users",
-        value: users.length.toString(),
-        detail: "All accounts returned by the API.",
-      },
-      {
-        label: "Admins",
-        value: users.filter((user) => user.role === "admin").length.toString(),
-        detail: "Accounts with admin access.",
-      },
-      {
-        label: "Active users",
-        value: users.filter((user) => user.is_active).length.toString(),
-        detail: "Users currently marked active.",
-      },
-    ],
-    [users],
-  );
+  const stats = [
+    {
+      label: "Total users",
+      value: (summaryTotal ?? total).toString(),
+      detail: "All accounts in the platform.",
+    },
+    {
+      label: "Admins",
+      value: summaryAdmins != null ? summaryAdmins.toString() : "--",
+      detail: "Accounts with admin access.",
+    },
+    {
+      label: "Active users",
+      value: summaryActive != null ? summaryActive.toString() : "--",
+      detail: "Users currently marked active.",
+    },
+  ];
 
   return (
     <AdminShell title="User management">
@@ -80,7 +98,7 @@ export default function UsersPage() {
           {error ? (
             <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-4 text-[12px] text-warning">
               <div>{error}</div>
-              <button type="button" onClick={loadUsers} className="mt-2 font-bold hover:underline">
+              <button type="button" onClick={() => loadUsers(page)} className="mt-2 font-bold hover:underline">
                 Retry
               </button>
             </div>
@@ -129,6 +147,14 @@ export default function UsersPage() {
                   ))}
                 </tbody>
               </table>
+              <AdminPagination
+                page={page}
+                pages={pages}
+                total={total}
+                pageSize={PAGE_SIZE}
+                isLoading={isLoading}
+                onPageChange={setPage}
+              />
             </div>
           )}
         </AdminCard>
@@ -147,7 +173,7 @@ export default function UsersPage() {
                   </div>
                 ))}
               {users.every((user) => user.role !== "admin") ? (
-                <p className="text-[13px] text-text-muted">No admin users found.</p>
+                <p className="text-[13px] text-text-muted">No admin users on this page.</p>
               ) : null}
             </div>
           )}

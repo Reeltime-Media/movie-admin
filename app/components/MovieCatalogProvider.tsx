@@ -14,11 +14,13 @@ import {
   deleteAdminMovie,
   deleteAdminSeriesApi,
   getAdminToken,
-  listAdminMovies,
-  listAdminSeries,
+  listAllAdminMovies,
+  listAllAdminSeries,
+  listSeriesEpisodesApi,
   updateAdminMovie,
   updateSeriesApi,
   type ApiContent,
+  type ApiSeasonRead,
   type ApiSeries,
 } from "../lib/api";
 import { formatGenres, parseGenresFromStored } from "../lib/genres";
@@ -91,14 +93,30 @@ function apiContentToCatalogEntry(content: ApiContent): CatalogEntry {
   };
 }
 
-function apiSeriesToCatalogEntry(series: ApiSeries): CatalogEntry {
+function mapApiSeasons(apiSeasons: ApiSeasonRead[]): import("../lib/adminData").Season[] {
+  return apiSeasons.map((s) => ({
+    id: `s-${s.season_number}`,
+    number: s.season_number,
+    title: `Season ${s.season_number}`,
+    episodes: s.episodes.map((ep) => ({
+      id: ep.id,
+      number: ep.episode_number ?? 0,
+      title: ep.title,
+      runtime: ep.runtime ?? "",
+      posterFileName: ep.poster_key ?? undefined,
+      videoFileName: ep.hls_master_key ?? undefined,
+    })),
+  }));
+}
+
+function apiSeriesToCatalogEntry(series: ApiSeries, apiSeasons: ApiSeasonRead[] = []): CatalogEntry {
   return {
     id: series.id,
     slug: series.slug,
     title: series.title,
     type: "Series",
     description: series.description,
-    price: series.monthly_price_usd ? `$${series.monthly_price_usd}/mo` : "-",
+    price: "Subscription",
     views: "-",
     rating: series.rating ?? "-",
     status: series.is_published ? "Published" : "Draft",
@@ -114,7 +132,7 @@ function apiSeriesToCatalogEntry(series: ApiSeries): CatalogEntry {
     transcodeStatus: undefined,
     createdAt: series.created_at,
     updatedAt: series.updated_at,
-    seasons: [],
+    seasons: mapApiSeasons(apiSeasons),
   };
 }
 
@@ -135,12 +153,17 @@ export function MovieCatalogProvider({ children }: { children: ReactNode }) {
 
     try {
       const [apiMovies, apiSeries] = await Promise.all([
-        listAdminMovies(),
-        listAdminSeries().catch(() => [] as ApiSeries[]),
+        listAllAdminMovies(),
+        listAllAdminSeries().catch(() => [] as ApiSeries[]),
       ]);
+      const episodesBySeries = await Promise.all(
+        apiSeries.map((s) =>
+          listSeriesEpisodesApi(s.slug).catch(() => [] as ApiSeasonRead[]),
+        ),
+      );
       setMovies([
         ...apiMovies.map(apiContentToCatalogEntry),
-        ...apiSeries.map(apiSeriesToCatalogEntry),
+        ...apiSeries.map((s, i) => apiSeriesToCatalogEntry(s, episodesBySeries[i])),
       ]);
     } catch (err) {
       setMovies([]);
@@ -174,6 +197,7 @@ export function MovieCatalogProvider({ children }: { children: ReactNode }) {
       }
       const updated = await updateAdminMovie(id, {
         title: entry.title,
+        description: entry.description ?? null,
         genres: parseGenresFromStored(entry.genre),
         priceUsd: moneyToApi(entry.price),
         rating: ratingToApi(entry.rating),

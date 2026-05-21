@@ -1,5 +1,15 @@
+import {
+  fetchAllPages,
+  paginationQuery,
+  type PaginatedResponse,
+  type PaginationQuery,
+} from "./pagination";
+
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/+$/, "");
 const TOKEN_KEY = "reeltime_admin_token";
+
+export type { PaginatedResponse, PaginationQuery } from "./pagination";
+export { fetchAllPages } from "./pagination";
 
 export type ApiSeries = {
   id: string;
@@ -216,18 +226,23 @@ export async function loginAdmin(email: string, password: string) {
   return result;
 }
 
-export async function listUsers() {
-  return apiFetch<ApiUser[]>("/users/");
+export async function listUsers(query: PaginationQuery = {}) {
+  return apiFetch<PaginatedResponse<ApiUser>>(`/users/${paginationQuery(query)}`);
 }
 
-export async function listAdminMovies() {
-  return apiFetch<ApiContent[]>("/admin/movies");
+export async function listAdminMovies(query: PaginationQuery = {}) {
+  return apiFetch<PaginatedResponse<ApiContent>>(`/admin/movies${paginationQuery(query)}`);
+}
+
+export async function listAllAdminMovies() {
+  return fetchAllPages((page, pageSize) => listAdminMovies({ page, pageSize }));
 }
 
 export async function updateAdminMovie(
   id: string,
   input: {
     title: string;
+    description?: string | null;
     genres: string[];
     priceUsd?: string | null;
     rating?: string | null;
@@ -240,6 +255,7 @@ export async function updateAdminMovie(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       title: input.title,
+      description: input.description ?? null,
       genres: input.genres,
       price_usd: input.priceUsd || null,
       rating: input.rating || null,
@@ -367,6 +383,27 @@ export function uploadFileToPresignedUrl(
 
 // ── Series ──────────────────────────────────────────────────────────────────
 
+export type ApiSeriesEpisode = {
+  id: string;
+  episode_number: number | null;
+  season_number: number | null;
+  title: string;
+  runtime: string | null;
+  poster_key: string | null;
+  hls_master_key: string | null;
+  status: string;
+  transcode_status: string;
+};
+
+export type ApiSeasonRead = {
+  season_number: number;
+  episodes: ApiSeriesEpisode[];
+};
+
+export async function listSeriesEpisodesApi(slug: string): Promise<ApiSeasonRead[]> {
+  return apiFetch<ApiSeasonRead[]>(`/admin/series/${slug}/episodes`);
+}
+
 async function multipartPost<T>(path: string, body: FormData): Promise<T> {
   const token = getAdminToken();
   const headers = new Headers();
@@ -375,8 +412,14 @@ async function multipartPost<T>(path: string, body: FormData): Promise<T> {
   return parseApiResponse<T>(res);
 }
 
-export async function listAdminSeries(): Promise<ApiSeries[]> {
-  return apiFetch<ApiSeries[]>("/admin/series");
+export async function listAdminSeries(
+  query: PaginationQuery = {},
+): Promise<PaginatedResponse<ApiSeries>> {
+  return apiFetch<PaginatedResponse<ApiSeries>>(`/admin/series${paginationQuery(query)}`);
+}
+
+export async function listAllAdminSeries(): Promise<ApiSeries[]> {
+  return fetchAllPages((page, pageSize) => listAdminSeries({ page, pageSize }));
 }
 
 export async function createSeries(input: {
@@ -386,6 +429,7 @@ export async function createSeries(input: {
   genres: string[];
   releaseYear?: number;
   rating?: string;
+  trailerUrl?: string;
   poster?: File;
 }): Promise<ApiSeries> {
   const fd = new FormData();
@@ -395,6 +439,7 @@ export async function createSeries(input: {
   if (input.genres.length) fd.append("genres", JSON.stringify(input.genres));
   if (input.releaseYear) fd.append("release_year", String(input.releaseYear));
   if (input.rating) fd.append("rating", input.rating);
+  if (input.trailerUrl) fd.append("trailer_url", input.trailerUrl);
   if (input.poster) fd.append("poster", input.poster);
   return multipartPost<ApiSeries>("/series/", fd);
 }
@@ -448,22 +493,34 @@ export async function addEpisodeApi(
 
 // ── Transcode jobs ───────────────────────────────────────────────────────────
 
-export async function listTranscodeJobs(): Promise<TranscodeJob[]> {
-  return apiFetch<TranscodeJob[]>("/admin/transcode-jobs");
+export async function listTranscodeJobs(
+  query: PaginationQuery = {},
+): Promise<PaginatedResponse<TranscodeJob>> {
+  return apiFetch<PaginatedResponse<TranscodeJob>>(
+    `/admin/transcode-jobs${paginationQuery(query)}`,
+  );
 }
 
 export async function retryTranscodeJob(jobId: string): Promise<TranscodeJob> {
   return apiFetch<TranscodeJob>(`/admin/transcode-jobs/${jobId}/retry`, { method: "POST" });
 }
 
-export async function listAdminPayments(): Promise<ApiPaymentIntent[]> {
-  return apiFetch<ApiPaymentIntent[]>("/admin/payments");
+export async function listAdminPayments(
+  query: PaginationQuery = {},
+): Promise<PaginatedResponse<ApiPaymentIntent>> {
+  return apiFetch<PaginatedResponse<ApiPaymentIntent>>(
+    `/admin/payments${paginationQuery(query)}`,
+  );
 }
 
 export async function getAdminDashboardSummary(): Promise<ApiDashboardSummary> {
   return apiFetch<ApiDashboardSummary>("/admin/dashboard-summary");
 }
 
-export async function listAdminTopTitles(): Promise<ApiTopTitleReport[]> {
-  return apiFetch<ApiTopTitleReport[]>("/admin/reports/top-titles");
+export async function listAdminTopTitles(
+  query: PaginationQuery = {},
+): Promise<PaginatedResponse<ApiTopTitleReport>> {
+  return apiFetch<PaginatedResponse<ApiTopTitleReport>>(
+    `/admin/reports/top-titles${paginationQuery(query)}`,
+  );
 }

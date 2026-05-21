@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { MovieCatalogProvider } from "./components/MovieCatalogProvider";
 import { ToastProvider } from "./components/ToastProvider";
+import { UploadProgressProvider } from "./components/UploadProgressContext";
 import "./globals.css";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -27,7 +28,9 @@ export default function RootLayout({
       className={`${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-bg text-text font-sans">
-        <MovieCatalogProvider>{children}</MovieCatalogProvider>
+        <UploadProgressProvider>
+          <MovieCatalogProvider>{children}</MovieCatalogProvider>
+        </UploadProgressProvider>
         <ToastProvider />
       </body>
     </html>
