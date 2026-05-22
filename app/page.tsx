@@ -197,9 +197,12 @@ export default function Home() {
         <AdminCard title="Quick controls">
           <div className="space-y-3">
             {[
-              { label: "Upload new title", href: "/movie/new" },
-              { label: "Update pricing", href: "/payments" },
-              { label: "Review publishing queue", href: "/movie" },
+              { label: "Upload new movie", href: "/movie/new" },
+              { label: "Upload new series", href: "/series/new" },
+              { label: "Manage subscription plans", href: "/plans" },
+              { label: "View transactions", href: "/payments" },
+              { label: "Review movies", href: "/movie" },
+              { label: "Review series", href: "/series" },
               { label: "Open reports", href: "/reports" },
             ].map((action) => (
               <Link

@@ -128,16 +128,17 @@ export function SeasonsEpisodesEditor({ seasons, onChange }: SeasonsEpisodesEdit
           </div>
 
           <div className="mt-3 space-y-2">
-            <div className="hidden text-[11px] font-bold uppercase tracking-widest text-text-disabled sm:grid sm:grid-cols-[52px_minmax(0,1fr)_100px_80px] sm:gap-2 sm:px-1">
+            <div className="hidden text-[11px] font-bold uppercase tracking-widest text-text-disabled sm:grid sm:grid-cols-[52px_minmax(0,1fr)_100px_72px_80px] sm:gap-2 sm:px-1">
               <span>Ep</span>
               <span>Title</span>
               <span>Runtime</span>
+              <span>Free</span>
               <span className="text-right"> </span>
             </div>
             {season.episodes.map((ep) => (
               <div
                 key={ep.id}
-                className="flex flex-col gap-2 rounded-md border border-dashed border-border/80 bg-surface/50 p-3 sm:grid sm:grid-cols-[52px_minmax(0,1fr)_100px_80px] sm:items-center sm:gap-2 sm:border-0 sm:bg-transparent sm:p-1"
+                className="flex flex-col gap-2 rounded-md border border-dashed border-border/80 bg-surface/50 p-3 sm:grid sm:grid-cols-[52px_minmax(0,1fr)_100px_72px_80px] sm:items-center sm:gap-2 sm:border-0 sm:bg-transparent sm:p-1"
               >
                 <div className="text-[12px] font-bold text-text-muted">E{ep.number}</div>
                 <input
@@ -152,6 +153,17 @@ export function SeasonsEpisodesEditor({ seasons, onChange }: SeasonsEpisodesEdit
                   onChange={(e) => updateEpisode(season.id, ep.id, { runtime: e.target.value })}
                   placeholder="45m"
                 />
+                <label className="flex items-center justify-center gap-2 text-[12px] font-semibold text-text-muted sm:justify-start">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(ep.isFree)}
+                    onChange={(e) =>
+                      updateEpisode(season.id, ep.id, { isFree: e.target.checked })
+                    }
+                    className="rounded border-border"
+                  />
+                  Free
+                </label>
                 <div className="flex justify-end sm:block">
                   <button
                     type="button"

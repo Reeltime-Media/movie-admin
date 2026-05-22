@@ -17,6 +17,7 @@ import {
   listAllAdminMovies,
   listAllAdminSeries,
   listSeriesEpisodesApi,
+  updateEpisodeApi,
   updateAdminMovie,
   updateSeriesApi,
   type ApiContent,
@@ -100,9 +101,11 @@ function mapApiSeasons(apiSeasons: ApiSeasonRead[]): import("../lib/adminData").
     title: `Season ${s.season_number}`,
     episodes: s.episodes.map((ep) => ({
       id: ep.id,
+      slug: ep.slug,
       number: ep.episode_number ?? 0,
       title: ep.title,
       runtime: ep.runtime ?? "",
+      isFree: ep.is_free,
       posterFileName: ep.poster_key ?? undefined,
       videoFileName: ep.hls_master_key ?? undefined,
     })),
@@ -183,15 +186,54 @@ export function MovieCatalogProvider({ children }: { children: ReactNode }) {
     async (id: string, entry: MovieDraft) => {
       const existing = movies.find((m) => m.id === id);
       if (existing?.type === "Series" && existing.slug) {
-        const updated = await updateSeriesApi(existing.slug, {
+        const patch: Parameters<typeof updateSeriesApi>[1] = {
           title: entry.title,
+          description: entry.description ?? null,
           genres: parseGenresFromStored(entry.genre),
-          rating: ratingToApi(entry.rating) ?? null,
-          monthly_price_usd: moneyToApi(entry.price) ?? null,
           is_published: entry.status === "Published",
-        });
+        };
+        const rating = ratingToApi(entry.rating);
+        if (rating != null) patch.rating = rating;
+        const monthlyPrice = moneyToApi(entry.price);
+        if (monthlyPrice != null) patch.monthly_price_usd = monthlyPrice;
+
+        const updated = await updateSeriesApi(existing.slug, patch);
+
+        const episodeUpdates: Promise<unknown>[] = [];
+        for (const season of entry.seasons) {
+          for (const ep of season.episodes) {
+            if (!ep.slug) continue;
+            const priorSeason = existing.seasons.find((s) => s.number === season.number);
+            const priorEp = priorSeason?.episodes.find((e) => e.id === ep.id);
+            const changed =
+              !priorEp ||
+              priorEp.title !== ep.title ||
+              priorEp.runtime !== ep.runtime ||
+              Boolean(priorEp.isFree) !== Boolean(ep.isFree);
+            if (!changed) continue;
+            episodeUpdates.push(
+              updateEpisodeApi(existing.slug, ep.slug, {
+                title: ep.title,
+                runtime: ep.runtime || null,
+                isFree: Boolean(ep.isFree),
+              }),
+            );
+          }
+        }
+        if (episodeUpdates.length) {
+          await Promise.all(episodeUpdates);
+        }
+
+        const apiSeasons = await listSeriesEpisodesApi(existing.slug).catch(() => null);
         setMovies((prev) =>
-          prev.map((m) => (m.id === id ? apiSeriesToCatalogEntry(updated) : m)),
+          prev.map((m) =>
+            m.id === id
+              ? {
+                  ...apiSeriesToCatalogEntry(updated),
+                  seasons: apiSeasons ? mapApiSeasons(apiSeasons) : entry.seasons,
+                }
+              : m,
+          ),
         );
         return;
       }

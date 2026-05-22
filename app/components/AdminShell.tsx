@@ -12,6 +12,7 @@ const navItems = [
   { label: "Series", href: "/series" },
   { label: "Users", href: "/users" },
   { label: "Payments", href: "/payments" },
+  { label: "Plans", href: "/plans" },
   { label: "Transcode", href: "/transcode" },
   { label: "Reports", href: "/reports", badge: "New" },
 ];

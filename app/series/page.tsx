@@ -1,10 +1,10 @@
 import { AdminShell } from "../components/AdminShell";
-import { SeriesPageBody } from "./SeriesPageBody";
+import { SeriesManagementSection } from "./SeriesManagementSection";
 
 export default function SeriesPage() {
   return (
-    <AdminShell title="Series operations">
-      <SeriesPageBody />
+    <AdminShell title="Series management">
+      <SeriesManagementSection />
     </AdminShell>
   );
 }

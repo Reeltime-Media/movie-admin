@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo } from "react";
 import { AdminCard } from "../../components/AdminCard";
 import { useMovieCatalog } from "../../components/MovieCatalogProvider";
 import { statusClasses } from "../../lib/adminData";
@@ -43,8 +44,16 @@ function DetailRow({ label, value }: { label: string; value?: string | number | 
 }
 
 export function MovieDetail({ movieId }: { movieId: string }) {
+  const router = useRouter();
   const { movies, isLoading, error, refreshMovies } = useMovieCatalog();
-  const movie = movies.find((item) => item.id === movieId);
+  const entry = movies.find((item) => item.id === movieId);
+  const movie = entry?.type === "Movie" ? entry : undefined;
+
+  useEffect(() => {
+    if (!isLoading && entry?.type === "Series") {
+      router.replace(`/series/${entry.id}`);
+    }
+  }, [isLoading, entry, router]);
 
   const trailerEmbedUrl = useMemo(() => youtubeEmbedUrl(movie?.trailerUrl), [movie?.trailerUrl]);
 

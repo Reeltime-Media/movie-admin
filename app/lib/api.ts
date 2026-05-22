@@ -107,12 +107,27 @@ export type ApiPaymentIntent = {
   intent_id: string;
   order_id: string;
   user_id: string;
+  user_email: string;
+  user_full_name: string | null;
   kind: string;
   content_id: string | null;
   amount_usd: string;
   status: string;
   created_at: string;
   resolved_at: string | null;
+};
+
+export type ApiSubscriptionPlan = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  price_usd: string;
+  billing_interval_days: number;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ApiDashboardSummary = {
@@ -385,6 +400,7 @@ export function uploadFileToPresignedUrl(
 
 export type ApiSeriesEpisode = {
   id: string;
+  slug: string;
   episode_number: number | null;
   season_number: number | null;
   title: string;
@@ -392,6 +408,7 @@ export type ApiSeriesEpisode = {
   poster_key: string | null;
   hls_master_key: string | null;
   status: string;
+  is_free: boolean;
   transcode_status: string;
 };
 
@@ -448,10 +465,10 @@ export async function updateSeriesApi(
   slug: string,
   data: Partial<{
     title: string;
+    description: string | null;
     genres: string[];
     rating: string | null;
-    monthly_price_usd: string | null;
-    status: string;
+    monthly_price_usd: string;
     is_published: boolean;
   }>,
 ): Promise<ApiSeries> {
@@ -466,6 +483,28 @@ export async function deleteAdminSeriesApi(slug: string): Promise<void> {
   return apiFetch<void>(`/series/${slug}`, { method: "DELETE" });
 }
 
+export async function updateEpisodeApi(
+  seriesSlug: string,
+  episodeSlug: string,
+  data: Partial<{
+    title: string;
+    runtime: string | null;
+    isFree: boolean;
+    status: string;
+  }>,
+): Promise<ApiContent> {
+  return apiFetch<ApiContent>(`/series/${seriesSlug}/episodes/${episodeSlug}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...(data.title !== undefined ? { title: data.title } : {}),
+      ...(data.runtime !== undefined ? { runtime: data.runtime } : {}),
+      ...(data.isFree !== undefined ? { is_free: data.isFree } : {}),
+      ...(data.status !== undefined ? { status: data.status } : {}),
+    }),
+  });
+}
+
 export async function addEpisodeApi(
   seriesSlug: string,
   data: {
@@ -475,6 +514,7 @@ export async function addEpisodeApi(
     description?: string;
     runtime?: string;
     status: string;
+    isFree?: boolean;
   },
   videoFile: File,
   posterFile?: File,
@@ -486,6 +526,7 @@ export async function addEpisodeApi(
   if (data.description) fd.append("description", data.description);
   if (data.runtime) fd.append("runtime", data.runtime);
   fd.append("status", data.status);
+  fd.append("is_free", data.isFree ? "true" : "false");
   fd.append("video", videoFile);
   if (posterFile) fd.append("poster", posterFile);
   return multipartPost<ApiContent>(`/series/${seriesSlug}/episodes`, fd);
@@ -511,6 +552,65 @@ export async function listAdminPayments(
   return apiFetch<PaginatedResponse<ApiPaymentIntent>>(
     `/admin/payments${paginationQuery(query)}`,
   );
+}
+
+export async function listAdminSubscriptionPlans(): Promise<ApiSubscriptionPlan[]> {
+  return apiFetch<ApiSubscriptionPlan[]>("/admin/subscription-plans");
+}
+
+export async function createAdminSubscriptionPlan(input: {
+  code: string;
+  name: string;
+  description?: string | null;
+  priceUsd: string;
+  billingIntervalDays?: number;
+  isActive?: boolean;
+  sortOrder?: number;
+}): Promise<ApiSubscriptionPlan> {
+  return apiFetch<ApiSubscriptionPlan>("/admin/subscription-plans", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      code: input.code,
+      name: input.name,
+      description: input.description ?? null,
+      price_usd: input.priceUsd,
+      billing_interval_days: input.billingIntervalDays ?? 30,
+      is_active: input.isActive ?? true,
+      sort_order: input.sortOrder ?? 0,
+    }),
+  });
+}
+
+export async function updateAdminSubscriptionPlan(
+  id: string,
+  input: Partial<{
+    name: string;
+    description: string | null;
+    priceUsd: string;
+    billingIntervalDays: number;
+    isActive: boolean;
+    sortOrder: number;
+  }>,
+): Promise<ApiSubscriptionPlan> {
+  return apiFetch<ApiSubscriptionPlan>(`/admin/subscription-plans/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...(input.name !== undefined ? { name: input.name } : {}),
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.priceUsd !== undefined ? { price_usd: input.priceUsd } : {}),
+      ...(input.billingIntervalDays !== undefined
+        ? { billing_interval_days: input.billingIntervalDays }
+        : {}),
+      ...(input.isActive !== undefined ? { is_active: input.isActive } : {}),
+      ...(input.sortOrder !== undefined ? { sort_order: input.sortOrder } : {}),
+    }),
+  });
+}
+
+export async function deleteAdminSubscriptionPlan(id: string): Promise<void> {
+  await apiFetch<void>(`/admin/subscription-plans/${id}`, { method: "DELETE" });
 }
 
 export async function getAdminDashboardSummary(): Promise<ApiDashboardSummary> {

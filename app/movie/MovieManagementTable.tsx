@@ -7,7 +7,6 @@ import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
 import { GenreMultiSelect } from "../components/GenreMultiSelect";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
-import { SeasonsEpisodesEditor } from "../components/SeasonsEpisodesEditor";
 import {
   completeAdminMovieAssetUpload,
   startAdminMovieAssetUpload,
@@ -16,10 +15,6 @@ import {
 import { TrailerPreview } from "../components/TrailerPreview";
 import { statusClasses, type CatalogEntry, type Status } from "../lib/adminData";
 import { formatGenres, parseGenresFromStored } from "../lib/genres";
-import {
-  defaultSeasons,
-  validateSeriesSeasons,
-} from "../lib/seriesHelpers";
 import type { ListFilter } from "./movieListTypes";
 
 const inputClass =
@@ -64,28 +59,6 @@ function MovieFormFields({
           onChange={(e) => set("description", e.target.value || null)}
           placeholder="Brief synopsis shown on the movie page…"
         />
-      </label>
-      <label className="block">
-        <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">Type</span>
-        <select
-          className={selectClass}
-          value={draft.type}
-          onChange={(e) => {
-            const t = e.target.value as CatalogEntry["type"];
-            if (t === "Movie") {
-              onChange({ ...draft, type: t, seasons: [] });
-            } else {
-              onChange({
-                ...draft,
-                type: t,
-                seasons: draft.seasons.length > 0 ? draft.seasons : defaultSeasons(),
-              });
-            }
-          }}
-        >
-          <option value="Movie">Movie</option>
-          <option value="Series">Series</option>
-        </select>
       </label>
       <label className="block">
         <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">Status</span>
@@ -147,15 +120,6 @@ function MovieFormFields({
           placeholder="https://www.youtube.com/watch?v=..."
         />
       </label>
-      {draft.type === "Series" ? (
-        <div className="sm:col-span-2">
-          <div className="mb-2 text-[12px] font-semibold text-text-muted">Seasons and episodes</div>
-          <SeasonsEpisodesEditor
-            seasons={draft.seasons}
-            onChange={(next) => onChange({ ...draft, seasons: next })}
-          />
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -243,12 +207,6 @@ export function MovieManagementTable({
     if (!editing || !editDraft) return;
     if (!editDraft.title.trim()) return;
     if (!editDraft.genre.trim()) return;
-    if (editDraft.type === "Series" && !validateSeriesSeasons(editDraft.seasons)) {
-      const message = "Series needs at least one season, and every episode needs a title.";
-      setEditSaveError(message);
-      toast.warning(message);
-      return;
-    }
     setEditSaveError(null);
     setIsSaving(true);
     try {
@@ -299,22 +257,19 @@ export function MovieManagementTable({
     }
   };
 
+  const movieCount = movies.filter((m) => m.type === "Movie").length;
   const emptyHint =
-    movies.length === 0 ? (
+    movieCount === 0 ? (
       <>
-        No titles yet.{" "}
+        No movies yet.{" "}
         <Link href="/movie/new" className="font-semibold text-brand hover:underline">
-          Add a title
+          Add a movie
         </Link>
       </>
-    ) : listFilter === "movies" ? (
-      "No movies match this view. Switch to All or Series, or add a movie."
-    ) : listFilter === "series" ? (
-      "No series match this view. Switch to All or Movies, or add a series."
     ) : listFilter === "drafts" ? (
-      "No draft titles. Change the filter or set a title to Draft when editing."
+      "No draft movies. Change the filter or set a movie to Draft when editing."
     ) : (
-      "No titles to show."
+      "No movies to show."
     );
 
   return (
@@ -325,7 +280,6 @@ export function MovieManagementTable({
             <thead>
               <tr className="border-b border-border text-[11px] uppercase tracking-widest text-text-disabled">
                 <th className="px-5 pb-3 font-bold">Title</th>
-                <th className="px-5 pb-3 font-bold">Type</th>
                 <th className="px-5 pb-3 font-bold">Genre</th>
                 <th className="px-5 pb-3 font-bold">Price</th>
                 <th className="px-5 pb-3 font-bold">Views</th>
@@ -336,7 +290,7 @@ export function MovieManagementTable({
             <tbody className="divide-y divide-border">
               {entries.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-[13px] text-text-muted">
+                  <td colSpan={6} className="px-5 py-10 text-center text-[13px] text-text-muted">
                     {emptyHint}
                   </td>
                 </tr>
@@ -358,7 +312,6 @@ export function MovieManagementTable({
                     <td className="p-0 font-bold">
                       <div className="px-5 py-4 transition-colors hover:text-brand">{item.title}</div>
                     </td>
-                    <td className="px-5 py-4 text-text-muted">{item.type}</td>
                     <td className="px-5 py-4 text-text-muted">{item.genre}</td>
                     <td className="px-5 py-4 text-text-muted">{item.price}</td>
                     <td className="px-5 py-4 text-text-muted">{item.views}</td>
@@ -409,14 +362,13 @@ export function MovieManagementTable({
             className="max-h-[90vh] w-full max-w-[calc(100vw-2rem)] overflow-y-auto rounded-lg border border-border bg-surface p-6 shadow-2xl xl:max-w-[calc(100vw-4rem)]"
           >
             <h2 id="edit-movie-title" className="text-[16px] font-bold tracking-[-0.02em]">
-              Edit title
+              Edit movie
             </h2>
             <p className="mt-1 text-[12px] text-text-muted">{editing.title}</p>
             <div className="mt-5">
               <MovieFormFields draft={editDraft} onChange={setEditDraft} />
             </div>
-            {editing.type === "Movie" ? (
-              <div className="mt-5 rounded-lg border border-border bg-bg p-4">
+            <div className="mt-5 rounded-lg border border-border bg-bg p-4">
                 <h3 className="text-[13px] font-bold text-text">Replace media</h3>
                 <p className="mt-1 text-[12px] leading-relaxed text-text-muted">
                   Choose a new poster or movie file only when you want to replace the existing asset.
@@ -516,7 +468,6 @@ export function MovieManagementTable({
                   </div>
                 ) : null}
               </div>
-            ) : null}
             {editSaveError ? (
               <p className="mt-3 text-[12px] font-semibold text-warning">{editSaveError}</p>
             ) : null}
@@ -549,7 +500,7 @@ export function MovieManagementTable({
         >
           <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-2xl">
             <h2 id="delete-movie-title" className="text-[16px] font-bold tracking-[-0.02em]">
-              Delete title
+              Delete movie
             </h2>
             <p className="mt-3 text-[13px] leading-relaxed text-text-muted">
               Remove <span className="font-bold text-text">{confirmDelete.title}</span> from the

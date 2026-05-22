@@ -93,6 +93,7 @@ export default function LoginPage() {
                 <input
                   name="email"
                   type="email"
+                  value="admin@gmail.com"
                   required
                   autoComplete="email"
                   placeholder="admin@reeltime.com"
@@ -107,6 +108,7 @@ export default function LoginPage() {
                 <input
                   name="password"
                   type="password"
+                  value="admin123"
                   required
                   autoComplete="current-password"
                   placeholder="Enter your password"

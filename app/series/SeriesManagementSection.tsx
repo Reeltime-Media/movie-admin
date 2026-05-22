@@ -4,31 +4,31 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AdminPagination } from "../components/AdminPagination";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
-import { MovieManagementTable } from "./MovieManagementTable";
-import type { ListFilter } from "./movieListTypes";
+import { SeriesManagementTable } from "./SeriesManagementTable";
+import type { SeriesListFilter } from "./seriesListTypes";
 
 const TABLE_PAGE_SIZE = 25;
 
-const tabs: { key: ListFilter; label: string }[] = [
-  { key: "all", label: "All movies" },
+const tabs: { key: SeriesListFilter; label: string }[] = [
+  { key: "all", label: "All series" },
   { key: "drafts", label: "Drafts" },
 ];
 
-function tableTitleForFilter(f: ListFilter): string {
-  return f === "drafts" ? "Draft movies" : "All movies";
+function tableTitleForFilter(f: SeriesListFilter): string {
+  return f === "drafts" ? "Draft series" : "All series";
 }
 
-export function MovieManagementSection() {
+export function SeriesManagementSection() {
   const { movies, isLoading, error, refreshMovies } = useMovieCatalog();
-  const [listFilter, setListFilter] = useState<ListFilter>("all");
+  const [listFilter, setListFilter] = useState<SeriesListFilter>("all");
   const [page, setPage] = useState(1);
 
   const entries = useMemo(() => {
-    const moviesOnly = movies.filter((m) => m.type === "Movie");
+    const seriesOnly = movies.filter((m) => m.type === "Series");
     if (listFilter === "drafts") {
-      return moviesOnly.filter((m) => m.status === "Draft");
+      return seriesOnly.filter((s) => s.status === "Draft");
     }
-    return moviesOnly;
+    return seriesOnly;
   }, [movies, listFilter]);
 
   const pages = Math.max(1, Math.ceil(entries.length / TABLE_PAGE_SIZE));
@@ -51,14 +51,14 @@ export function MovieManagementSection() {
       <div className="mb-6 space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <p className="max-w-[72ch] text-[13px] leading-relaxed text-text-muted">
-            Manage standalone movies surfaced in the Reeltime client. For series with seasons and
-            episodes, use the Series section.
+            Manage series with seasons and episodes. Edit metadata, review episode readiness, and
+            publish to the Reeltime catalog.
           </p>
           <Link
-            href="/movie/new"
+            href="/series/new"
             className="shrink-0 rounded-md bg-brand px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
           >
-            Add movie
+            Add series
           </Link>
         </div>
         {error ? (
@@ -69,7 +69,7 @@ export function MovieManagementSection() {
             </button>
           </div>
         ) : null}
-        {isLoading ? <p className="text-[12px] text-text-muted">Loading movies...</p> : null}
+        {isLoading ? <p className="text-[12px] text-text-muted">Loading series...</p> : null}
         <div className="flex flex-wrap items-center gap-2">
           {tabs.map(({ key, label }) => {
             const active = listFilter === key;
@@ -92,7 +92,7 @@ export function MovieManagementSection() {
         </div>
       </div>
 
-      <MovieManagementTable
+      <SeriesManagementTable
         entries={paginatedEntries}
         tableTitle={tableTitleForFilter(listFilter)}
         listFilter={listFilter}
