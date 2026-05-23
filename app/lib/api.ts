@@ -40,8 +40,10 @@ export type TranscodeJob = {
 
 export type MovieUploadStartResponse = {
   content_id: string;
+  slug: string;
+  upload_id: string;
   source_key: string;
-  video_upload_url: string;
+  part_size: number;
   poster_key: string | null;
   poster_upload_url: string | null;
 };
@@ -74,6 +76,7 @@ export type ApiContent = {
   status: string;
   is_published: boolean;
   transcode_status: string;
+  watch_count: number;
   created_at: string;
   updated_at: string;
 };
@@ -261,6 +264,8 @@ export async function updateAdminMovie(
     genres: string[];
     priceUsd?: string | null;
     rating?: string | null;
+    runtime?: string | null;
+    releaseYear?: number | null;
     status: string;
     trailerUrl?: string | null;
   },
@@ -274,6 +279,8 @@ export async function updateAdminMovie(
       genres: input.genres,
       price_usd: input.priceUsd || null,
       rating: input.rating || null,
+      runtime: input.runtime ?? null,
+      release_year: input.releaseYear ?? null,
       status: input.status,
       trailer_url: input.trailerUrl || null,
     }),
@@ -321,6 +328,7 @@ export async function completeAdminMovieAssetUpload(
 }
 
 export async function startMovieUpload(input: {
+  title: string;
   videoContentType: string;
   posterContentType?: string;
 }) {
@@ -328,15 +336,32 @@ export async function startMovieUpload(input: {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      title: input.title,
       video_content_type: input.videoContentType,
       poster_content_type: input.posterContentType ?? null,
     }),
   });
 }
 
+export async function getMovieUploadPartUrl(input: {
+  sourceKey: string;
+  uploadId: string;
+  partNumber: number;
+}) {
+  const params = new URLSearchParams({
+    source_key: input.sourceKey,
+    upload_id: input.uploadId,
+    part_number: String(input.partNumber),
+  });
+  return apiFetch<{ url: string }>(`/movies/uploads/part-url?${params}`);
+}
+
 export async function completeMovieUpload(input: {
   contentId: string;
+  slug: string;
   sourceKey: string;
+  uploadId: string;
+  parts: { partNumber: number; etag: string }[];
   title: string;
   priceUsd: string;
   description?: string;
@@ -353,7 +378,13 @@ export async function completeMovieUpload(input: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       content_id: input.contentId,
+      slug: input.slug,
       source_key: input.sourceKey,
+      upload_id: input.uploadId,
+      parts: input.parts.map((p) => ({
+        part_number: p.partNumber,
+        etag: p.etag,
+      })),
       title: input.title,
       price_usd: input.priceUsd,
       description: input.description || null,
@@ -368,15 +399,16 @@ export async function completeMovieUpload(input: {
   });
 }
 
-export function uploadFileToPresignedUrl(
+function uploadBlobToPresignedUrl(
   url: string,
-  file: File,
+  blob: Blob,
+  contentType: string,
   onProgress?: (percent: number) => void,
-) {
-  return new Promise<void>((resolve, reject) => {
+): Promise<string> {
+  return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", url);
-    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    xhr.setRequestHeader("Content-Type", contentType);
 
     xhr.upload.onprogress = (event) => {
       if (!event.lengthComputable || !onProgress) return;
@@ -386,14 +418,63 @@ export function uploadFileToPresignedUrl(
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         onProgress?.(100);
-        resolve();
+        const etag = xhr.getResponseHeader("ETag");
+        if (!etag) {
+          reject(new Error("Upload succeeded but ETag header is missing"));
+          return;
+        }
+        resolve(etag);
       } else {
         reject(new Error(`Upload failed with ${xhr.status}`));
       }
     };
     xhr.onerror = () => reject(new Error("Upload failed. Check your network and R2 CORS settings."));
-    xhr.send(file);
+    xhr.send(blob);
   });
+}
+
+export function uploadFileToPresignedUrl(
+  url: string,
+  file: File,
+  onProgress?: (percent: number) => void,
+) {
+  return uploadBlobToPresignedUrl(url, file, file.type || "application/octet-stream", onProgress).then(
+    () => undefined,
+  );
+}
+
+export async function uploadMovieVideoMultipart(
+  file: File,
+  input: {
+    sourceKey: string;
+    uploadId: string;
+    partSize: number;
+  },
+  onProgress?: (percent: number) => void,
+) {
+  const contentType = file.type || "video/mp4";
+  const partSize = input.partSize;
+  const totalParts = Math.max(1, Math.ceil(file.size / partSize));
+  const parts: { partNumber: number; etag: string }[] = [];
+
+  for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
+    const start = (partNumber - 1) * partSize;
+    const end = Math.min(start + partSize, file.size);
+    const chunk = file.slice(start, end);
+
+    const { url } = await getMovieUploadPartUrl({
+      sourceKey: input.sourceKey,
+      uploadId: input.uploadId,
+      partNumber,
+    });
+
+    const etag = await uploadBlobToPresignedUrl(url, chunk, contentType);
+    parts.push({ partNumber, etag });
+
+    onProgress?.(Math.round((partNumber / totalParts) * 100));
+  }
+
+  return parts;
 }
 
 // ── Series ──────────────────────────────────────────────────────────────────
@@ -623,4 +704,42 @@ export async function listAdminTopTitles(
   return apiFetch<PaginatedResponse<ApiTopTitleReport>>(
     `/admin/reports/top-titles${paginationQuery(query)}`,
   );
+}
+
+export type ApiComment = {
+  id: string;
+  content_id: string;
+  body: string;
+  created_at: string;
+  updated_at: string;
+  author: {
+    id: string;
+    display_name: string;
+  };
+};
+
+export async function listAdminComments(
+  contentId: string,
+  query: PaginationQuery = {},
+): Promise<PaginatedResponse<ApiComment>> {
+  const search = new URLSearchParams();
+  search.set("content_id", contentId);
+  if (query.page != null) search.set("page", String(query.page));
+  if (query.pageSize != null) search.set("page_size", String(query.pageSize));
+  return apiFetch<PaginatedResponse<ApiComment>>(`/admin/comments?${search}`);
+}
+
+export async function updateAdminComment(
+  commentId: string,
+  body: string,
+): Promise<ApiComment> {
+  return apiFetch<ApiComment>(`/admin/comments/${commentId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ body }),
+  });
+}
+
+export async function deleteAdminComment(commentId: string): Promise<void> {
+  await apiFetch<void>(`/admin/comments/${commentId}`, { method: "DELETE" });
 }

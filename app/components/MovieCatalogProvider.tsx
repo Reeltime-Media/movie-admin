@@ -26,6 +26,7 @@ import {
 } from "../lib/api";
 import { formatGenres, parseGenresFromStored } from "../lib/genres";
 import { mediaUrl } from "../lib/media";
+import { validateAdminPriceUsd } from "../lib/money";
 
 export type MovieDraft = Omit<CatalogEntry, "id">;
 
@@ -58,14 +59,13 @@ function toApiStatus(status: Status) {
   return status.toLowerCase();
 }
 
-function moneyToApi(value: string) {
-  const normalized = value.replace(/[$,\s]/g, "");
-  return /^\d+(\.\d+)?$/.test(normalized) ? normalized : null;
-}
-
 function ratingToApi(value: string) {
   const normalized = value.trim();
   return /^\d+(\.\d+)?$/.test(normalized) ? normalized : null;
+}
+
+function formatWatchers(count: number) {
+  return count.toLocaleString();
 }
 
 function apiContentToCatalogEntry(content: ApiContent): CatalogEntry {
@@ -74,8 +74,12 @@ function apiContentToCatalogEntry(content: ApiContent): CatalogEntry {
     title: content.title,
     type: "Movie",
     description: content.description,
-    price: content.price_usd ? `$${content.price_usd}` : "-",
-    views: "-",
+    price:
+      content.price_usd && Number.parseFloat(content.price_usd) > 0
+        ? `$${content.price_usd}`
+        : "Free",
+    views: formatWatchers(content.watch_count ?? 0),
+    watchCount: content.watch_count ?? 0,
     rating: content.rating ?? "-",
     status: toStatus(content.status),
     genre: formatGenres(content.genres),
@@ -119,7 +123,10 @@ function apiSeriesToCatalogEntry(series: ApiSeries, apiSeasons: ApiSeasonRead[] 
     title: series.title,
     type: "Series",
     description: series.description,
-    price: "Subscription",
+    price:
+      series.monthly_price_usd && Number.parseFloat(series.monthly_price_usd) > 0
+        ? `$${series.monthly_price_usd}`
+        : "Free",
     views: "-",
     rating: series.rating ?? "-",
     status: series.is_published ? "Published" : "Draft",
@@ -194,8 +201,11 @@ export function MovieCatalogProvider({ children }: { children: ReactNode }) {
         };
         const rating = ratingToApi(entry.rating);
         if (rating != null) patch.rating = rating;
-        const monthlyPrice = moneyToApi(entry.price);
-        if (monthlyPrice != null) patch.monthly_price_usd = monthlyPrice;
+        const monthlyPriceResult = validateAdminPriceUsd(entry.price);
+        if (!monthlyPriceResult.ok) {
+          throw new Error(monthlyPriceResult.message);
+        }
+        patch.monthly_price_usd = monthlyPriceResult.value;
 
         const updated = await updateSeriesApi(existing.slug, patch);
 
@@ -237,16 +247,30 @@ export function MovieCatalogProvider({ children }: { children: ReactNode }) {
         );
         return;
       }
+      const priceResult = validateAdminPriceUsd(entry.price);
+      if (!priceResult.ok) {
+        throw new Error(priceResult.message);
+      }
       const updated = await updateAdminMovie(id, {
         title: entry.title,
         description: entry.description ?? null,
         genres: parseGenresFromStored(entry.genre),
-        priceUsd: moneyToApi(entry.price),
+        priceUsd: priceResult.value,
         rating: ratingToApi(entry.rating),
+        runtime: entry.runtime ?? null,
+        releaseYear: entry.releaseYear ?? null,
         status: toApiStatus(entry.status as Status),
         trailerUrl: entry.trailerUrl,
       });
-      setMovies((prev) => prev.map((m) => (m.id === id ? apiContentToCatalogEntry(updated) : m)));
+      setMovies((prev) =>
+        prev.map((m) => {
+          if (m.id !== id) return m;
+          return apiContentToCatalogEntry({
+            ...updated,
+            watch_count: m.watchCount ?? 0,
+          } as ApiContent);
+        }),
+      );
     },
     [movies],
   );

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "./AdminCard";
+import { LoadingOverlay } from "./LoadingOverlay";
 import {
   createAdminSubscriptionPlan,
   deleteAdminSubscriptionPlan,
@@ -10,6 +11,7 @@ import {
   updateAdminSubscriptionPlan,
   type ApiSubscriptionPlan,
 } from "../lib/api";
+import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../lib/money";
 
 type PlanFormState = {
   code: string;
@@ -34,6 +36,7 @@ const emptyForm = (): PlanFormState => ({
 function formatPrice(value: string) {
   const parsed = Number.parseFloat(value);
   if (Number.isNaN(parsed)) return value;
+  if (parsed === 0) return "Free";
   return parsed.toFixed(2);
 }
 
@@ -120,6 +123,11 @@ export function SubscriptionPlanCreator() {
       toast.error("Plan code is required.");
       return;
     }
+    const priceResult = validateAdminPriceUsd(form.priceUsd);
+    if (!priceResult.ok) {
+      toast.error(priceResult.message);
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -127,7 +135,7 @@ export function SubscriptionPlanCreator() {
         const updated = await updateAdminSubscriptionPlan(editingPlan.id, {
           name: form.name.trim(),
           description: form.description.trim() || null,
-          priceUsd: form.priceUsd.trim(),
+          priceUsd: priceResult.value,
           billingIntervalDays: Number.parseInt(form.billingIntervalDays, 10) || 30,
           isActive: form.isActive,
           sortOrder: Number.parseInt(form.sortOrder, 10) || 0,
@@ -139,7 +147,7 @@ export function SubscriptionPlanCreator() {
           code: form.code.trim().toLowerCase().replace(/\s+/g, "_"),
           name: form.name.trim(),
           description: form.description.trim() || null,
-          priceUsd: form.priceUsd.trim(),
+          priceUsd: priceResult.value,
           billingIntervalDays: Number.parseInt(form.billingIntervalDays, 10) || 30,
           isActive: form.isActive,
           sortOrder: Number.parseInt(form.sortOrder, 10) || 0,
@@ -192,9 +200,7 @@ export function SubscriptionPlanCreator() {
             Retry
           </button>
         </div>
-      ) : isLoading ? (
-        <p className="text-[13px] text-text-muted">Loading plans...</p>
-      ) : plans.length === 0 ? (
+      ) : plans.length === 0 && !isLoading ? (
             <div className="rounded-md border border-dashed border-border py-8 text-center">
               <p className="text-[13px] text-text-muted">No subscription plans yet.</p>
               <button
@@ -230,8 +236,10 @@ export function SubscriptionPlanCreator() {
                       <p className="mt-1 text-[12px] text-text-muted">{plan.description}</p>
                     )}
                     <p className="mt-1 text-[11px] text-text-muted">
-                      ${formatPrice(plan.price_usd)}/period · {plan.billing_interval_days} days · sort{" "}
-                      {plan.sort_order}
+                      {formatPrice(plan.price_usd) === "Free"
+                        ? "Free"
+                        : `$${formatPrice(plan.price_usd)}`}
+                      /period · {plan.billing_interval_days} days · sort {plan.sort_order}
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-2">
@@ -344,10 +352,11 @@ export function SubscriptionPlanCreator() {
                   inputMode="decimal"
                   value={form.priceUsd}
                   onChange={(e) => setForm((f) => ({ ...f, priceUsd: e.target.value }))}
-                  placeholder="6.99"
+                  placeholder="0 or 6.99"
                   className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text"
                   required
                 />
+                <span className="mt-1 block text-[10px] text-text-disabled">{ADMIN_PRICE_HINT}</span>
               </label>
               <label className="block">
                 <span className="text-[11px] font-semibold text-text-muted">Billing days</span>
@@ -401,6 +410,7 @@ export function SubscriptionPlanCreator() {
         </form>
       </div>
     ) : null}
+    <LoadingOverlay open={isLoading} label="Loading plans" />
     </>
   );
 }

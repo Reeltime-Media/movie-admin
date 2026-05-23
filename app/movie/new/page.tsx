@@ -9,10 +9,16 @@ import { AdminShell } from "../../components/AdminShell";
 import { GenreMultiSelect } from "../../components/GenreMultiSelect";
 import { useMovieCatalog } from "../../components/MovieCatalogProvider";
 import type { Status } from "../../lib/adminData";
-import { completeMovieUpload, startMovieUpload, uploadFileToPresignedUrl } from "../../lib/api";
+import {
+  completeMovieUpload,
+  startMovieUpload,
+  uploadFileToPresignedUrl,
+  uploadMovieVideoMultipart,
+} from "../../lib/api";
 import { TrailerPreview } from "../../components/TrailerPreview";
 import { useUploadProgress } from "../../components/UploadProgressContext";
 import { formatGenres } from "../../lib/genres";
+import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../../lib/money";
 
 const textInputClass =
   "w-full rounded-md border border-border bg-bg px-3 py-2.5 text-[13px] text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated";
@@ -32,11 +38,6 @@ function parseStatus(s: string): Status {
 
 function toApiStatus(status: Status) {
   return status.toLowerCase();
-}
-
-function parseMoney(value: string) {
-  const normalized = value.replace(/[$,\s]/g, "");
-  return normalized || "0";
 }
 
 function parseOptionalNumber(value: FormDataEntryValue | null) {
@@ -131,6 +132,7 @@ export default function NewMoviePage() {
     void (async () => {
       try {
         const upload = await startMovieUpload({
+          title,
           videoContentType: video.type || "video/mp4",
           posterContentType: posterImage?.type,
         });
@@ -141,14 +143,30 @@ export default function NewMoviePage() {
         }
 
         setJobLabel(movieJobId, "Uploading video…");
-        await uploadFileToPresignedUrl(upload.video_upload_url, video, (pct) => updateJob(movieJobId, pct));
+        const parts = await uploadMovieVideoMultipart(
+          video,
+          {
+            sourceKey: upload.source_key,
+            uploadId: upload.upload_id,
+            partSize: upload.part_size,
+          },
+          (pct) => updateJob(movieJobId, pct),
+        );
+
+        const priceResult = validateAdminPriceUsd(String(fd.get("price") || "0"));
+        if (!priceResult.ok) {
+          throw new Error(priceResult.message);
+        }
 
         setJobLabel(movieJobId, "Saving…");
         await completeMovieUpload({
           contentId: upload.content_id,
+          slug: upload.slug,
           sourceKey: upload.source_key,
+          uploadId: upload.upload_id,
+          parts,
           title,
-          priceUsd: parseMoney(String(fd.get("price") || "")),
+          priceUsd: priceResult.value,
           description: String(fd.get("description") || "").trim(),
           genres,
           releaseYear: parseOptionalNumber(fd.get("releaseYear")),
@@ -246,8 +264,8 @@ export default function NewMoviePage() {
                 </select>
               </Field>
 
-              <Field label="Price (USD)">
-                <input name="price" placeholder="2.99" className={textInputClass} />
+              <Field label="Price (USD)" hint={ADMIN_PRICE_HINT}>
+                <input name="price" placeholder="0 or 2.99" className={textInputClass} />
               </Field>
 
               <div className="md:col-span-2">

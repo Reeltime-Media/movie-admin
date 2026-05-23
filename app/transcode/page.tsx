@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
 import { AdminPagination } from "../components/AdminPagination";
+import { LoadingOverlay } from "../components/LoadingOverlay";
 import { AdminShell } from "../components/AdminShell";
 import { listTranscodeJobs, retryTranscodeJob, type TranscodeJob } from "../lib/api";
 
@@ -302,9 +303,7 @@ export default function TranscodePage() {
               Retry
             </button>
           </div>
-        ) : isLoading ? (
-          <p className="text-[13px] text-text-muted">Loading jobs...</p>
-        ) : jobs.length === 0 ? (
+        ) : jobs.length === 0 && !isLoading ? (
           <div className="rounded-md border border-dashed border-border bg-bg px-4 py-8 text-center">
             <p className="text-[13px] font-semibold text-text">No jobs</p>
             <p className="mt-1 text-[12px] text-text-muted">
@@ -400,6 +399,7 @@ export default function TranscodePage() {
           </div>
         )}
       </AdminCard>
+      <LoadingOverlay open={isLoading} label="Loading transcode jobs" />
     </AdminShell>
   );
 }

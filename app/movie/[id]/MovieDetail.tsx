@@ -4,44 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { AdminCard } from "../../components/AdminCard";
+import { LoadingOverlay } from "../../components/LoadingOverlay";
 import { useMovieCatalog } from "../../components/MovieCatalogProvider";
 import { statusClasses } from "../../lib/adminData";
-
-function formatDate(value?: string) {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleString();
-}
-
-function youtubeEmbedUrl(url?: string | null) {
-  if (!url) return null;
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname.includes("youtu.be")) {
-      const id = parsed.pathname.replace("/", "");
-      return id ? `https://www.youtube.com/embed/${id}` : null;
-    }
-    if (parsed.hostname.includes("youtube.com")) {
-      const id = parsed.searchParams.get("v");
-      return id ? `https://www.youtube.com/embed/${id}` : null;
-    }
-  } catch {
-    return null;
-  }
-  return null;
-}
-
-function DetailRow({ label, value }: { label: string; value?: string | number | null }) {
-  return (
-    <div className="rounded-md border border-border bg-bg p-4">
-      <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-disabled">
-        {label}
-      </div>
-      <div className="mt-1 text-[13px] font-semibold text-text">{value || "-"}</div>
-    </div>
-  );
-}
+import { MovieCommentsAdmin } from "../MovieCommentsAdmin";
+import { DetailRow, formatMovieDate, youtubeEmbedUrl } from "../movieDetailUi";
 
 export function MovieDetail({ movieId }: { movieId: string }) {
   const router = useRouter();
@@ -58,7 +25,7 @@ export function MovieDetail({ movieId }: { movieId: string }) {
   const trailerEmbedUrl = useMemo(() => youtubeEmbedUrl(movie?.trailerUrl), [movie?.trailerUrl]);
 
   if (isLoading) {
-    return <p className="text-[13px] text-text-muted">Loading movie detail...</p>;
+    return <LoadingOverlay open label="Loading movie detail" />;
   }
 
   if (error) {
@@ -111,10 +78,14 @@ export function MovieDetail({ movieId }: { movieId: string }) {
             <DetailRow label="Genre" value={movie.genre} />
             <DetailRow label="Price" value={movie.price} />
             <DetailRow label="Rating" value={movie.rating} />
+            <DetailRow
+              label="Watchers"
+              value={(movie.watchCount ?? 0).toLocaleString()}
+            />
             <DetailRow label="Runtime" value={movie.runtime} />
             <DetailRow label="Release year" value={movie.releaseYear} />
             <DetailRow label="Transcode" value={movie.transcodeStatus} />
-            <DetailRow label="Updated" value={formatDate(movie.updatedAt)} />
+            <DetailRow label="Updated" value={formatMovieDate(movie.updatedAt)} />
           </div>
           <p className="mt-4 text-[13px] leading-relaxed text-text-muted">
             {movie.description || "No description has been added for this movie."}
@@ -204,6 +175,7 @@ export function MovieDetail({ movieId }: { movieId: string }) {
         </div>
       </section>
 
+      <MovieCommentsAdmin contentId={movie.id} />
     </div>
   );
 }

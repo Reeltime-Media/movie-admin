@@ -45,6 +45,7 @@ export type CatalogEntry = {
   hlsMasterUrl?: string | null;
   trailerUrl?: string | null;
   transcodeStatus?: string;
+  watchCount?: number;
   createdAt?: string;
   updatedAt?: string;
   seasons: Season[];

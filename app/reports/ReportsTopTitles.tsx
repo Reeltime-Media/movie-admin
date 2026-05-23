@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AdminCard } from "../components/AdminCard";
 import { AdminPagination } from "../components/AdminPagination";
+import { LoadingOverlay } from "../components/LoadingOverlay";
 import { listAdminTopTitles, type ApiTopTitleReport } from "../lib/api";
 
 const PAGE_SIZE = 10;
@@ -52,14 +53,12 @@ export function ReportsTopTitles() {
 
   return (
     <AdminCard title="Top titles" action="Refresh" actionOnClick={() => loadTitles(page)}>
-      {isLoading ? (
-        <p className="text-[13px] text-text-muted">Loading report data...</p>
-      ) : error ? (
+      {error ? (
         <div className="rounded-md border border-dashed border-border bg-bg px-4 py-8 text-center">
           <p className="text-[13px] font-semibold text-text">Could not load report data</p>
           <p className="mt-1 text-[12px] text-text-muted">{error}</p>
         </div>
-      ) : titles.length === 0 ? (
+      ) : titles.length === 0 && !isLoading ? (
         <div className="rounded-md border border-dashed border-border bg-bg px-4 py-8 text-center">
           <p className="text-[13px] font-semibold text-text">No title data yet</p>
           <p className="mt-1 text-[12px] text-text-muted">
@@ -103,6 +102,7 @@ export function ReportsTopTitles() {
           />
         </div>
       )}
+      <LoadingOverlay open={isLoading} label="Loading report data" />
     </AdminCard>
   );
 }

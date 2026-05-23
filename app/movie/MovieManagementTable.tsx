@@ -12,117 +12,20 @@ import {
   startAdminMovieAssetUpload,
   uploadFileToPresignedUrl,
 } from "../lib/api";
-import { TrailerPreview } from "../components/TrailerPreview";
 import { statusClasses, type CatalogEntry, type Status } from "../lib/adminData";
 import { formatGenres, parseGenresFromStored } from "../lib/genres";
 import type { ListFilter } from "./movieListTypes";
-
-const inputClass =
-  "w-full rounded-md border border-border bg-bg px-3 py-2.5 text-[13px] text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated";
-
-const selectClass =
-  "w-full rounded-md border border-border bg-bg px-3 py-2.5 text-[13px] text-text outline-none transition-colors focus:border-border-hover focus:bg-surface-elevated";
-
-const fileInputClass =
-  "w-full rounded-md border border-dashed border-border bg-bg px-3 py-4 text-[12px] text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-brand file:px-3 file:py-2 file:text-[12px] file:font-bold file:text-white hover:border-border-hover";
+import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../lib/money";
+import {
+  EditField,
+  formatMovieDate,
+  movieEditInputClass,
+  movieEditSelectClass,
+  movieFileInputClass,
+  youtubeEmbedUrl,
+} from "./movieDetailUi";
 
 const statuses: Status[] = ["Published", "Draft", "Scheduled", "Review"];
-
-
-function MovieFormFields({
-  draft,
-  onChange,
-}: {
-  draft: Omit<CatalogEntry, "id">;
-  onChange: (next: Omit<CatalogEntry, "id">) => void;
-}) {
-  const set = <K extends keyof Omit<CatalogEntry, "id">>(key: K, value: Omit<CatalogEntry, "id">[K]) => {
-    onChange({ ...draft, [key]: value });
-  };
-
-  return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <label className="block sm:col-span-2">
-        <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">Title</span>
-        <input
-          className={inputClass}
-          value={draft.title}
-          onChange={(e) => set("title", e.target.value)}
-          required
-        />
-      </label>
-      <label className="block sm:col-span-2">
-        <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">Description</span>
-        <textarea
-          className={`${inputClass} min-h-20 resize-y`}
-          value={draft.description ?? ""}
-          onChange={(e) => set("description", e.target.value || null)}
-          placeholder="Brief synopsis shown on the movie page…"
-        />
-      </label>
-      <label className="block">
-        <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">Status</span>
-        <select
-          className={selectClass}
-          value={draft.status}
-          onChange={(e) => set("status", e.target.value as Status)}
-        >
-          {statuses.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block md:col-span-2">
-        <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">Genres</span>
-        <GenreMultiSelect
-          selected={parseGenresFromStored(draft.genre)}
-          onChange={(next) => set("genre", formatGenres(next))}
-        />
-      </label>
-      <label className="block">
-        <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">Price</span>
-        <input
-          className={inputClass}
-          value={draft.price}
-          onChange={(e) => set("price", e.target.value)}
-          placeholder="$2.99 or Premium"
-        />
-      </label>
-      <label className="block">
-        <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">Views</span>
-        <input
-          className={inputClass}
-          value={draft.views}
-          onChange={(e) => set("views", e.target.value)}
-          placeholder="82.4K"
-        />
-      </label>
-      <label className="block">
-        <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">Rating</span>
-        <input
-          className={inputClass}
-          value={draft.rating}
-          onChange={(e) => set("rating", e.target.value)}
-          placeholder="8.7"
-        />
-      </label>
-      <label className="block sm:col-span-2">
-        <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">
-          Trailer URL
-        </span>
-        <input
-          className={inputClass}
-          type="url"
-          value={draft.trailerUrl ?? ""}
-          onChange={(e) => set("trailerUrl", e.target.value)}
-          placeholder="https://www.youtube.com/watch?v=..."
-        />
-      </label>
-    </div>
-  );
-}
 
 function toDraft(entry: CatalogEntry): Omit<CatalogEntry, "id"> {
   return {
@@ -132,10 +35,15 @@ function toDraft(entry: CatalogEntry): Omit<CatalogEntry, "id"> {
     price: entry.price,
     views: entry.views,
     rating: entry.rating,
+    runtime: entry.runtime,
+    releaseYear: entry.releaseYear,
     status: entry.status,
     genre: entry.genre,
     owner: entry.owner,
     trailerUrl: entry.trailerUrl,
+    transcodeStatus: entry.transcodeStatus,
+    watchCount: entry.watchCount,
+    updatedAt: entry.updatedAt,
     seasons: entry.seasons,
     seriesPosterFileName: entry.seriesPosterFileName,
   };
@@ -171,6 +79,14 @@ export function MovieManagementTable({
   );
   const posterPreviewUrl = editPosterPreviewUrl ?? editing?.posterUrl ?? null;
   const videoPreviewUrl = editVideoPreviewUrl ?? editing?.hlsMasterUrl ?? null;
+  const editTrailerEmbedUrl = useMemo(
+    () => youtubeEmbedUrl(editDraft?.trailerUrl),
+    [editDraft?.trailerUrl],
+  );
+
+  const patchDraft = (patch: Partial<Omit<CatalogEntry, "id">>) => {
+    setEditDraft((prev) => (prev ? { ...prev, ...patch } : prev));
+  };
 
   useEffect(() => {
     return () => {
@@ -207,6 +123,12 @@ export function MovieManagementTable({
     if (!editing || !editDraft) return;
     if (!editDraft.title.trim()) return;
     if (!editDraft.genre.trim()) return;
+    const priceResult = validateAdminPriceUsd(editDraft.price);
+    if (!priceResult.ok) {
+      setEditSaveError(priceResult.message);
+      toast.error(priceResult.message);
+      return;
+    }
     setEditSaveError(null);
     setIsSaving(true);
     try {
@@ -282,7 +204,7 @@ export function MovieManagementTable({
                 <th className="px-5 pb-3 font-bold">Title</th>
                 <th className="px-5 pb-3 font-bold">Genre</th>
                 <th className="px-5 pb-3 font-bold">Price</th>
-                <th className="px-5 pb-3 font-bold">Views</th>
+                <th className="px-5 pb-3 font-bold">Watchers</th>
                 <th className="px-5 pb-3 font-bold">Status</th>
                 <th className="px-5 pb-3 text-right font-bold">Actions</th>
               </tr>
@@ -352,126 +274,265 @@ export function MovieManagementTable({
 
       {editing && editDraft ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4"
+          className="fixed inset-0 z-50 flex flex-col bg-bg"
           role="dialog"
           aria-modal="true"
           aria-labelledby="edit-movie-title"
         >
           <form
             onSubmit={saveEdit}
-            className="max-h-[90vh] w-full max-w-[calc(100vw-2rem)] overflow-y-auto rounded-lg border border-border bg-surface p-6 shadow-2xl xl:max-w-[calc(100vw-4rem)]"
+            className="flex h-full w-full flex-col overflow-hidden bg-surface"
           >
-            <h2 id="edit-movie-title" className="text-[16px] font-bold tracking-[-0.02em]">
-              Edit movie
-            </h2>
-            <p className="mt-1 text-[12px] text-text-muted">{editing.title}</p>
-            <div className="mt-5">
-              <MovieFormFields draft={editDraft} onChange={setEditDraft} />
-            </div>
-            <div className="mt-5 rounded-lg border border-border bg-bg p-4">
-                <h3 className="text-[13px] font-bold text-text">Replace media</h3>
-                <p className="mt-1 text-[12px] leading-relaxed text-text-muted">
-                  Choose a new poster or movie file only when you want to replace the existing asset.
-                  Replacing the movie video will queue a fresh transcode job.
-                </p>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <label className="block">
-                    <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">
-                      Poster image
+            <div className="flex-1 overflow-y-auto">
+              <section className="overflow-hidden">
+                <header className="border-b border-border bg-surface-elevated px-6 py-6 md:px-10">
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <h2 id="edit-movie-title" className="text-[18px] font-extrabold tracking-[-0.02em]">
+                      Movie metadata
+                    </h2>
+                    <select
+                      className={`${movieEditSelectClass} w-auto min-w-32`}
+                      value={editDraft.status}
+                      onChange={(e) => patchDraft({ status: e.target.value as Status })}
+                    >
+                      {statuses.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    <EditField label="Title">
+                      <input
+                        className={movieEditInputClass}
+                        value={editDraft.title}
+                        onChange={(e) => patchDraft({ title: e.target.value })}
+                        required
+                      />
+                    </EditField>
+                    <EditField label="Type">
+                      <span className="text-[13px] font-semibold text-text">{editDraft.type}</span>
+                    </EditField>
+                    <EditField label="Genre" className="sm:col-span-2 xl:col-span-1">
+                      <GenreMultiSelect
+                        selected={parseGenresFromStored(editDraft.genre)}
+                        onChange={(next) => patchDraft({ genre: formatGenres(next) })}
+                      />
+                    </EditField>
+                    <EditField label={editDraft.type === "Series" ? "Monthly price" : "Price"}>
+                      <input
+                        className={movieEditInputClass}
+                        value={editDraft.price}
+                        onChange={(e) => patchDraft({ price: e.target.value })}
+                        placeholder="0, Free, or 2.99"
+                      />
+                      <p className="mt-1.5 text-[11px] text-text-disabled">{ADMIN_PRICE_HINT}</p>
+                    </EditField>
+                    <EditField label="Rating">
+                      <input
+                        className={movieEditInputClass}
+                        value={editDraft.rating}
+                        onChange={(e) => patchDraft({ rating: e.target.value })}
+                        placeholder="8.7"
+                      />
+                    </EditField>
+                    <EditField label="Runtime">
+                      <input
+                        className={movieEditInputClass}
+                        value={editDraft.runtime ?? ""}
+                        onChange={(e) => patchDraft({ runtime: e.target.value || null })}
+                        placeholder="2h 15m"
+                      />
+                    </EditField>
+                    <EditField label="Release year">
+                      <input
+                        className={movieEditInputClass}
+                        type="number"
+                        min={1900}
+                        max={2100}
+                        value={editDraft.releaseYear ?? ""}
+                        onChange={(e) =>
+                          patchDraft({
+                            releaseYear: e.target.value ? Number(e.target.value) : null,
+                          })
+                        }
+                        placeholder="2024"
+                      />
+                    </EditField>
+                    <EditField label="Watchers">
+                      <span className="text-[13px] font-semibold text-text">
+                        {(editing.watchCount ?? 0).toLocaleString()}
+                      </span>
+                    </EditField>
+                    <EditField label="Transcode">
+                      <span className="text-[13px] font-semibold text-text">
+                        {editing.transcodeStatus || "-"}
+                      </span>
+                    </EditField>
+                    <EditField label="Updated">
+                      <span className="text-[13px] font-semibold text-text">
+                        {formatMovieDate(editing.updatedAt)}
+                      </span>
+                    </EditField>
+                  </div>
+                  <label className="mt-4 block">
+                    <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-text-disabled">
+                      Description
                     </span>
+                    <textarea
+                      className={`${movieEditInputClass} min-h-20 resize-y font-normal`}
+                      value={editDraft.description ?? ""}
+                      onChange={(e) => patchDraft({ description: e.target.value || null })}
+                      placeholder="Brief synopsis shown on the movie page…"
+                    />
+                  </label>
+                </header>
+
+                <div className="grid gap-0 lg:grid-cols-[340px_1fr]">
+                  <aside className="border-b border-border bg-bg p-5 lg:border-b-0 lg:border-r">
+                    <div className="mb-3 text-[16px] font-bold tracking-[-0.02em]">Poster</div>
+                    {posterPreviewUrl ? (
+                      <img
+                        src={posterPreviewUrl}
+                        alt={`${editing.title} poster`}
+                        className="aspect-2/3 w-full rounded-lg border border-border object-cover"
+                      />
+                    ) : (
+                      <div className="grid aspect-2/3 place-items-center rounded-lg border border-dashed border-border bg-surface text-center text-[13px] text-text-muted">
+                        No poster available
+                      </div>
+                    )}
                     <input
                       type="file"
                       accept="image/*"
-                      className={fileInputClass}
+                      className={movieFileInputClass}
                       onChange={(e) => setEditPosterFile(e.target.files?.[0] ?? null)}
                     />
-                    <p className="mt-1 break-all text-[11px] text-text-disabled">
-                      Current: {editing.posterKey || "none"}
-                    </p>
-                  </label>
-                  <label className="block">
-                    <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">
-                      Movie video
-                    </span>
-                    <input
-                      type="file"
-                      accept="video/mp4,video/quicktime,application/x-mpegURL,video/*"
-                      className={fileInputClass}
-                      onChange={(e) => setEditVideoFile(e.target.files?.[0] ?? null)}
-                    />
-                    <p className="mt-1 break-all text-[11px] text-text-disabled">
-                      Current: {editing.hlsMasterKey || "not transcoded yet"}
-                    </p>
-                  </label>
-                </div>
-                <div className="mt-4 grid gap-4 sm:grid-cols-[220px_1fr]">
-                  <div>
-                    <div className="mb-1.5 text-[12px] font-semibold text-text-muted">
-                      Poster preview
-                    </div>
-                    {posterPreviewUrl ? (
-                      <div
-                        className="aspect-2/3 rounded-lg border border-border bg-cover bg-center"
-                        style={{ backgroundImage: `url(${posterPreviewUrl})` }}
-                        aria-label={`${editing.title} poster preview`}
-                        role="img"
-                      />
-                    ) : (
-                      <div className="grid aspect-2/3 place-items-center rounded-lg border border-dashed border-border bg-surface text-center text-[12px] text-text-muted">
-                        No poster preview
-                      </div>
-                    )}
                     {editPosterFile ? (
-                      <p className="mt-1 break-all text-[11px] text-text-muted">
-                        Selected: {editPosterFile.name}
+                      <p className="mt-2 break-all text-[11px] text-text-muted">
+                        New file: {editPosterFile.name}
                       </p>
-                    ) : null}
-                  </div>
-                  <div>
-                    <div className="mb-1.5 text-[12px] font-semibold text-text-muted">
-                      Movie preview
-                    </div>
-                    {videoPreviewUrl ? (
-                      <video
-                        controls
-                        className="aspect-video w-full rounded-lg border border-border bg-black"
-                        src={videoPreviewUrl}
-                      />
                     ) : (
-                      <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-surface text-center text-[12px] text-text-muted">
-                        No video preview
+                      <p className="mt-2 break-all text-[11px] text-text-disabled">
+                        {editing.posterKey || "No poster uploaded"}
+                      </p>
+                    )}
+                  </aside>
+
+                  <main className="space-y-6 bg-bg p-5">
+                    <div>
+                      <div className="mb-3 text-[16px] font-bold tracking-[-0.02em]">
+                        Video Preview
                       </div>
-                    )}
-                    {editVideoFile ? (
-                      <p className="mt-1 break-all text-[11px] text-text-muted">
-                        Selected: {editVideoFile.name}
-                      </p>
-                    ) : (
-                      <p className="mt-1 text-[11px] text-text-disabled">
-                        HLS playback may only preview in Safari until a web HLS player is added.
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <TrailerPreview url={editDraft.trailerUrl} />
-                {editUploadProgress !== null ? (
-                  <div className="mt-4">
-                    <div className="h-2 overflow-hidden rounded-full bg-surface-elevated">
-                      <div
-                        className="h-full bg-brand transition-all"
-                        style={{ width: `${editUploadProgress}%` }}
+                      {videoPreviewUrl ? (
+                        <>
+                          <video
+                            controls
+                            className="aspect-video w-full rounded-lg border border-border bg-black"
+                            src={videoPreviewUrl}
+                          />
+                          <p className="mt-2 text-[12px] text-text-muted">
+                            HLS playback works natively in Safari. Chrome may require a player
+                            integration.
+                          </p>
+                        </>
+                      ) : (
+                        <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-surface text-center text-[13px] text-text-muted">
+                          No transcoded video yet.
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="video/mp4,video/quicktime,application/x-mpegURL,video/*"
+                        className={movieFileInputClass}
+                        onChange={(e) => setEditVideoFile(e.target.files?.[0] ?? null)}
                       />
+                      {editVideoFile ? (
+                        <p className="mt-2 break-all text-[11px] text-text-muted">
+                          New file: {editVideoFile.name} — saving will queue a fresh transcode.
+                        </p>
+                      ) : (
+                        <p className="mt-2 break-all text-[11px] text-text-disabled">
+                          {editing.hlsMasterKey || "Not transcoded yet"}
+                        </p>
+                      )}
+                      {editUploadProgress !== null ? (
+                        <div className="mt-3">
+                          <div className="h-2 overflow-hidden rounded-full bg-surface-elevated">
+                            <div
+                              className="h-full bg-brand transition-all"
+                              style={{ width: `${editUploadProgress}%` }}
+                            />
+                          </div>
+                          <p className="mt-1 text-[11px] text-text-muted">
+                            Uploading video: {editUploadProgress}%
+                          </p>
+                        </div>
+                      ) : null}
                     </div>
-                    <p className="mt-1 text-[11px] text-text-muted">
-                      Uploading video: {editUploadProgress}%
-                    </p>
-                  </div>
-                ) : null}
-              </div>
+
+                    <div>
+                      <div className="mb-3 text-[16px] font-bold tracking-[-0.02em]">Trailer</div>
+                      <input
+                        className={`${movieEditInputClass} mb-3 font-normal`}
+                        type="url"
+                        value={editDraft.trailerUrl ?? ""}
+                        onChange={(e) => patchDraft({ trailerUrl: e.target.value || null })}
+                        placeholder="https://www.youtube.com/watch?v=..."
+                      />
+                      {editTrailerEmbedUrl ? (
+                        <>
+                          <iframe
+                            className="aspect-video w-full rounded-lg border border-border bg-black"
+                            src={editTrailerEmbedUrl}
+                            title={`${editing.title} trailer`}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                          {editDraft.trailerUrl ? (
+                            <a
+                              href={editDraft.trailerUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mt-2 inline-block text-[12px] font-semibold text-brand hover:underline"
+                            >
+                              Open in new tab ↗
+                            </a>
+                          ) : null}
+                        </>
+                      ) : editDraft.trailerUrl ? (
+                        <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-surface text-center">
+                          <div>
+                            <p className="mb-3 text-[12px] text-text-muted">Non-YouTube trailer URL</p>
+                            <a
+                              href={editDraft.trailerUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex rounded-md bg-brand px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
+                            >
+                              Open trailer
+                            </a>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-surface text-center text-[13px] text-text-muted">
+                          No trailer URL added.
+                        </div>
+                      )}
+                    </div>
+                  </main>
+                </div>
+              </section>
+            </div>
+
             {editSaveError ? (
-              <p className="mt-3 text-[12px] font-semibold text-warning">{editSaveError}</p>
+              <p className="border-t border-border px-6 py-3 text-[12px] font-semibold text-warning">
+                {editSaveError}
+              </p>
             ) : null}
-            <div className="mt-6 flex flex-wrap justify-end gap-2">
+
+            <div className="flex flex-wrap justify-end gap-2 border-t border-border bg-surface-elevated px-6 py-4">
               <button
                 type="button"
                 onClick={closeEdit}
@@ -482,7 +543,7 @@ export function MovieManagementTable({
               <button
                 type="submit"
                 disabled={isSaving}
-                className="rounded-md bg-brand px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
+                className="rounded-md bg-brand px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover disabled:opacity-60"
               >
                 {isSaving ? "Saving..." : "Save changes"}
               </button>

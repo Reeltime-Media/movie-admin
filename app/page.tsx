@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AdminCard } from "./components/AdminCard";
+import { LoadingOverlay } from "./components/LoadingOverlay";
 import { AdminShell } from "./components/AdminShell";
 import { DashboardMoviesPreview } from "./components/DashboardMoviesPreview";
 import { useMovieCatalog } from "./components/MovieCatalogProvider";
@@ -164,9 +165,7 @@ export default function Home() {
 
         <AdminCard title="Audience">
           <div className="space-y-3">
-            {usersLoading ? (
-              <p className="text-[13px] text-text-muted">Loading users...</p>
-            ) : users.length === 0 ? (
+            {users.length === 0 && !usersLoading ? (
               <p className="text-[13px] text-text-muted">No users found.</p>
             ) : (
               users.slice(0, 5).map((user) => (
@@ -217,6 +216,10 @@ export default function Home() {
           </div>
         </AdminCard>
       </div>
+      <LoadingOverlay
+        open={moviesLoading || usersLoading || summaryLoading}
+        label="Loading dashboard"
+      />
     </AdminShell>
   );
 }

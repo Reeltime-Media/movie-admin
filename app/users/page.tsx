@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
 import { AdminPagination } from "../components/AdminPagination";
+import { LoadingOverlay } from "../components/LoadingOverlay";
 import { AdminShell } from "../components/AdminShell";
 import { getAdminDashboardSummary, listUsers, type ApiUser } from "../lib/api";
 
@@ -102,9 +103,7 @@ export default function UsersPage() {
                 Retry
               </button>
             </div>
-          ) : isLoading ? (
-            <p className="text-[13px] text-text-muted">Loading users...</p>
-          ) : users.length === 0 ? (
+          ) : users.length === 0 && !isLoading ? (
             <div className="rounded-md border border-dashed border-border bg-bg px-4 py-8 text-center">
               <p className="text-[13px] font-semibold text-text">No users found</p>
               <p className="mt-1 text-[12px] text-text-muted">
@@ -160,9 +159,7 @@ export default function UsersPage() {
         </AdminCard>
 
         <AdminCard title="Admin access">
-          {isLoading ? (
-            <p className="text-[13px] text-text-muted">Loading roles...</p>
-          ) : (
+          {!isLoading ? (
             <div className="space-y-3">
               {users
                 .filter((user) => user.role === "admin")
@@ -176,9 +173,10 @@ export default function UsersPage() {
                 <p className="text-[13px] text-text-muted">No admin users on this page.</p>
               ) : null}
             </div>
-          )}
+          ) : null}
         </AdminCard>
       </div>
+      <LoadingOverlay open={isLoading} label="Loading users" />
     </AdminShell>
   );
 }

@@ -16,7 +16,7 @@ export function DashboardMoviesPreview() {
               <th className="px-5 pb-3 font-bold">Title</th>
               <th className="px-5 pb-3 font-bold">Type</th>
               <th className="px-5 pb-3 font-bold">Price</th>
-              <th className="px-5 pb-3 font-bold">Views</th>
+              <th className="px-5 pb-3 font-bold">Watchers</th>
               <th className="px-5 pb-3 font-bold">Rating</th>
               <th className="px-5 pb-3 font-bold">Status</th>
             </tr>

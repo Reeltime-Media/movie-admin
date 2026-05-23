@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronDown, ChevronRight, Lock, PlayCircle } from "lucide-react";
 import { useState } from "react";
 import { AdminCard } from "../../components/AdminCard";
+import { LoadingOverlay } from "../../components/LoadingOverlay";
 import { useMovieCatalog } from "../../components/MovieCatalogProvider";
 import { statusClasses } from "../../lib/adminData";
 import { seriesStructureSummary, totalEpisodesInEntry } from "../../lib/seriesHelpers";
@@ -41,7 +42,7 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
   }
 
   if (isLoading) {
-    return <p className="text-[13px] text-text-muted">Loading series detail...</p>;
+    return <LoadingOverlay open label="Loading series detail" />;
   }
 
   if (error) {

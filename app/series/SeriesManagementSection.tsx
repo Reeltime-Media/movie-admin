@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AdminPagination } from "../components/AdminPagination";
+import { LoadingOverlay } from "../components/LoadingOverlay";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
 import { SeriesManagementTable } from "./SeriesManagementTable";
 import type { SeriesListFilter } from "./seriesListTypes";
@@ -69,7 +70,6 @@ export function SeriesManagementSection() {
             </button>
           </div>
         ) : null}
-        {isLoading ? <p className="text-[12px] text-text-muted">Loading series...</p> : null}
         <div className="flex flex-wrap items-center gap-2">
           {tabs.map(({ key, label }) => {
             const active = listFilter === key;
@@ -107,6 +107,7 @@ export function SeriesManagementSection() {
           onPageChange={setPage}
         />
       ) : null}
+      <LoadingOverlay open={isLoading} label="Loading series" />
     </>
   );
 }

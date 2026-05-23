@@ -10,6 +10,12 @@ export type PaginationQuery = {
   page?: number;
   pageSize?: number;
   status?: string;
+  /** User full name or email (admin payments). */
+  search?: string;
+  /** YYYY-MM-DD inclusive start (admin payments). */
+  dateFrom?: string;
+  /** YYYY-MM-DD inclusive end (admin payments). */
+  dateTo?: string;
 };
 
 export function paginationQuery(params: PaginationQuery = {}): string {
@@ -17,6 +23,9 @@ export function paginationQuery(params: PaginationQuery = {}): string {
   if (params.page != null) search.set("page", String(params.page));
   if (params.pageSize != null) search.set("page_size", String(params.pageSize));
   if (params.status) search.set("status", params.status);
+  if (params.search?.trim()) search.set("search", params.search.trim());
+  if (params.dateFrom) search.set("date_from", params.dateFrom);
+  if (params.dateTo) search.set("date_to", params.dateTo);
   const q = search.toString();
   return q ? `?${q}` : "";
 }
