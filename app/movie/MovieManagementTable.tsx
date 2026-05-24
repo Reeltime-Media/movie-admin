@@ -16,6 +16,7 @@ import { statusClasses, type CatalogEntry, type Status } from "../lib/adminData"
 import { formatGenres, parseGenresFromStored } from "../lib/genres";
 import type { ListFilter } from "./movieListTypes";
 import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../lib/money";
+import { validateMoviePublishReady } from "../lib/moviePublish";
 import {
   EditField,
   formatMovieDate,
@@ -36,6 +37,7 @@ function toDraft(entry: CatalogEntry): Omit<CatalogEntry, "id"> {
     views: entry.views,
     rating: entry.rating,
     runtime: entry.runtime,
+    runtimeMinutes: entry.runtimeMinutes,
     releaseYear: entry.releaseYear,
     status: entry.status,
     genre: entry.genre,
@@ -129,6 +131,18 @@ export function MovieManagementTable({
       toast.error(priceResult.message);
       return;
     }
+    if (editDraft.status === "Published") {
+      const publishCheck = validateMoviePublishReady(editDraft, {
+        posterFile: editPosterFile,
+        videoFile: editVideoFile,
+      });
+      if (!publishCheck.ok) {
+        setEditSaveError(publishCheck.message);
+        toast.error(publishCheck.message);
+        return;
+      }
+    }
+
     setEditSaveError(null);
     setIsSaving(true);
     try {
@@ -337,12 +351,22 @@ export function MovieManagementTable({
                         placeholder="8.7"
                       />
                     </EditField>
-                    <EditField label="Runtime">
+                    <EditField label="Runtime (minutes)">
                       <input
                         className={movieEditInputClass}
-                        value={editDraft.runtime ?? ""}
-                        onChange={(e) => patchDraft({ runtime: e.target.value || null })}
-                        placeholder="2h 15m"
+                        type="number"
+                        min={1}
+                        step={1}
+                        inputMode="numeric"
+                        value={editDraft.runtimeMinutes ?? ""}
+                        onChange={(e) =>
+                          patchDraft({
+                            runtimeMinutes: e.target.value
+                              ? Number(e.target.value)
+                              : null,
+                          })
+                        }
+                        placeholder="135"
                       />
                     </EditField>
                     <EditField label="Release year">

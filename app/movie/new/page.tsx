@@ -10,7 +10,10 @@ import { GenreMultiSelect } from "../../components/GenreMultiSelect";
 import { useMovieCatalog } from "../../components/MovieCatalogProvider";
 import type { Status } from "../../lib/adminData";
 import {
+  completeAdminMovieAssetUpload,
   completeMovieUpload,
+  createAdminMovieDraft,
+  startAdminMovieAssetUpload,
   startMovieUpload,
   uploadFileToPresignedUrl,
   uploadMovieVideoMultipart,
@@ -19,6 +22,8 @@ import { TrailerPreview } from "../../components/TrailerPreview";
 import { useUploadProgress } from "../../components/UploadProgressContext";
 import { formatGenres } from "../../lib/genres";
 import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../../lib/money";
+import { validateMoviePublishReady } from "../../lib/moviePublish";
+import { parseRuntimeMinutesInput } from "../../lib/runtime";
 
 const textInputClass =
   "w-full rounded-md border border-border bg-bg px-3 py-2.5 text-[13px] text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated";
@@ -30,6 +35,9 @@ const fileInputClass =
   "w-full rounded-md border border-dashed border-border bg-bg px-3 py-4 text-[12px] text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-brand file:px-3 file:py-2 file:text-[12px] file:font-bold file:text-white hover:border-border-hover";
 
 const stepLabels = ["Details", "Assets"] as const;
+
+const draftButtonClass =
+  "rounded-md border border-border bg-surface-elevated px-4 py-2.5 text-[12px] font-bold text-text transition-colors hover:border-border-hover disabled:opacity-40";
 
 function parseStatus(s: string): Status {
   if (s === "Published" || s === "Draft" || s === "Scheduled" || s === "Review") return s;
@@ -97,42 +105,185 @@ export default function NewMoviePage() {
     setStep(1);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const fd = new FormData(form);
-    const intent = String(fd.get("intent") || "");
+  const readCommonFields = (fd: FormData) => {
     const title = String(fd.get("title") || "").trim();
-    if (!title) return;
+    if (!title) {
+      return { ok: false as const, message: "Enter a title to save." };
+    }
 
-    const genre = formatGenres(genres);
-    if (!genre) return;
+    const priceResult = validateAdminPriceUsd(String(fd.get("price") || "0"));
+    if (!priceResult.ok) {
+      return { ok: false as const, message: priceResult.message };
+    }
+
+    const runtimeResult = parseRuntimeMinutesInput(fd.get("runtimeMinutes"));
+    if (!runtimeResult.ok) {
+      return { ok: false as const, message: runtimeResult.message };
+    }
+
+    return {
+      ok: true as const,
+      title,
+      genres,
+      priceUsd: priceResult.value,
+      runtimeMinutes: runtimeResult.value,
+      description: String(fd.get("description") || "").trim(),
+      releaseYear: parseOptionalNumber(fd.get("releaseYear")),
+      rating: String(fd.get("rating") || "").trim(),
+      trailerUrl: String(fd.get("trailerUrl") || "").trim(),
+    };
+  };
+
+  const uploadPosterForMovie = async (movieId: string, poster: File) => {
+    const upload = await startAdminMovieAssetUpload(movieId, {
+      posterContentType: poster.type,
+    });
+    if (!upload.poster_upload_url || !upload.poster_key) {
+      throw new Error("Could not start poster upload.");
+    }
+    await uploadFileToPresignedUrl(upload.poster_upload_url, poster);
+    await completeAdminMovieAssetUpload(movieId, { posterKey: upload.poster_key });
+  };
+
+  const getWizardForm = () =>
+    document.getElementById("movie-wizard-form") as HTMLFormElement | null;
+
+  const saveDraftFromForm = async (fd: FormData) => {
+    const fields = readCommonFields(fd);
+    if (!fields.ok) {
+      const message = fields.message;
+      if (step === 0) setDetailsError(message);
+      else setSubmitError(message);
+      toast.warning(message);
+      return;
+    }
+
+    const posterFile = fd.get("poster");
+    const poster = posterFile instanceof File && posterFile.size > 0 ? posterFile : null;
 
     setSubmitError(null);
+    setDetailsError(null);
+    setIsSubmitting(true);
+
+    try {
+      const created = await createAdminMovieDraft({
+        title: fields.title,
+        description: fields.description || undefined,
+        genres: fields.genres,
+        releaseYear: fields.releaseYear,
+        rating: fields.rating || undefined,
+        runtimeMinutes: fields.runtimeMinutes,
+        priceUsd: fields.priceUsd,
+        trailerUrl: fields.trailerUrl || undefined,
+      });
+
+      if (poster) {
+        await uploadPosterForMovie(created.id, poster);
+      }
+
+      await refreshMovies();
+      toast.success("Draft saved");
+      router.push("/movie");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not save draft";
+      if (step === 0) setDetailsError(message);
+      else setSubmitError(message);
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const runWizardAction = async (intent: "draft" | "upload") => {
+    const form = getWizardForm();
+    if (!form) return;
+    const fd = new FormData(form);
+
+    const fields = readCommonFields(fd);
+    if (!fields.ok) {
+      if (step === 0) setDetailsError(fields.message);
+      else setSubmitError(fields.message);
+      toast.warning(fields.message);
+      return;
+    }
 
     const videoFile = fd.get("video");
     const posterFile = fd.get("poster");
     const video = videoFile instanceof File && videoFile.size > 0 ? videoFile : null;
     const posterImage = posterFile instanceof File && posterFile.size > 0 ? posterFile : null;
 
-    if (!video) {
+    if (intent === "draft") {
+      if (video) {
+        await uploadMovieWithStatus(fd, fields, video, posterImage, "Draft");
+      } else {
+        await saveDraftFromForm(fd);
+      }
+      return;
+    }
+
+    const genre = formatGenres(genres);
+    if (!genre) {
+      const message = "Select at least one genre.";
+      setSubmitError(message);
+      toast.warning(message);
+      return;
+    }
+
+    setSubmitError(null);
+
+    const status: Status = parseStatus(String(fd.get("status")));
+
+    if (status === "Published") {
+      const publishCheck = validateMoviePublishReady(
+        { posterKey: null, hlsMasterKey: null, transcodeStatus: undefined },
+        { posterFile: posterImage, videoFile: video },
+      );
+      if (!publishCheck.ok) {
+        setSubmitError(publishCheck.message);
+        toast.warning(publishCheck.message);
+        return;
+      }
+    } else if (!video) {
       const message = "Choose a movie video file before uploading.";
       setSubmitError(message);
       toast.warning(message);
       return;
     }
 
-    const status: Status = intent === "draft" ? "Draft" : parseStatus(String(fd.get("status")));
-    const movieJobId = `movie-${title}-${Date.now()}`;
+    await uploadMovieWithStatus(fd, fields, video!, posterImage, status);
+  };
+
+  const handleSaveDraftClick = () => {
+    void runWizardAction("draft");
+  };
+
+  const handleUploadSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    void runWizardAction("upload");
+  };
+
+  const uploadMovieWithStatus = async (
+    _fd: FormData,
+    fields: Extract<ReturnType<typeof readCommonFields>, { ok: true }>,
+    video: File,
+    posterImage: File | null,
+    status: Status,
+  ) => {
+    const movieJobId = `movie-${fields.title}-${Date.now()}`;
     jobIdRef.current = movieJobId;
-    startJob(movieJobId, title, "Starting upload…");
+    startJob(movieJobId, fields.title, "Starting upload…");
     setIsSubmitting(true);
+    setSubmitError(null);
+    setDetailsError(null);
     router.push("/movie");
+
+    const successMessage =
+      status === "Draft" ? "Draft saved with video" : "Movie uploaded successfully";
 
     void (async () => {
       try {
         const upload = await startMovieUpload({
-          title,
+          title: fields.title,
           videoContentType: video.type || "video/mp4",
           posterContentType: posterImage?.type,
         });
@@ -153,11 +304,6 @@ export default function NewMoviePage() {
           (pct) => updateJob(movieJobId, pct),
         );
 
-        const priceResult = validateAdminPriceUsd(String(fd.get("price") || "0"));
-        if (!priceResult.ok) {
-          throw new Error(priceResult.message);
-        }
-
         setJobLabel(movieJobId, "Saving…");
         await completeMovieUpload({
           contentId: upload.content_id,
@@ -165,21 +311,21 @@ export default function NewMoviePage() {
           sourceKey: upload.source_key,
           uploadId: upload.upload_id,
           parts,
-          title,
-          priceUsd: priceResult.value,
-          description: String(fd.get("description") || "").trim(),
-          genres,
-          releaseYear: parseOptionalNumber(fd.get("releaseYear")),
-          rating: String(fd.get("rating") || "").trim(),
-          runtime: String(fd.get("runtime") || "").trim(),
+          title: fields.title,
+          priceUsd: fields.priceUsd,
+          description: fields.description,
+          genres: fields.genres,
+          releaseYear: fields.releaseYear,
+          rating: fields.rating,
+          runtimeMinutes: fields.runtimeMinutes,
           status: toApiStatus(status),
           posterKey: upload.poster_key,
-          trailerUrl: String(fd.get("trailerUrl") || "").trim(),
+          trailerUrl: fields.trailerUrl,
         });
 
         finishJob(movieJobId);
         await refreshMovies();
-        toast.success(intent === "draft" ? "Draft saved" : "Movie uploaded successfully");
+        toast.success(successMessage);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Upload failed";
         failJob(movieJobId, message);
@@ -197,7 +343,7 @@ export default function NewMoviePage() {
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <p className="max-w-[72ch] text-[13px] leading-relaxed text-text-muted">
           Enter movie details and publishing settings, then upload the video directly to storage
-          before transcoding starts.
+          before transcoding starts. You can save a draft at any step and finish the video later.
         </p>
         <Link
           href="/movie"
@@ -229,18 +375,20 @@ export default function NewMoviePage() {
         })}
       </div>
 
-      <form id="movie-wizard-form" onSubmit={handleSubmit} className="mx-auto max-w-3xl space-y-6">
+      <form id="movie-wizard-form" onSubmit={handleUploadSubmit} noValidate className="w-full space-y-6">
         <div className={step === 0 ? "block" : "hidden"} aria-hidden={step !== 0}>
           <AdminCard title="Movie details">
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Title">
-                <input name="title" required placeholder="The Last Drive" className={textInputClass} />
+                <input name="title" placeholder="The Last Drive" className={textInputClass} />
               </Field>
 
               <div className="md:col-span-2">
                 <div className="mb-1.5 text-[12px] font-semibold text-text-muted">Genres</div>
                 <GenreMultiSelect selected={genres} onChange={setGenres} />
-                <p className="mt-1.5 text-[11px] text-text-disabled">Open the list and select one or more genres.</p>
+                <p className="mt-1.5 text-[11px] text-text-disabled">
+                  Required for upload. Optional when saving a draft.
+                </p>
               </div>
 
               <Field label="Release year">
@@ -251,11 +399,19 @@ export default function NewMoviePage() {
                 <input name="rating" inputMode="decimal" placeholder="8.7" className={textInputClass} />
               </Field>
 
-              <Field label="Runtime">
-                <input name="runtime" placeholder="1h 42m" className={textInputClass} />
+              <Field label="Runtime (minutes)" hint="Whole minutes only, e.g. 102 for 1h 42m.">
+                <input
+                  name="runtimeMinutes"
+                  type="number"
+                  min={0}
+                  step={1}
+                  inputMode="numeric"
+                  placeholder="102"
+                  className={textInputClass}
+                />
               </Field>
 
-              <Field label="Status" hint="Upload uses this status. Save draft always saves as Draft.">
+              <Field label="Status" hint="Published requires a poster and video on the Assets step. Save draft does not.">
                 <select name="status" defaultValue="Published" className={selectClass}>
                   <option>Draft</option>
                   <option>Review</option>
@@ -307,6 +463,14 @@ export default function NewMoviePage() {
               </Link>
               <button
                 type="button"
+                onClick={handleSaveDraftClick}
+                disabled={isSubmitting}
+                className={draftButtonClass}
+              >
+                {isSubmitting ? "Saving…" : "Save draft"}
+              </button>
+              <button
+                type="button"
                 onClick={continueFromDetails}
                 className="rounded-md bg-brand px-4 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
               >
@@ -320,13 +484,19 @@ export default function NewMoviePage() {
           <AdminCard title="Upload assets">
             <p className="mb-5 text-[13px] text-text-muted">
               Attach poster and main video. The video is sent directly to R2, then the API queues
-              transcoding.
+              transcoding. Save draft without a video to finish uploading later from the movie list.
             </p>
             <div className="space-y-4">
-              <Field label="Poster image" hint="PNG, JPG, or WebP. Recommended portrait poster.">
+              <Field
+                label="Poster image"
+                hint="Required for Published. Optional when saving a draft."
+              >
                 <input name="poster" type="file" accept="image/*" className={fileInputClass} />
               </Field>
-              <Field label="Movie file" hint="MP4 or MOV.">
+              <Field
+                label="Movie file"
+                hint="Required for Published. Optional when saving a draft."
+              >
                 <input name="video" type="file" accept="video/mp4,video/quicktime,video/*" className={fileInputClass} />
               </Field>
             </div>
@@ -361,19 +531,16 @@ export default function NewMoviePage() {
                 Back
               </button>
               <button
-                type="submit"
-                name="intent"
-                value="draft"
+                type="button"
+                onClick={handleSaveDraftClick}
                 disabled={isSubmitting}
-                className="rounded-md border border-border bg-surface-elevated px-4 py-2.5 text-[12px] font-bold text-text transition-colors hover:border-border-hover disabled:opacity-40"
+                className={draftButtonClass}
               >
-                Save draft
+                {isSubmitting ? "Saving…" : "Save draft"}
               </button>
               <button
                 type="submit"
-                name="intent"
-                value="upload"
-                disabled={isSubmitting}
+                disabled={isSubmitting || step !== 1}
                 className="rounded-md bg-brand px-4 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover disabled:opacity-40"
               >
                 {isSubmitting ? "Uploading…" : "Upload"}

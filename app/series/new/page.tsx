@@ -235,7 +235,7 @@ export default function NewSeriesPage() {
         })}
       </div>
 
-      <form id="series-wizard-form" onSubmit={handleSubmit} className="mx-auto max-w-3xl space-y-6">
+      <form id="series-wizard-form" onSubmit={handleSubmit} className="w-full space-y-6">
         <div className={step === 0 ? "block" : "hidden"} aria-hidden={step !== 0}>
           <AdminCard title="Seasons and episodes">
             <p className="mb-5 text-[13px] text-text-muted">

@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { AdminCatalogSearchBar } from "../components/AdminCatalogSearchBar";
 import { AdminPagination } from "../components/AdminPagination";
 import { LoadingOverlay } from "../components/LoadingOverlay";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
+import { matchesCatalogSearch } from "../lib/catalogSearch";
 import { MovieManagementTable } from "./MovieManagementTable";
 import type { ListFilter } from "./movieListTypes";
 
@@ -22,15 +24,24 @@ function tableTitleForFilter(f: ListFilter): string {
 export function MovieManagementSection() {
   const { movies, isLoading, error, refreshMovies } = useMovieCatalog();
   const [listFilter, setListFilter] = useState<ListFilter>("all");
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
+  const moviesOnly = useMemo(
+    () => movies.filter((m) => m.type === "Movie"),
+    [movies],
+  );
+
   const entries = useMemo(() => {
-    const moviesOnly = movies.filter((m) => m.type === "Movie");
+    let list = moviesOnly;
     if (listFilter === "drafts") {
-      return moviesOnly.filter((m) => m.status === "Draft");
+      list = list.filter((m) => m.status === "Draft");
     }
-    return moviesOnly;
-  }, [movies, listFilter]);
+    if (search.trim()) {
+      list = list.filter((m) => matchesCatalogSearch(m, search));
+    }
+    return list;
+  }, [moviesOnly, listFilter, search]);
 
   const pages = Math.max(1, Math.ceil(entries.length / TABLE_PAGE_SIZE));
 
@@ -41,7 +52,7 @@ export function MovieManagementSection() {
 
   useEffect(() => {
     setPage(1);
-  }, [listFilter]);
+  }, [listFilter, search]);
 
   useEffect(() => {
     if (page > pages) setPage(pages);
@@ -70,6 +81,13 @@ export function MovieManagementSection() {
             </button>
           </div>
         ) : null}
+        <AdminCatalogSearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Search movies by title, genre, slug, or description…"
+          resultCount={entries.length}
+          totalCount={moviesOnly.length}
+        />
         <div className="flex flex-wrap items-center gap-2">
           {tabs.map(({ key, label }) => {
             const active = listFilter === key;

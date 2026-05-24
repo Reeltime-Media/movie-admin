@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
@@ -44,6 +45,34 @@ function formatDate(iso: string | null) {
 
 function shortId(id: string) {
   return id.slice(0, 8);
+}
+
+function seasonEpisodeLabel(job: TranscodeJob) {
+  if (job.season_number == null || job.episode_number == null) return null;
+  return `S${job.season_number}E${job.episode_number}`;
+}
+
+function transcodeJobLabel(job: TranscodeJob) {
+  if (!job.content_title) return "Unknown title";
+  if (job.content_type === "episode") {
+    const parts: string[] = [];
+    if (job.series_title) parts.push(job.series_title);
+    const se = seasonEpisodeLabel(job);
+    if (se) parts.push(se);
+    parts.push(job.content_title);
+    return parts.join(" · ");
+  }
+  return job.content_title;
+}
+
+function transcodeJobHref(job: TranscodeJob): string | null {
+  if (job.content_type === "episode" && job.series_id) {
+    return `/series/${job.series_id}`;
+  }
+  if (job.content_type === "single") {
+    return `/movie/${job.content_id}`;
+  }
+  return null;
 }
 
 function ProgressBar({ pct, status }: { pct: number; status: string }) {
@@ -317,8 +346,8 @@ export default function TranscodePage() {
             <table className="w-full min-w-160 text-left">
               <thead>
                 <tr className="border-b border-border text-[11px] uppercase tracking-widest text-text-disabled">
+                  <th className="px-5 pb-3 font-bold">Title</th>
                   <th className="px-5 pb-3 font-bold">Job ID</th>
-                  <th className="px-5 pb-3 font-bold">Content ID</th>
                   <th className="px-5 pb-3 font-bold">Status</th>
                   <th className="px-5 pb-3 font-bold w-48">Progress</th>
                   <th className="px-5 pb-3 font-bold">Attempts</th>
@@ -329,13 +358,40 @@ export default function TranscodePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {jobs.map((job) => (
+                {jobs.map((job) => {
+                  const href = transcodeJobHref(job);
+                  const label = transcodeJobLabel(job);
+                  return (
                   <tr key={job.id} className="text-[13px]">
+                    <td className="px-5 py-4 max-w-xs">
+                      {href ? (
+                        <Link
+                          href={href}
+                          className="font-semibold text-text transition-colors hover:text-brand"
+                          title={label}
+                        >
+                          <span className="line-clamp-2">{label}</span>
+                        </Link>
+                      ) : (
+                        <span className="font-semibold text-text line-clamp-2" title={label}>
+                          {label}
+                        </span>
+                      )}
+                      {job.content_slug ? (
+                        <span className="mt-0.5 block font-mono text-[10px] text-text-muted">
+                          {job.content_slug}
+                        </span>
+                      ) : (
+                        <span
+                          className="mt-0.5 block font-mono text-[10px] text-text-muted"
+                          title={job.content_id}
+                        >
+                          {shortId(job.content_id)}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-5 py-4 font-mono text-[11px] text-text-muted" title={job.id}>
                       {shortId(job.id)}
-                    </td>
-                    <td className="px-5 py-4 font-mono text-[11px] text-text-muted" title={job.content_id}>
-                      {shortId(job.content_id)}
                     </td>
                     <td className="px-5 py-4">
                       <span className={statusClass(job.status)}>{job.status}</span>
@@ -385,7 +441,8 @@ export default function TranscodePage() {
                       )}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
             <AdminPagination

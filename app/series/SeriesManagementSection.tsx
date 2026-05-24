@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { AdminCatalogSearchBar } from "../components/AdminCatalogSearchBar";
 import { AdminPagination } from "../components/AdminPagination";
 import { LoadingOverlay } from "../components/LoadingOverlay";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
+import { matchesCatalogSearch } from "../lib/catalogSearch";
 import { SeriesManagementTable } from "./SeriesManagementTable";
 import type { SeriesListFilter } from "./seriesListTypes";
 
@@ -22,15 +24,24 @@ function tableTitleForFilter(f: SeriesListFilter): string {
 export function SeriesManagementSection() {
   const { movies, isLoading, error, refreshMovies } = useMovieCatalog();
   const [listFilter, setListFilter] = useState<SeriesListFilter>("all");
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
+  const seriesOnly = useMemo(
+    () => movies.filter((m) => m.type === "Series"),
+    [movies],
+  );
+
   const entries = useMemo(() => {
-    const seriesOnly = movies.filter((m) => m.type === "Series");
+    let list = seriesOnly;
     if (listFilter === "drafts") {
-      return seriesOnly.filter((s) => s.status === "Draft");
+      list = list.filter((s) => s.status === "Draft");
     }
-    return seriesOnly;
-  }, [movies, listFilter]);
+    if (search.trim()) {
+      list = list.filter((s) => matchesCatalogSearch(s, search));
+    }
+    return list;
+  }, [seriesOnly, listFilter, search]);
 
   const pages = Math.max(1, Math.ceil(entries.length / TABLE_PAGE_SIZE));
 
@@ -41,7 +52,7 @@ export function SeriesManagementSection() {
 
   useEffect(() => {
     setPage(1);
-  }, [listFilter]);
+  }, [listFilter, search]);
 
   useEffect(() => {
     if (page > pages) setPage(pages);
@@ -70,6 +81,13 @@ export function SeriesManagementSection() {
             </button>
           </div>
         ) : null}
+        <AdminCatalogSearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Search series by title, genre, slug, episode, or description…"
+          resultCount={entries.length}
+          totalCount={seriesOnly.length}
+        />
         <div className="flex flex-wrap items-center gap-2">
           {tabs.map(({ key, label }) => {
             const active = listFilter === key;

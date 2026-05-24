@@ -11,6 +11,8 @@ export type Episode = {
   isFree?: boolean;
   posterFileName?: string;
   videoFileName?: string;
+  hlsMasterKey?: string | null;
+  hlsMasterUrl?: string | null;
   /** Transient — not sent to the API */
   videoFile?: File;
   /** Transient — not sent to the API */
@@ -38,6 +40,8 @@ export type CatalogEntry = {
   genre: string;
   owner: string;
   runtime?: string | null;
+  /** Editable runtime in minutes (movies). */
+  runtimeMinutes?: number | null;
   releaseYear?: number | null;
   posterKey?: string | null;
   posterUrl?: string | null;

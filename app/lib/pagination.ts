@@ -16,6 +16,8 @@ export type PaginationQuery = {
   dateFrom?: string;
   /** YYYY-MM-DD inclusive end (admin payments). */
   dateTo?: string;
+  /** Content type filter (admin top-titles), e.g. single for movies. */
+  contentType?: string;
 };
 
 export function paginationQuery(params: PaginationQuery = {}): string {
@@ -26,6 +28,7 @@ export function paginationQuery(params: PaginationQuery = {}): string {
   if (params.search?.trim()) search.set("search", params.search.trim());
   if (params.dateFrom) search.set("date_from", params.dateFrom);
   if (params.dateTo) search.set("date_to", params.dateTo);
+  if (params.contentType) search.set("content_type", params.contentType);
   const q = search.toString();
   return q ? `?${q}` : "";
 }

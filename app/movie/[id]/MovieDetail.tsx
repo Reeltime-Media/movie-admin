@@ -7,6 +7,7 @@ import { AdminCard } from "../../components/AdminCard";
 import { LoadingOverlay } from "../../components/LoadingOverlay";
 import { useMovieCatalog } from "../../components/MovieCatalogProvider";
 import { statusClasses } from "../../lib/adminData";
+import { AdminHlsPlayer } from "../../components/AdminHlsPlayer";
 import { MovieCommentsAdmin } from "../MovieCommentsAdmin";
 import { DetailRow, formatMovieDate, youtubeEmbedUrl } from "../movieDetailUi";
 
@@ -113,13 +114,9 @@ export function MovieDetail({ movieId }: { movieId: string }) {
               <div className="mb-3 text-[16px] font-bold tracking-[-0.02em]">Video Preview</div>
               {movie.hlsMasterUrl ? (
                 <>
-                  <video
-                    controls
-                    className="aspect-video w-full rounded-lg border border-border bg-black"
-                    src={movie.hlsMasterUrl}
-                  />
+                  <AdminHlsPlayer src={movie.hlsMasterUrl} title={movie.title} />
                   <p className="mt-2 text-[12px] text-text-muted">
-                    HLS playback works natively in Safari. Chrome may require a player integration.
+                    Stream preview uses HLS from your R2 public URL.
                   </p>
                 </>
               ) : (

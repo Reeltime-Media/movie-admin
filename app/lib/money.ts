@@ -1,5 +1,14 @@
 export const MIN_PAID_PRICE_USD = 0.03;
 
+export function formatUsdDisplay(value: string | number): string {
+  const parsed = typeof value === "number" ? value : Number.parseFloat(value);
+  if (!Number.isFinite(parsed)) return "0.00";
+  return parsed.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 export const ADMIN_PRICE_HINT =
   "Enter 0 for free, or at least $0.03 for paid pricing.";
 

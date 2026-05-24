@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { type CatalogEntry, type Status } from "../lib/adminData";
+import { runtimeMinutesFromApi } from "../lib/runtime";
 import {
   deleteAdminMovie,
   deleteAdminSeriesApi,
@@ -85,6 +86,7 @@ function apiContentToCatalogEntry(content: ApiContent): CatalogEntry {
     genre: formatGenres(content.genres),
     owner: content.transcode_status === "ready" ? "API - ready" : `API - ${content.transcode_status}`,
     runtime: content.runtime,
+    runtimeMinutes: runtimeMinutesFromApi(content),
     releaseYear: content.release_year,
     posterKey: content.poster_key,
     posterUrl: mediaUrl(content.poster_key),
@@ -112,6 +114,8 @@ function mapApiSeasons(apiSeasons: ApiSeasonRead[]): import("../lib/adminData").
       isFree: ep.is_free,
       posterFileName: ep.poster_key ?? undefined,
       videoFileName: ep.hls_master_key ?? undefined,
+      hlsMasterKey: ep.hls_master_key,
+      hlsMasterUrl: mediaUrl(ep.hls_master_key),
     })),
   }));
 }
@@ -257,7 +261,7 @@ export function MovieCatalogProvider({ children }: { children: ReactNode }) {
         genres: parseGenresFromStored(entry.genre),
         priceUsd: priceResult.value,
         rating: ratingToApi(entry.rating),
-        runtime: entry.runtime ?? null,
+        runtimeMinutes: entry.runtimeMinutes ?? null,
         releaseYear: entry.releaseYear ?? null,
         status: toApiStatus(entry.status as Status),
         trailerUrl: entry.trailerUrl,

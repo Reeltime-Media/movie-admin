@@ -36,6 +36,13 @@ export type TranscodeJob = {
   started_at: string | null;
   finished_at: string | null;
   created_at: string;
+  content_title?: string | null;
+  content_type?: string | null;
+  content_slug?: string | null;
+  series_id?: string | null;
+  series_title?: string | null;
+  season_number?: number | null;
+  episode_number?: number | null;
 };
 
 export type MovieUploadStartResponse = {
@@ -172,6 +179,28 @@ export type ApiTopTitleReport = {
   completion_count: number;
 };
 
+export type ApiRevenueTimelinePoint = {
+  date: string;
+  revenue_usd: string;
+  payment_count: number;
+};
+
+export type ApiRevenueTimeline = {
+  days: number;
+  date_from: string | null;
+  date_to: string | null;
+  period_revenue_usd: string;
+  all_time_revenue_usd: string;
+  succeeded_payments: number;
+  points: ApiRevenueTimelinePoint[];
+};
+
+export type AdminRevenueTimelineQuery = {
+  days?: number;
+  dateFrom?: string;
+  dateTo?: string;
+};
+
 function apiUrl(path: string) {
   return `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
@@ -256,6 +285,32 @@ export async function listAllAdminMovies() {
   return fetchAllPages((page, pageSize) => listAdminMovies({ page, pageSize }));
 }
 
+export async function createAdminMovieDraft(input: {
+  title: string;
+  description?: string;
+  genres: string[];
+  releaseYear?: number;
+  rating?: string;
+  runtimeMinutes?: number;
+  priceUsd: string;
+  trailerUrl?: string;
+}) {
+  return apiFetch<ApiContent>("/admin/movies", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: input.title,
+      description: input.description || null,
+      genres: input.genres,
+      release_year: input.releaseYear ?? null,
+      rating: input.rating || null,
+      runtime_minutes: input.runtimeMinutes ?? null,
+      price_usd: input.priceUsd,
+      trailer_url: input.trailerUrl || null,
+    }),
+  });
+}
+
 export async function updateAdminMovie(
   id: string,
   input: {
@@ -264,7 +319,7 @@ export async function updateAdminMovie(
     genres: string[];
     priceUsd?: string | null;
     rating?: string | null;
-    runtime?: string | null;
+    runtimeMinutes?: number | null;
     releaseYear?: number | null;
     status: string;
     trailerUrl?: string | null;
@@ -279,7 +334,7 @@ export async function updateAdminMovie(
       genres: input.genres,
       price_usd: input.priceUsd || null,
       rating: input.rating || null,
-      runtime: input.runtime ?? null,
+      runtime_minutes: input.runtimeMinutes ?? null,
       release_year: input.releaseYear ?? null,
       status: input.status,
       trailer_url: input.trailerUrl || null,
@@ -368,7 +423,7 @@ export async function completeMovieUpload(input: {
   genres: string[];
   releaseYear?: number;
   rating?: string;
-  runtime?: string;
+  runtimeMinutes?: number;
   status: string;
   posterKey?: string | null;
   trailerUrl?: string | null;
@@ -391,7 +446,7 @@ export async function completeMovieUpload(input: {
       genres: input.genres,
       release_year: input.releaseYear ?? null,
       rating: input.rating || null,
-      runtime: input.runtime || null,
+      runtime_minutes: input.runtimeMinutes ?? null,
       status: input.status,
       poster_key: input.posterKey ?? null,
       trailer_url: input.trailerUrl || null,
@@ -696,6 +751,16 @@ export async function deleteAdminSubscriptionPlan(id: string): Promise<void> {
 
 export async function getAdminDashboardSummary(): Promise<ApiDashboardSummary> {
   return apiFetch<ApiDashboardSummary>("/admin/dashboard-summary");
+}
+
+export async function getAdminRevenueTimeline(
+  query: AdminRevenueTimelineQuery = {},
+): Promise<ApiRevenueTimeline> {
+  const search = new URLSearchParams();
+  search.set("days", String(query.days ?? 30));
+  if (query.dateFrom) search.set("date_from", query.dateFrom);
+  if (query.dateTo) search.set("date_to", query.dateTo);
+  return apiFetch<ApiRevenueTimeline>(`/admin/revenue-timeline?${search.toString()}`);
 }
 
 export async function listAdminTopTitles(
