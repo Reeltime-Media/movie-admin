@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { MovieCatalogProvider } from "./components/MovieCatalogProvider";
+import { QueryProvider } from "./components/QueryProvider";
 import { ToastProvider } from "./components/ToastProvider";
 import { UploadProgressProvider } from "./components/UploadProgressContext";
 import "./globals.css";
@@ -28,9 +28,9 @@ export default function RootLayout({
       className={`${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-bg text-text font-sans">
-        <UploadProgressProvider>
-          <MovieCatalogProvider>{children}</MovieCatalogProvider>
-        </UploadProgressProvider>
+        <QueryProvider>
+          <UploadProgressProvider>{children}</UploadProgressProvider>
+        </QueryProvider>
         <ToastProvider />
       </body>
     </html>

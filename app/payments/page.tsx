@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { useEffect, useState } from "react";
 import { AdminCard } from "../components/AdminCard";
-import { LoadingOverlay } from "../components/LoadingOverlay";
+import { InlineLoading } from "../components/InlineLoading";
 import { AdminShell } from "../components/AdminShell";
 import { AdminPagination } from "../components/AdminPagination";
-import { listAdminPayments, type ApiPaymentIntent } from "../lib/api";
+import { usePayments } from "../hooks/adminQueries";
+import { type ApiPaymentIntent } from "../lib/api";
 
 const PAGE_SIZE = 20;
 
@@ -47,13 +47,7 @@ function userLabel(payment: ApiPaymentIntent) {
 }
 
 export default function PaymentsPage() {
-  const [payments, setPayments] = useState<ApiPaymentIntent[]>([]);
   const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -70,36 +64,28 @@ export default function PaymentsPage() {
     setPage(1);
   }, [debouncedSearch, dateFrom, dateTo]);
 
-  const loadPayments = useCallback(
-    async (targetPage = page) => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const res = await listAdminPayments({
-          page: targetPage,
-          pageSize: PAGE_SIZE,
-          search: debouncedSearch || undefined,
-          dateFrom: dateFrom || undefined,
-          dateTo: dateTo || undefined,
-        });
-        setPayments(res.items);
-        setPage(res.page);
-        setPages(res.pages);
-        setTotal(res.total);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Could not load payments.";
-        setError(message);
-        toast.error(message);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [page, debouncedSearch, dateFrom, dateTo],
-  );
+  const {
+    data,
+    isLoading,
+    isFetching,
+    error: queryError,
+    refetch,
+  } = usePayments({
+    page,
+    pageSize: PAGE_SIZE,
+    search: debouncedSearch || undefined,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+  });
 
-  useEffect(() => {
-    void loadPayments(page);
-  }, [page, loadPayments]);
+  const payments = data?.items ?? [];
+  const pages = data?.pages ?? 1;
+  const total = data?.total ?? 0;
+  const error = queryError
+    ? queryError instanceof Error
+      ? queryError.message
+      : "Could not load payments."
+    : null;
 
   const clearFilters = () => {
     setSearch("");
@@ -113,7 +99,7 @@ export default function PaymentsPage() {
       <AdminCard
         title="Recent transactions"
         action="Refresh"
-        actionOnClick={() => loadPayments(page)}
+        actionOnClick={() => void refetch()}
       >
         <div className="mb-5 flex flex-col gap-3 border-b border-border pb-5">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -157,7 +143,7 @@ export default function PaymentsPage() {
           {hasFilters ? (
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-[12px] text-text-muted">
-                {isLoading ? "Filtering…" : `${total} transaction${total === 1 ? "" : "s"} matched`}
+                {isFetching ? "Filtering…" : `${total} transaction${total === 1 ? "" : "s"} matched`}
               </p>
               <button
                 type="button"
@@ -170,12 +156,14 @@ export default function PaymentsPage() {
           ) : null}
         </div>
 
-        {error ? (
+        {isLoading && !payments.length ? (
+          <InlineLoading label="Loading transactions" />
+        ) : error ? (
           <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-4 text-[12px] text-warning">
             <div>{error}</div>
             <button
               type="button"
-              onClick={() => loadPayments(page)}
+              onClick={() => void refetch()}
               className="mt-2 font-bold hover:underline"
             >
               Retry
@@ -234,13 +222,12 @@ export default function PaymentsPage() {
               pages={pages}
               total={total}
               pageSize={PAGE_SIZE}
-              isLoading={isLoading}
+              isLoading={isFetching}
               onPageChange={setPage}
             />
           </div>
         )}
       </AdminCard>
-      <LoadingOverlay open={isLoading} label="Loading transactions" />
     </AdminShell>
   );
 }

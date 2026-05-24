@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AdminCatalogSearchBar } from "../components/AdminCatalogSearchBar";
 import { AdminPagination } from "../components/AdminPagination";
-import { LoadingOverlay } from "../components/LoadingOverlay";
+import { InlineLoading } from "../components/InlineLoading";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
 import { matchesCatalogSearch } from "../lib/catalogSearch";
 import { MovieManagementTable } from "./MovieManagementTable";
@@ -110,22 +110,29 @@ export function MovieManagementSection() {
         </div>
       </div>
 
-      <MovieManagementTable
-        entries={paginatedEntries}
-        tableTitle={tableTitleForFilter(listFilter)}
-        listFilter={listFilter}
-      />
-      {entries.length > 0 ? (
-        <AdminPagination
-          page={page}
-          pages={pages}
-          total={entries.length}
-          pageSize={TABLE_PAGE_SIZE}
-          isLoading={isLoading}
-          onPageChange={setPage}
-        />
-      ) : null}
-      <LoadingOverlay open={isLoading} label="Loading movies" />
+      {isLoading && moviesOnly.length === 0 ? (
+        <div className="rounded-lg border border-border bg-surface">
+          <InlineLoading label="Loading movies" />
+        </div>
+      ) : (
+        <>
+          <MovieManagementTable
+            entries={paginatedEntries}
+            tableTitle={tableTitleForFilter(listFilter)}
+            listFilter={listFilter}
+          />
+          {entries.length > 0 ? (
+            <AdminPagination
+              page={page}
+              pages={pages}
+              total={entries.length}
+              pageSize={TABLE_PAGE_SIZE}
+              isLoading={isLoading}
+              onPageChange={setPage}
+            />
+          ) : null}
+        </>
+      )}
     </>
   );
 }

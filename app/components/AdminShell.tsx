@@ -60,50 +60,49 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <div className="flex min-h-screen">
-        <aside className="hidden w-64 shrink-0 border-r border-border bg-surface/80 px-5 py-5 lg:block">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="grid h-8 w-8 place-items-center rounded-md bg-brand text-[15px] font-black text-white">
-              R
-            </div>
-            <div>
-              <div className="text-[14px] font-extrabold tracking-[0.06em]">REELTIME</div>
-              <div className="text-[11px] font-semibold text-text-muted">Admin console</div>
-            </div>
-          </Link>
+      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-64 overflow-y-auto border-r border-border bg-surface px-5 py-5 lg:block">
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="grid h-8 w-8 place-items-center rounded-md bg-brand text-[15px] font-black text-white">
+            R
+          </div>
+          <div>
+            <div className="text-[14px] font-extrabold tracking-[0.06em]">REELTIME</div>
+            <div className="text-[11px] font-semibold text-text-muted">Admin console</div>
+          </div>
+        </Link>
 
-          <nav className="mt-8 space-y-1">
-            {navItems.map((item) => {
-              const active =
-                pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
+        <nav className="mt-8 space-y-1">
+          {navItems.map((item) => {
+            const active =
+              pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
 
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={[
-                    "flex items-center justify-between rounded-md px-3 py-2.5 text-[13px] font-semibold transition-colors",
-                    active
-                      ? "bg-brand text-white"
-                      : "text-text-muted hover:bg-surface-elevated hover:text-text",
-                  ].join(" ")}
-                >
-                  {item.label}
-                  {item.badge ? (
-                    <span className="rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] text-warning">
-                      {item.badge}
-                    </span>
-                  ) : null}
-                </Link>
-              );
-            })}
-          </nav>
-        </aside>
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={[
+                  "flex items-center justify-between rounded-md px-3 py-2.5 text-[13px] font-semibold transition-colors",
+                  active
+                    ? "bg-brand text-white"
+                    : "text-text-muted hover:bg-surface-elevated hover:text-text",
+                ].join(" ")}
+              >
+                {item.label}
+                {item.badge ? (
+                  <span className="rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] text-warning">
+                    {item.badge}
+                  </span>
+                ) : null}
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 border-b border-border bg-bg/95 backdrop-blur">
-            <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 md:px-8">
+      <div className="flex min-h-screen min-w-0 flex-col lg:ml-64">
+        <header className="sticky top-0 z-20 border-b border-border bg-bg/95 backdrop-blur">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 md:px-8">
               <div>
                 <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-muted">
                   Reeltime operations
@@ -229,11 +228,10 @@ export function AdminShell({
                   Sign out
                 </button>
               </div>
-            </div>
-          </header>
+          </div>
+        </header>
 
-          <main className="flex-1 px-5 py-6 md:px-8">{children}</main>
-        </div>
+        <main className="flex-1 px-5 py-6 md:px-8">{children}</main>
       </div>
     </div>
   );

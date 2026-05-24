@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { AdminCard } from "./AdminCard";
-import { getAdminRevenueTimeline, type ApiRevenueTimeline } from "../lib/api";
+import { type ApiRevenueTimeline } from "../lib/api";
+import { useRevenueTimelineQuery } from "../hooks/adminQueries";
 import { formatUsdDisplay } from "../lib/money";
 
 const CHART_WIDTH = 800;
@@ -43,33 +44,18 @@ export type RevenueDateRange = {
 };
 
 export function useRevenueTimeline(days: number, dateRange?: RevenueDateRange) {
-  const [timeline, setTimeline] = useState<ApiRevenueTimeline | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const query = useRevenueTimelineQuery(days, dateRange);
 
-  const reload = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getAdminRevenueTimeline({
-        days,
-        dateFrom: dateRange?.from || undefined,
-        dateTo: dateRange?.to || undefined,
-      });
-      setTimeline(data);
-    } catch (err) {
-      setTimeline(null);
-      setError(err instanceof Error ? err.message : "Could not load revenue");
-    } finally {
-      setLoading(false);
-    }
-  }, [days, dateRange?.from, dateRange?.to]);
-
-  useEffect(() => {
-    void reload();
-  }, [reload]);
-
-  return { timeline, loading, error, reload };
+  return {
+    timeline: query.data ?? null,
+    loading: query.isLoading,
+    error: query.error
+      ? query.error instanceof Error
+        ? query.error.message
+        : "Could not load revenue"
+      : null,
+    reload: () => query.refetch(),
+  };
 }
 
 type RevenuePanelProps = {
@@ -211,7 +197,7 @@ export function RevenuePanel({
                 type="date"
                 value={dateFrom}
                 max={dateTo || undefined}
-                onChange={(e) => onDateFromChange(e.target.value)}
+                onChange={(e) => onDateFromChange?.(e.target.value)}
                 className="w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text outline-none transition-colors focus:border-border-hover focus:bg-surface-elevated"
               />
             </label>
@@ -223,7 +209,7 @@ export function RevenuePanel({
                 type="date"
                 value={dateTo}
                 min={dateFrom || undefined}
-                onChange={(e) => onDateToChange(e.target.value)}
+                onChange={(e) => onDateToChange?.(e.target.value)}
                 className="w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text outline-none transition-colors focus:border-border-hover focus:bg-surface-elevated"
               />
             </label>

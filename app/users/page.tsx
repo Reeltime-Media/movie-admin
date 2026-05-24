@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { useState } from "react";
 import { AdminCard } from "../components/AdminCard";
 import { AdminPagination } from "../components/AdminPagination";
-import { LoadingOverlay } from "../components/LoadingOverlay";
+import { InlineLoading } from "../components/InlineLoading";
 import { AdminShell } from "../components/AdminShell";
-import { getAdminDashboardSummary, listUsers, type ApiUser } from "../lib/api";
+import { useDashboardSummary, useUsers } from "../hooks/adminQueries";
 
 const PAGE_SIZE = 20;
 
@@ -19,63 +18,39 @@ function formatDate(value: string) {
 }
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<ApiUser[]>([]);
   const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [summaryTotal, setSummaryTotal] = useState<number | null>(null);
-  const [summaryAdmins, setSummaryAdmins] = useState<number | null>(null);
-  const [summaryActive, setSummaryActive] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: usersData,
+    isLoading,
+    isFetching,
+    error: usersError,
+    refetch,
+  } = useUsers(page, PAGE_SIZE);
+  const { data: summary } = useDashboardSummary();
 
-  const loadUsers = async (targetPage = page) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [res, summary] = await Promise.all([
-        listUsers({ page: targetPage, pageSize: PAGE_SIZE }),
-        getAdminDashboardSummary().catch(() => null),
-      ]);
-      setUsers(res.items);
-      setPage(res.page);
-      setPages(res.pages);
-      setTotal(res.total);
-      if (summary) {
-        setSummaryTotal(summary.users.total);
-        setSummaryAdmins(summary.users.admins);
-        setSummaryActive(summary.users.active);
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not load users.";
-      setError(message);
-      toast.error(message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void loadUsers(page);
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [page]);
+  const users = usersData?.items ?? [];
+  const pages = usersData?.pages ?? 1;
+  const total = usersData?.total ?? 0;
+  const error = usersError
+    ? usersError instanceof Error
+      ? usersError.message
+      : "Could not load users."
+    : null;
 
   const stats = [
     {
       label: "Total users",
-      value: (summaryTotal ?? total).toString(),
+      value: (summary?.users.total ?? total).toString(),
       detail: "All accounts in the platform.",
     },
     {
       label: "Admins",
-      value: summaryAdmins != null ? summaryAdmins.toString() : "--",
+      value: summary?.users.admins != null ? String(summary.users.admins) : "--",
       detail: "Accounts with admin access.",
     },
     {
       label: "Active users",
-      value: summaryActive != null ? summaryActive.toString() : "--",
+      value: summary?.users.active != null ? String(summary.users.active) : "--",
       detail: "Users currently marked active.",
     },
   ];
@@ -87,7 +62,7 @@ export default function UsersPage() {
           <div key={stat.label} className="rounded-lg border border-border bg-surface p-5">
             <div className="text-[12px] font-semibold text-text-muted">{stat.label}</div>
             <div className="mt-3 text-[28px] font-extrabold tracking-[-0.03em]">
-              {isLoading ? "--" : stat.value}
+              {isLoading && !users.length ? "--" : stat.value}
             </div>
             <div className="mt-1 text-[12px] font-semibold text-text-muted">{stat.detail}</div>
           </div>
@@ -96,10 +71,12 @@ export default function UsersPage() {
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <AdminCard title="Recent users">
-          {error ? (
+          {isLoading && !users.length ? (
+            <InlineLoading label="Loading users" />
+          ) : error ? (
             <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-4 text-[12px] text-warning">
               <div>{error}</div>
-              <button type="button" onClick={() => loadUsers(page)} className="mt-2 font-bold hover:underline">
+              <button type="button" onClick={() => void refetch()} className="mt-2 font-bold hover:underline">
                 Retry
               </button>
             </div>
@@ -151,7 +128,7 @@ export default function UsersPage() {
                 pages={pages}
                 total={total}
                 pageSize={PAGE_SIZE}
-                isLoading={isLoading}
+                isLoading={isFetching}
                 onPageChange={setPage}
               />
             </div>
@@ -159,7 +136,9 @@ export default function UsersPage() {
         </AdminCard>
 
         <AdminCard title="Admin access">
-          {!isLoading ? (
+          {isLoading && !users.length ? (
+            <InlineLoading label="Loading admins" minHeight="sm" />
+          ) : !isLoading || users.length > 0 ? (
             <div className="space-y-3">
               {users
                 .filter((user) => user.role === "admin")
@@ -176,7 +155,6 @@ export default function UsersPage() {
           ) : null}
         </AdminCard>
       </div>
-      <LoadingOverlay open={isLoading} label="Loading users" />
     </AdminShell>
   );
 }

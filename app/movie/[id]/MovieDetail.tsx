@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { AdminCard } from "../../components/AdminCard";
-import { LoadingOverlay } from "../../components/LoadingOverlay";
+import { InlineLoading } from "../../components/InlineLoading";
 import { useMovieCatalog } from "../../components/MovieCatalogProvider";
 import { statusClasses } from "../../lib/adminData";
 import { AdminHlsPlayer } from "../../components/AdminHlsPlayer";
@@ -26,7 +26,11 @@ export function MovieDetail({ movieId }: { movieId: string }) {
   const trailerEmbedUrl = useMemo(() => youtubeEmbedUrl(movie?.trailerUrl), [movie?.trailerUrl]);
 
   if (isLoading) {
-    return <LoadingOverlay open label="Loading movie detail" />;
+    return (
+      <AdminCard title="Movie detail">
+        <InlineLoading label="Loading movie detail" />
+      </AdminCard>
+    );
   }
 
   if (error) {

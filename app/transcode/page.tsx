@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
 import { AdminPagination } from "../components/AdminPagination";
-import { LoadingOverlay } from "../components/LoadingOverlay";
+import { InlineLoading } from "../components/InlineLoading";
 import { AdminShell } from "../components/AdminShell";
-import { listTranscodeJobs, retryTranscodeJob, type TranscodeJob } from "../lib/api";
+import { useTranscodeJobs } from "../hooks/adminQueries";
+import { type TranscodeJob } from "../lib/api";
 
 type StatusFilter = "all" | "queued" | "running" | "success" | "failed";
 
@@ -118,80 +120,34 @@ function ProgressBar({ pct, status }: { pct: number; status: string }) {
 }
 
 export default function TranscodePage() {
-  const [jobs, setJobs] = useState<TranscodeJob[]>([]);
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [counts, setCounts] = useState({ all: 0, queued: 0, running: 0, success: 0, failed: 0 });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
   const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
   const [stoppingIds, setStoppingIds] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<StatusFilter>("all");
 
-  const loadCounts = useCallback(async () => {
-    const statuses = ["queued", "running", "success", "failed"] as const;
-    try {
-      const [allRes, ...statusTotals] = await Promise.all([
-        listTranscodeJobs({ page: 1, pageSize: 1 }),
-        ...statuses.map((status) =>
-          listTranscodeJobs({ page: 1, pageSize: 1, status }).then((res) => res.total),
-        ),
-      ]);
-      setCounts({
-        all: allRes.total,
-        queued: statusTotals[0],
-        running: statusTotals[1],
-        success: statusTotals[2],
-        failed: statusTotals[3],
-      });
-    } catch {
-      // Keep previous counts on refresh failure.
-    }
-  }, []);
+  const { jobsQuery, countsQuery, retryMutation } = useTranscodeJobs({
+    page,
+    pageSize: PAGE_SIZE,
+    status: filter === "all" ? undefined : filter,
+  });
 
-  const load = useCallback(
-    async (targetPage = page, targetFilter = filter) => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const res = await listTranscodeJobs({
-          page: targetPage,
-          pageSize: PAGE_SIZE,
-          status: targetFilter === "all" ? undefined : targetFilter,
-        });
-        setJobs(res.items);
-        setPage(res.page);
-        setPages(res.pages);
-        setTotal(res.total);
-        await loadCounts();
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Could not load transcode jobs.";
-        setError(message);
-        toast.error(message);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [page, filter, loadCounts],
-  );
+  const jobs = jobsQuery.data?.items ?? [];
+  const pages = jobsQuery.data?.pages ?? 1;
+  const total = jobsQuery.data?.total ?? 0;
+  const counts = countsQuery.data ?? { all: 0, queued: 0, running: 0, success: 0, failed: 0 };
+  const isLoading = jobsQuery.isLoading;
+  const error = jobsQuery.error
+    ? jobsQuery.error instanceof Error
+      ? jobsQuery.error.message
+      : "Could not load transcode jobs."
+    : null;
 
-  useEffect(() => {
-    const t = window.setTimeout(() => {
-      void load(page, filter);
-    }, 0);
-    return () => window.clearTimeout(t);
-  }, [page, filter, load]);
-
-  useEffect(() => {
-    const hasActive = jobs.some((j) => j.status === "running" || j.status === "queued");
-    if (!hasActive) return;
-    const id = setInterval(() => {
-      void load(page, filter);
-    }, 5000);
-    return () => clearInterval(id);
-  }, [jobs, page, filter, load]);
+  const reload = () => {
+    void jobsQuery.refetch();
+    void countsQuery.refetch();
+  };
 
   useEffect(() => {
     const runningIds = jobs.filter((j) => j.status === "running").map((j) => j.id);
@@ -225,7 +181,7 @@ export default function TranscodePage() {
       }
       toast.success(`Job ${shortId(job.id)} stopped`);
       window.setTimeout(() => {
-        void load(page, filter);
+        void queryClient.invalidateQueries({ queryKey: ["transcode"] });
       }, 1200);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Stop failed");
@@ -241,10 +197,8 @@ export default function TranscodePage() {
   const handleRetry = async (job: TranscodeJob) => {
     setRetryingIds((prev) => new Set(prev).add(job.id));
     try {
-      const updated = await retryTranscodeJob(job.id);
-      setJobs((prev) => prev.map((j) => (j.id === job.id ? updated : j)));
+      await retryMutation.mutateAsync(job.id);
       toast.success(`Job ${shortId(job.id)} re-queued`);
-      void loadCounts();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Retry failed");
     } finally {
@@ -299,7 +253,7 @@ export default function TranscodePage() {
         </div>
       )}
 
-      <AdminCard title="Encoding queue" action="Refresh" actionOnClick={() => load(page, filter)}>
+      <AdminCard title="Encoding queue" action="Refresh" actionOnClick={reload}>
         {!isLoading && !error && (
           <div className="mb-4 flex gap-1 border-b border-border -mt-1">
             {FILTERS.map((tab) => {
@@ -325,10 +279,12 @@ export default function TranscodePage() {
           </div>
         )}
 
-        {error ? (
+        {isLoading && !jobs.length ? (
+          <InlineLoading label="Loading transcode jobs" />
+        ) : error ? (
           <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-4 text-[12px] text-warning">
             <div>{error}</div>
-            <button type="button" onClick={() => load(page, filter)} className="mt-2 font-bold hover:underline">
+            <button type="button" onClick={reload} className="mt-2 font-bold hover:underline">
               Retry
             </button>
           </div>
@@ -450,13 +406,12 @@ export default function TranscodePage() {
               pages={pages}
               total={total}
               pageSize={PAGE_SIZE}
-              isLoading={isLoading}
+              isLoading={jobsQuery.isFetching}
               onPageChange={setPage}
             />
           </div>
         )}
       </AdminCard>
-      <LoadingOverlay open={isLoading} label="Loading transcode jobs" />
     </AdminShell>
   );
 }

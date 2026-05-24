@@ -1,54 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
 import { AdminCard } from "./AdminCard";
-import { listAdminTopTitles, type ApiTopTitleReport } from "../lib/api";
+import { useTopTitles } from "../hooks/adminQueries";
 
 const TOP_COUNT = 10;
 
 export function DashboardTopMovies() {
-  const [movies, setMovies] = useState<ApiTopTitleReport[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading, error, refetch } = useTopTitles({
+    page: 1,
+    pageSize: TOP_COUNT,
+    contentType: "single",
+  });
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await listAdminTopTitles({
-        page: 1,
-        pageSize: TOP_COUNT,
-        contentType: "single",
-      });
-      setMovies(res.items);
-    } catch (err) {
-      setMovies([]);
-      setError(err instanceof Error ? err.message : "Could not load top movies");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
+  const movies = data?.items ?? [];
   const maxPurchases = Math.max(...movies.map((m) => m.purchase_count), 0);
 
   return (
     <AdminCard title="Top movies" action="Full report" actionHref="/reports">
-      {loading ? (
+      {isLoading && !movies.length ? (
         <div className="flex h-40 items-center justify-center">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-brand" />
         </div>
       ) : error ? (
         <div className="rounded-md border border-dashed border-border bg-bg px-4 py-8 text-center">
           <p className="text-[13px] font-semibold text-text">Could not load rankings</p>
-          <p className="mt-1 text-[12px] text-text-muted">{error}</p>
+          <p className="mt-1 text-[12px] text-text-muted">
+            {error instanceof Error ? error.message : "Could not load rankings"}
+          </p>
           <button
             type="button"
-            onClick={() => void load()}
+            onClick={() => void refetch()}
             className="mt-3 text-[12px] font-bold text-brand hover:underline"
           >
             Retry

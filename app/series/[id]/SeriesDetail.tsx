@@ -5,7 +5,7 @@ import { ChevronDown, ChevronRight, Lock, PlayCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { AdminCard } from "../../components/AdminCard";
 import { AdminHlsPlayer } from "../../components/AdminHlsPlayer";
-import { LoadingOverlay } from "../../components/LoadingOverlay";
+import { InlineLoading } from "../../components/InlineLoading";
 import { useMovieCatalog } from "../../components/MovieCatalogProvider";
 import type { Episode } from "../../lib/adminData";
 import { statusClasses } from "../../lib/adminData";
@@ -81,7 +81,11 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
   }
 
   if (isLoading) {
-    return <LoadingOverlay open label="Loading series detail" />;
+    return (
+      <AdminCard title="Series detail">
+        <InlineLoading label="Loading series detail" />
+      </AdminCard>
+    );
   }
 
   if (error) {

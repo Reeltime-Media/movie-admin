@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AdminCard } from "../components/AdminCard";
-import { LoadingOverlay } from "../components/LoadingOverlay";
 import { AdminShell } from "../components/AdminShell";
 import { RevenuePanel, useRevenueTimeline } from "../components/RevenuePanel";
-import { getAdminDashboardSummary, type ApiDashboardSummary } from "../lib/api";
+import { useDashboardSummary } from "../hooks/adminQueries";
 import { formatUsdDisplay } from "../lib/money";
 
 const DAY_OPTIONS = [7, 30, 90] as const;
@@ -24,8 +23,7 @@ export default function RevenuePage() {
   const [days, setDays] = useState<number>(30);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [summary, setSummary] = useState<ApiDashboardSummary | null>(null);
-  const [summaryLoading, setSummaryLoading] = useState(true);
+  const { data: summary, isLoading: summaryLoading } = useDashboardSummary();
 
   const dateRange = useMemo(
     () => (dateFrom || dateTo ? { from: dateFrom, to: dateTo } : undefined),
@@ -34,13 +32,6 @@ export default function RevenuePage() {
   const hasDateFilter = Boolean(dateFrom || dateTo);
 
   const { timeline, loading, error, reload } = useRevenueTimeline(days, dateRange);
-
-  useEffect(() => {
-    void getAdminDashboardSummary()
-      .then(setSummary)
-      .catch(() => setSummary(null))
-      .finally(() => setSummaryLoading(false));
-  }, []);
 
   const dailyRows = [...(timeline?.points ?? [])].reverse().filter((row) => {
     const amount = Number.parseFloat(row.revenue_usd) || 0;
@@ -169,7 +160,6 @@ export default function RevenuePage() {
         to review individual transactions.
       </p>
 
-      <LoadingOverlay open={summaryLoading && loading} label="Loading revenue" />
     </AdminShell>
   );
 }

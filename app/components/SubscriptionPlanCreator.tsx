@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "./AdminCard";
-import { LoadingOverlay } from "./LoadingOverlay";
+import { InlineLoading } from "./InlineLoading";
+import { useSubscriptionPlans } from "../hooks/adminQueries";
 import {
   createAdminSubscriptionPlan,
   deleteAdminSubscriptionPlan,
-  listAdminSubscriptionPlans,
   updateAdminSubscriptionPlan,
   type ApiSubscriptionPlan,
 } from "../lib/api";
@@ -41,37 +41,26 @@ function formatPrice(value: string) {
 }
 
 export function SubscriptionPlanCreator() {
-  const [plans, setPlans] = useState<ApiSubscriptionPlan[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { plansQuery, invalidate } = useSubscriptionPlans();
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingPlan, setEditingPlan] = useState<ApiSubscriptionPlan | null>(null);
   const [form, setForm] = useState<PlanFormState>(emptyForm);
 
-  const loadPlans = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      setPlans(await listAdminSubscriptionPlans());
-    } catch (err) {
-      let message = err instanceof Error ? err.message : "Could not load subscription plans.";
-      if (message.includes("subscription_plans") || message.includes("alembic upgrade")) {
-        message = `${message} Run: cd movie-api && alembic upgrade head`;
-      }
-      setError(message);
-      setPlans([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void loadPlans();
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [loadPlans]);
+  const plans = plansQuery.data ?? [];
+  const isLoading = plansQuery.isLoading;
+  const error = plansQuery.error
+    ? (() => {
+        let message =
+          plansQuery.error instanceof Error
+            ? plansQuery.error.message
+            : "Could not load subscription plans.";
+        if (message.includes("subscription_plans") || message.includes("alembic upgrade")) {
+          message = `${message} Run: cd movie-api && alembic upgrade head`;
+        }
+        return message;
+      })()
+    : null;
 
   useEffect(() => {
     if (!showForm) return;
@@ -132,7 +121,7 @@ export function SubscriptionPlanCreator() {
     setIsSaving(true);
     try {
       if (editingPlan) {
-        const updated = await updateAdminSubscriptionPlan(editingPlan.id, {
+        await updateAdminSubscriptionPlan(editingPlan.id, {
           name: form.name.trim(),
           description: form.description.trim() || null,
           priceUsd: priceResult.value,
@@ -140,10 +129,9 @@ export function SubscriptionPlanCreator() {
           isActive: form.isActive,
           sortOrder: Number.parseInt(form.sortOrder, 10) || 0,
         });
-        setPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
         toast.success("Plan updated.");
       } else {
-        const created = await createAdminSubscriptionPlan({
+        await createAdminSubscriptionPlan({
           code: form.code.trim().toLowerCase().replace(/\s+/g, "_"),
           name: form.name.trim(),
           description: form.description.trim() || null,
@@ -152,9 +140,9 @@ export function SubscriptionPlanCreator() {
           isActive: form.isActive,
           sortOrder: Number.parseInt(form.sortOrder, 10) || 0,
         });
-        setPlans((prev) => [...prev, created].sort((a, b) => a.sort_order - b.sort_order));
         toast.success("Plan created.");
       }
+      invalidate();
       closeForm();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save plan.");
@@ -168,7 +156,7 @@ export function SubscriptionPlanCreator() {
     setIsSaving(true);
     try {
       await deleteAdminSubscriptionPlan(plan.id);
-      setPlans((prev) => prev.filter((p) => p.id !== plan.id));
+      invalidate();
       toast.success("Plan deleted.");
       if (editingPlan?.id === plan.id) closeForm();
     } catch (err) {
@@ -193,10 +181,12 @@ export function SubscriptionPlanCreator() {
         used for new checkouts.
       </p>
 
-      {error ? (
+      {isLoading && !plans.length ? (
+        <InlineLoading label="Loading plans" />
+      ) : error ? (
         <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-4 text-[12px] text-warning">
           <div>{error}</div>
-          <button type="button" onClick={() => void loadPlans()} className="mt-2 font-bold hover:underline">
+          <button type="button" onClick={() => void plansQuery.refetch()} className="mt-2 font-bold hover:underline">
             Retry
           </button>
         </div>
@@ -410,7 +400,6 @@ export function SubscriptionPlanCreator() {
         </form>
       </div>
     ) : null}
-    <LoadingOverlay open={isLoading} label="Loading plans" />
     </>
   );
 }

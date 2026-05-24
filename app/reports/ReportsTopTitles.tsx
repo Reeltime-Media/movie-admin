@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { AdminCard } from "../components/AdminCard";
 import { AdminPagination } from "../components/AdminPagination";
-import { LoadingOverlay } from "../components/LoadingOverlay";
-import { listAdminTopTitles, type ApiTopTitleReport } from "../lib/api";
+import { InlineLoading } from "../components/InlineLoading";
+import { useTopTitles } from "../hooks/adminQueries";
 
 const PAGE_SIZE = 10;
 
@@ -15,36 +15,20 @@ function titleTypeLabel(type: string) {
 }
 
 export function ReportsTopTitles() {
-  const [titles, setTitles] = useState<ApiTopTitleReport[]>([]);
   const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading, isFetching, error, refetch } = useTopTitles({
+    page,
+    pageSize: PAGE_SIZE,
+  });
 
-  const loadTitles = useCallback(async (targetPage = page) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const res = await listAdminTopTitles({ page: targetPage, pageSize: PAGE_SIZE });
-      setTitles(res.items);
-      setPage(res.page);
-      setPages(res.pages);
-      setTotal(res.total);
-    } catch (err) {
-      setTitles([]);
-      setError(err instanceof Error ? err.message : "Could not load report data");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page]);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void loadTitles(page);
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [page, loadTitles]);
+  const titles = data?.items ?? [];
+  const pages = data?.pages ?? 1;
+  const total = data?.total ?? 0;
+  const errorMessage = error
+    ? error instanceof Error
+      ? error.message
+      : "Could not load report data"
+    : null;
 
   const maxRevenue = Math.max(
     ...titles.map((item) => Number.parseFloat(item.revenue_usd) || 0),
@@ -52,11 +36,13 @@ export function ReportsTopTitles() {
   );
 
   return (
-    <AdminCard title="Top titles" action="Refresh" actionOnClick={() => loadTitles(page)}>
-      {error ? (
+    <AdminCard title="Top titles" action="Refresh" actionOnClick={() => void refetch()}>
+      {isLoading && !titles.length ? (
+        <InlineLoading label="Loading report data" />
+      ) : errorMessage ? (
         <div className="rounded-md border border-dashed border-border bg-bg px-4 py-8 text-center">
           <p className="text-[13px] font-semibold text-text">Could not load report data</p>
-          <p className="mt-1 text-[12px] text-text-muted">{error}</p>
+          <p className="mt-1 text-[12px] text-text-muted">{errorMessage}</p>
         </div>
       ) : titles.length === 0 && !isLoading ? (
         <div className="rounded-md border border-dashed border-border bg-bg px-4 py-8 text-center">
@@ -97,12 +83,11 @@ export function ReportsTopTitles() {
             pages={pages}
             total={total}
             pageSize={PAGE_SIZE}
-            isLoading={isLoading}
+            isLoading={isFetching}
             onPageChange={setPage}
           />
         </div>
       )}
-      <LoadingOverlay open={isLoading} label="Loading report data" />
     </AdminCard>
   );
 }

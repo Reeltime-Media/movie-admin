@@ -1,35 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { LoadingOverlay } from "./components/LoadingOverlay";
 import { AdminShell } from "./components/AdminShell";
-import { DashboardMoviesPreview } from "./components/DashboardMoviesPreview";
 import { DashboardRevenue } from "./components/DashboardRevenue";
 import { DashboardTopMovies } from "./components/DashboardTopMovies";
-import { useMovieCatalog } from "./components/MovieCatalogProvider";
-import { getAdminDashboardSummary, type ApiDashboardSummary } from "./lib/api";
+import { useMovieCatalog } from "./hooks/useMovieCatalog";
+import { useDashboardSummary } from "./hooks/adminQueries";
 
 export default function Home() {
   const { movies, isLoading: moviesLoading } = useMovieCatalog();
-  const [summary, setSummary] = useState<ApiDashboardSummary | null>(null);
-  const [summaryLoading, setSummaryLoading] = useState(true);
-  const [summaryError, setSummaryError] = useState<string | null>(null);
+  const {
+    data: summary,
+    isLoading: summaryLoading,
+    error: summaryQueryError,
+  } = useDashboardSummary();
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void getAdminDashboardSummary()
-        .then((data) => {
-          setSummary(data);
-          setSummaryError(null);
-        })
-        .catch((err) => {
-          setSummary(null);
-          setSummaryError(err instanceof Error ? err.message : "Could not load dashboard summary");
-        })
-        .finally(() => setSummaryLoading(false));
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, []);
+  const summaryError = summaryQueryError
+    ? summaryQueryError instanceof Error
+      ? summaryQueryError.message
+      : "Could not load dashboard summary"
+    : null;
 
   const movieCount = movies.filter((m) => m.type === "Movie").length;
   const seriesCount = movies.filter((m) => m.type === "Series").length;
@@ -88,16 +77,9 @@ export default function Home() {
         <DashboardRevenue />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(340px,0.85fr)]">
-        <DashboardMoviesPreview />
-
+      <div className="mt-6">
         <DashboardTopMovies />
       </div>
-
-      <LoadingOverlay
-        open={moviesLoading || summaryLoading}
-        label="Loading dashboard"
-      />
     </AdminShell>
   );
 }
