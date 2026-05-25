@@ -45,15 +45,37 @@ export type TranscodeJob = {
   episode_number?: number | null;
 };
 
+export type MultipartPartUrl = {
+  part_number: number;
+  url: string;
+};
+
 export type MovieUploadStartResponse = {
   content_id: string;
   slug: string;
   upload_id: string;
   source_key: string;
   part_size: number;
+  part_count: number;
+  part_urls: MultipartPartUrl[];
   poster_key: string | null;
   poster_upload_url: string | null;
 };
+
+export type EpisodeUploadStartResponse = {
+  content_id: string;
+  episode_slug: string;
+  upload_id: string;
+  source_key: string;
+  part_size: number;
+  part_count: number;
+  part_urls: MultipartPartUrl[];
+  poster_key: string | null;
+  poster_upload_url: string | null;
+};
+
+const MULTIPART_UPLOAD_CONCURRENCY = 4;
+const EPISODE_UPLOAD_CONCURRENCY = 3;
 
 export type MovieAssetUploadStartResponse = {
   source_key: string | null;
@@ -270,7 +292,23 @@ export async function loginAdmin(email: string, password: string) {
     body,
   });
   setAdminToken(result.access_token);
+  const me = await apiFetch<ApiUser>("/users/me");
+  if (me.role !== "admin") {
+    clearAdminToken();
+    throw new Error("This account does not have admin access.");
+  }
   return result;
+}
+
+export async function fetchTranscodeJobsProgress(): Promise<Record<string, number>> {
+  return apiFetch<Record<string, number>>("/admin/transcode-jobs/progress");
+}
+
+export async function cancelTranscodeJob(jobId: string): Promise<{ job_id: string; cancelled: boolean }> {
+  return apiFetch<{ job_id: string; cancelled: boolean }>(
+    `/admin/transcode-jobs/${jobId}/cancel`,
+    { method: "POST" },
+  );
 }
 
 export async function listUsers(query: PaginationQuery = {}) {
@@ -384,6 +422,7 @@ export async function completeAdminMovieAssetUpload(
 
 export async function startMovieUpload(input: {
   title: string;
+  fileSizeBytes: number;
   videoContentType: string;
   posterContentType?: string;
 }) {
@@ -392,6 +431,7 @@ export async function startMovieUpload(input: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       title: input.title,
+      file_size_bytes: input.fileSizeBytes,
       video_content_type: input.videoContentType,
       poster_content_type: input.posterContentType ?? null,
     }),
@@ -498,38 +538,124 @@ export function uploadFileToPresignedUrl(
   );
 }
 
-export async function uploadMovieVideoMultipart(
+async function runWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) return [];
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (true) {
+      const index = nextIndex;
+      nextIndex += 1;
+      if (index >= items.length) return;
+      results[index] = await fn(items[index], index);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, () => worker()),
+  );
+  return results;
+}
+
+export async function runPool<T>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<void>,
+): Promise<void> {
+  await runWithConcurrency(items, limit, async (item, index) => {
+    await fn(item, index);
+    return undefined;
+  });
+}
+
+export { EPISODE_UPLOAD_CONCURRENCY };
+
+async function uploadVideoMultipart(
   file: File,
   input: {
-    sourceKey: string;
-    uploadId: string;
     partSize: number;
+    partUrls: MultipartPartUrl[];
+    getPartUrl?: (partNumber: number) => Promise<string>;
   },
   onProgress?: (percent: number) => void,
-) {
+): Promise<{ partNumber: number; etag: string }[]> {
   const contentType = file.type || "video/mp4";
   const partSize = input.partSize;
   const totalParts = Math.max(1, Math.ceil(file.size / partSize));
-  const parts: { partNumber: number; etag: string }[] = [];
+  const urlByPart = new Map(input.partUrls.map((part) => [part.part_number, part.url]));
+  const bytesLoaded = new Array<number>(totalParts + 1).fill(0);
 
-  for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
+  const reportProgress = () => {
+    if (!onProgress) return;
+    const loaded = bytesLoaded.slice(1).reduce((sum, value) => sum + value, 0);
+    onProgress(Math.min(100, Math.round((loaded / file.size) * 100)));
+  };
+
+  const uploadPart = async (partNumber: number) => {
     const start = (partNumber - 1) * partSize;
     const end = Math.min(start + partSize, file.size);
     const chunk = file.slice(start, end);
 
-    const { url } = await getMovieUploadPartUrl({
-      sourceKey: input.sourceKey,
-      uploadId: input.uploadId,
-      partNumber,
+    let url = urlByPart.get(partNumber);
+    if (!url && input.getPartUrl) {
+      url = await input.getPartUrl(partNumber);
+    }
+    if (!url) {
+      throw new Error(`Missing presigned URL for part ${partNumber}`);
+    }
+
+    const etag = await uploadBlobToPresignedUrl(url, chunk, contentType, (percent) => {
+      bytesLoaded[partNumber] = Math.round((chunk.size * percent) / 100);
+      reportProgress();
     });
+    bytesLoaded[partNumber] = chunk.size;
+    reportProgress();
+    return { partNumber, etag };
+  };
 
-    const etag = await uploadBlobToPresignedUrl(url, chunk, contentType);
-    parts.push({ partNumber, etag });
+  const partNumbers = Array.from({ length: totalParts }, (_, index) => index + 1);
+  const parts = await runWithConcurrency(
+    partNumbers,
+    MULTIPART_UPLOAD_CONCURRENCY,
+    (partNumber) => uploadPart(partNumber),
+  );
+  return parts.sort((a, b) => a.partNumber - b.partNumber);
+}
 
-    onProgress?.(Math.round((partNumber / totalParts) * 100));
-  }
-
-  return parts;
+export async function uploadMovieVideoMultipart(
+  file: File,
+  input: {
+    partSize: number;
+    partUrls: MultipartPartUrl[];
+    sourceKey?: string;
+    uploadId?: string;
+  },
+  onProgress?: (percent: number) => void,
+) {
+  return uploadVideoMultipart(
+    file,
+    {
+      partSize: input.partSize,
+      partUrls: input.partUrls,
+      getPartUrl:
+        input.sourceKey && input.uploadId
+          ? async (partNumber) => {
+              const { url } = await getMovieUploadPartUrl({
+                sourceKey: input.sourceKey!,
+                uploadId: input.uploadId!,
+                partNumber,
+              });
+              return url;
+            }
+          : undefined,
+    },
+    onProgress,
+  );
 }
 
 // ── Series ──────────────────────────────────────────────────────────────────
@@ -641,7 +767,118 @@ export async function updateEpisodeApi(
   });
 }
 
-export async function addEpisodeApi(
+export async function startEpisodeUpload(
+  seriesSlug: string,
+  input: {
+    seasonNumber: number;
+    episodeNumber: number;
+    fileSizeBytes: number;
+    videoContentType: string;
+    posterContentType?: string;
+  },
+) {
+  return apiFetch<EpisodeUploadStartResponse>(`/series/${seriesSlug}/episodes/uploads/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      season_number: input.seasonNumber,
+      episode_number: input.episodeNumber,
+      file_size_bytes: input.fileSizeBytes,
+      video_content_type: input.videoContentType,
+      poster_content_type: input.posterContentType ?? null,
+    }),
+  });
+}
+
+export async function getEpisodeUploadPartUrl(
+  seriesSlug: string,
+  input: {
+    sourceKey: string;
+    uploadId: string;
+    partNumber: number;
+  },
+) {
+  const params = new URLSearchParams({
+    source_key: input.sourceKey,
+    upload_id: input.uploadId,
+    part_number: String(input.partNumber),
+  });
+  return apiFetch<{ url: string }>(`/series/${seriesSlug}/episodes/uploads/part-url?${params}`);
+}
+
+export async function completeEpisodeUpload(
+  seriesSlug: string,
+  input: {
+    contentId: string;
+    episodeSlug: string;
+    sourceKey: string;
+    uploadId: string;
+    parts: { partNumber: number; etag: string }[];
+    title: string;
+    seasonNumber: number;
+    episodeNumber: number;
+    description?: string;
+    runtime?: string;
+    status: string;
+    isFree?: boolean;
+    posterKey?: string | null;
+  },
+) {
+  return apiFetch<ApiContent>(`/series/${seriesSlug}/episodes/uploads/complete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      content_id: input.contentId,
+      episode_slug: input.episodeSlug,
+      source_key: input.sourceKey,
+      upload_id: input.uploadId,
+      parts: input.parts.map((part) => ({
+        part_number: part.partNumber,
+        etag: part.etag,
+      })),
+      title: input.title,
+      season_number: input.seasonNumber,
+      episode_number: input.episodeNumber,
+      description: input.description ?? null,
+      runtime: input.runtime ?? null,
+      status: input.status,
+      is_free: input.isFree ?? false,
+      poster_key: input.posterKey ?? null,
+    }),
+  });
+}
+
+export async function uploadEpisodeVideoMultipart(
+  file: File,
+  seriesSlug: string,
+  input: {
+    partSize: number;
+    partUrls: MultipartPartUrl[];
+    sourceKey: string;
+    uploadId: string;
+  },
+  onProgress?: (percent: number) => void,
+) {
+  return uploadVideoMultipart(
+    file,
+    {
+      partSize: input.partSize,
+      partUrls: input.partUrls,
+      getPartUrl: async (partNumber) => {
+        const { url } = await getEpisodeUploadPartUrl(seriesSlug, {
+          sourceKey: input.sourceKey,
+          uploadId: input.uploadId,
+          partNumber,
+        });
+        return url;
+      },
+    },
+    onProgress,
+  );
+}
+
+/** Upload one episode video (and optional poster) via multipart direct-to-R2. */
+export async function uploadEpisodeWithAssets(
   seriesSlug: string,
   data: {
     title: string;
@@ -654,18 +891,47 @@ export async function addEpisodeApi(
   },
   videoFile: File,
   posterFile?: File,
+  onProgress?: (percent: number) => void,
 ): Promise<ApiContent> {
-  const fd = new FormData();
-  fd.append("title", data.title);
-  fd.append("season_number", String(data.seasonNumber));
-  fd.append("episode_number", String(data.episodeNumber));
-  if (data.description) fd.append("description", data.description);
-  if (data.runtime) fd.append("runtime", data.runtime);
-  fd.append("status", data.status);
-  fd.append("is_free", data.isFree ? "true" : "false");
-  fd.append("video", videoFile);
-  if (posterFile) fd.append("poster", posterFile);
-  return multipartPost<ApiContent>(`/series/${seriesSlug}/episodes`, fd);
+  const upload = await startEpisodeUpload(seriesSlug, {
+    seasonNumber: data.seasonNumber,
+    episodeNumber: data.episodeNumber,
+    fileSizeBytes: videoFile.size,
+    videoContentType: videoFile.type || "video/mp4",
+    posterContentType: posterFile?.type,
+  });
+
+  if (posterFile && upload.poster_upload_url) {
+    await uploadFileToPresignedUrl(upload.poster_upload_url, posterFile);
+  }
+
+  const parts = await uploadEpisodeVideoMultipart(
+    videoFile,
+    seriesSlug,
+    {
+      partSize: upload.part_size,
+      partUrls: upload.part_urls,
+      sourceKey: upload.source_key,
+      uploadId: upload.upload_id,
+    },
+    onProgress,
+  );
+
+  return completeEpisodeUpload(seriesSlug, {
+    contentId: upload.content_id,
+    episodeSlug: upload.episode_slug,
+    sourceKey: upload.source_key,
+    uploadId: upload.upload_id,
+    parts,
+    title: data.title,
+    seasonNumber: data.seasonNumber,
+    episodeNumber: data.episodeNumber,
+    description: data.description,
+    runtime: data.runtime,
+    status: data.status,
+    isFree: data.isFree,
+    posterKey: upload.poster_key,
+  });
 }
 
 // ── Transcode jobs ───────────────────────────────────────────────────────────

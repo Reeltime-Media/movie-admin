@@ -9,13 +9,13 @@ import { AdminPagination } from "../components/AdminPagination";
 import { InlineLoading } from "../components/InlineLoading";
 import { AdminShell } from "../components/AdminShell";
 import { useTranscodeJobs } from "../hooks/adminQueries";
-import { type TranscodeJob } from "../lib/api";
+import {
+  cancelTranscodeJob,
+  fetchTranscodeJobsProgress,
+  type TranscodeJob,
+} from "../lib/api";
 
 type StatusFilter = "all" | "queued" | "running" | "success" | "failed";
-
-const TRANSCODE_URL = (
-  process.env.NEXT_PUBLIC_TRANSCODE_URL ?? "http://localhost:8001"
-).replace(/\/+$/, "");
 
 const PAGE_SIZE = 20;
 
@@ -155,9 +155,7 @@ export default function TranscodePage() {
 
     const fetchProgress = async () => {
       try {
-        const res = await fetch(`${TRANSCODE_URL}/jobs/progress`);
-        if (!res.ok) return;
-        const data = (await res.json()) as Record<string, number>;
+        const data = await fetchTranscodeJobsProgress();
         setProgressMap((prev) => ({ ...prev, ...data }));
       } catch {
         // transcoder unreachable — silently skip
@@ -174,11 +172,7 @@ export default function TranscodePage() {
   const handleStop = async (job: TranscodeJob) => {
     setStoppingIds((prev) => new Set(prev).add(job.id));
     try {
-      const res = await fetch(`${TRANSCODE_URL}/jobs/${job.id}/cancel`, { method: "POST" });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { detail?: string };
-        throw new Error(data.detail ?? "Stop failed");
-      }
+      await cancelTranscodeJob(job.id);
       toast.success(`Job ${shortId(job.id)} stopped`);
       window.setTimeout(() => {
         void queryClient.invalidateQueries({ queryKey: ["transcode"] });

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { AdminCard } from "../components/AdminCard";
 import { AdminCatalogSearchBar } from "../components/AdminCatalogSearchBar";
 import { AdminPagination } from "../components/AdminPagination";
 import { InlineLoading } from "../components/InlineLoading";
@@ -111,9 +112,9 @@ export function MovieManagementSection() {
       </div>
 
       {isLoading && moviesOnly.length === 0 ? (
-        <div className="rounded-lg border border-border bg-surface">
+        <AdminCard title={tableTitleForFilter(listFilter)}>
           <InlineLoading label="Loading movies" />
-        </div>
+        </AdminCard>
       ) : (
         <>
           <MovieManagementTable

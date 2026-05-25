@@ -284,6 +284,7 @@ export default function NewMoviePage() {
       try {
         const upload = await startMovieUpload({
           title: fields.title,
+          fileSizeBytes: video.size,
           videoContentType: video.type || "video/mp4",
           posterContentType: posterImage?.type,
         });
@@ -297,9 +298,8 @@ export default function NewMoviePage() {
         const parts = await uploadMovieVideoMultipart(
           video,
           {
-            sourceKey: upload.source_key,
-            uploadId: upload.upload_id,
             partSize: upload.part_size,
+            partUrls: upload.part_urls,
           },
           (pct) => updateJob(movieJobId, pct),
         );
@@ -435,7 +435,7 @@ export default function NewMoviePage() {
                     onChange={(e) => setTrailerUrl(e.target.value)}
                   />
                 </Field>
-                <TrailerPreview url={trailerUrl} />
+                <TrailerPreview url={trailerUrl} className="max-w-sm" />
               </div>
 
               <div className="md:col-span-2">

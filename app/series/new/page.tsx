@@ -11,7 +11,12 @@ import { GenreMultiSelect } from "../../components/GenreMultiSelect";
 import { useMovieCatalog } from "../../components/MovieCatalogProvider";
 import { SeasonsEpisodesEditor } from "../../components/SeasonsEpisodesEditor";
 import type { Season, Status } from "../../lib/adminData";
-import { addEpisodeApi, createSeries } from "../../lib/api";
+import {
+  createSeries,
+  EPISODE_UPLOAD_CONCURRENCY,
+  runPool,
+  uploadEpisodeWithAssets,
+} from "../../lib/api";
 import { TrailerPreview } from "../../components/TrailerPreview";
 import { useUploadProgress } from "../../components/UploadProgressContext";
 import { formatGenres } from "../../lib/genres";
@@ -30,7 +35,7 @@ const selectClass =
 const fileInputClass =
   "w-full rounded-md border border-dashed border-border bg-bg px-3 py-4 text-[12px] text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-brand file:px-3 file:py-2 file:text-[12px] file:font-bold file:text-white hover:border-border-hover";
 
-const stepLabels = ["Seasons", "Details", "Episode media"] as const;
+const stepLabels = ["Details", "Seasons", "Episode media"] as const;
 
 function parseStatus(s: string): Status {
   if (s === "Published" || s === "Draft" || s === "Scheduled" || s === "Review") return s;
@@ -89,7 +94,7 @@ export default function NewSeriesPage() {
       toast.warning(message);
       return;
     }
-    setStep(1);
+    setStep(2);
   };
 
   const continueFromDetails = () => {
@@ -109,7 +114,7 @@ export default function NewSeriesPage() {
       toast.warning(message);
       return;
     }
-    setStep(2);
+    setStep(1);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -163,16 +168,14 @@ export default function NewSeriesPage() {
         const episodesWithVideo = allEpisodes.filter((x) => x.ep.videoFile);
         let done = 0;
 
-        for (const { season, ep } of episodesWithVideo) {
+        await runPool(episodesWithVideo, EPISODE_UPLOAD_CONCURRENCY, async ({ season, ep }) => {
           setJobLabel(seriesJobId, `Uploading S${season.number}E${ep.number} – ${ep.title}…`);
-          updateJob(seriesJobId, Math.round((done / episodesWithVideo.length) * 100));
-          await addEpisodeApi(
+          await uploadEpisodeWithAssets(
             series.slug,
             {
               title: ep.title,
               seasonNumber: season.number,
               episodeNumber: ep.number,
-              description: undefined,
               runtime: ep.runtime || undefined,
               status: toApiStatus(status),
               isFree: Boolean(ep.isFree),
@@ -180,8 +183,9 @@ export default function NewSeriesPage() {
             ep.videoFile!,
             ep.posterFile,
           );
-          done++;
-        }
+          done += 1;
+          updateJob(seriesJobId, Math.round((done / episodesWithVideo.length) * 100));
+        });
 
         finishJob(seriesJobId);
         await refreshMovies();
@@ -202,7 +206,7 @@ export default function NewSeriesPage() {
     <AdminShell title="Upload new series">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <p className="max-w-[72ch] text-[13px] leading-relaxed text-text-muted">
-          Build seasons and episodes, enter show details, then attach poster and per-episode video
+          Enter show details, build seasons and episodes, then attach poster and per-episode video
           files.
         </p>
         <Link
@@ -237,34 +241,6 @@ export default function NewSeriesPage() {
 
       <form id="series-wizard-form" onSubmit={handleSubmit} className="w-full space-y-6">
         <div className={step === 0 ? "block" : "hidden"} aria-hidden={step !== 0}>
-          <AdminCard title="Seasons and episodes">
-            <p className="mb-5 text-[13px] text-text-muted">
-              Create every season and episode first. You will attach video and poster files for each
-              episode in the final step.
-            </p>
-            <SeasonsEpisodesEditor seasons={seasons} onChange={setSeasons} />
-            {seasonsError ? (
-              <p className="mt-4 text-[12px] font-semibold text-warning">{seasonsError}</p>
-            ) : null}
-            <div className="mt-6 flex flex-wrap justify-end gap-2">
-              <Link
-                href="/series"
-                className="rounded-md border border-border bg-bg px-4 py-2.5 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-              >
-                Cancel
-              </Link>
-              <button
-                type="button"
-                onClick={continueFromSeasons}
-                className="rounded-md bg-brand px-4 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
-              >
-                Continue
-              </button>
-            </div>
-          </AdminCard>
-        </div>
-
-        <div className={step === 1 ? "block" : "hidden"} aria-hidden={step !== 1}>
           <AdminCard title="Series details">
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Title">
@@ -324,6 +300,34 @@ export default function NewSeriesPage() {
             ) : null}
 
             <div className="mt-6 flex flex-wrap justify-end gap-2">
+              <Link
+                href="/series"
+                className="rounded-md border border-border bg-bg px-4 py-2.5 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
+              >
+                Cancel
+              </Link>
+              <button
+                type="button"
+                onClick={continueFromDetails}
+                className="rounded-md bg-brand px-4 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
+              >
+                Continue
+              </button>
+            </div>
+          </AdminCard>
+        </div>
+
+        <div className={step === 1 ? "block" : "hidden"} aria-hidden={step !== 1}>
+          <AdminCard title="Seasons and episodes">
+            <p className="mb-5 text-[13px] text-text-muted">
+              Create every season and episode. You will attach video and poster files for each
+              episode in the final step.
+            </p>
+            <SeasonsEpisodesEditor seasons={seasons} onChange={setSeasons} />
+            {seasonsError ? (
+              <p className="mt-4 text-[12px] font-semibold text-warning">{seasonsError}</p>
+            ) : null}
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setStep(0)}
@@ -333,7 +337,7 @@ export default function NewSeriesPage() {
               </button>
               <button
                 type="button"
-                onClick={continueFromDetails}
+                onClick={continueFromSeasons}
                 className="rounded-md bg-brand px-4 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
               >
                 Continue

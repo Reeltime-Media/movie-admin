@@ -17,13 +17,26 @@ function youtubeEmbedUrl(url: string): string | null {
   return null;
 }
 
-export function TrailerPreview({ url }: { url?: string | null }) {
+export function TrailerPreview({
+  url,
+  className,
+}: {
+  url?: string | null;
+  className?: string;
+}) {
   if (!url) return null;
 
   const embedUrl = youtubeEmbedUrl(url);
 
   return (
-    <div className="mt-4 overflow-hidden rounded-xl border border-border bg-[#0a0a0a] shadow-xl shadow-black/40">
+    <div
+      className={[
+        "mt-4 overflow-hidden rounded-xl border border-border bg-[#0a0a0a] shadow-xl shadow-black/40",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
         <div className="flex items-center gap-2">
           <div className="grid h-5 w-5 place-items-center rounded-full bg-brand/20">

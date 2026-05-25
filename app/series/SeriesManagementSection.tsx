@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { AdminCard } from "../components/AdminCard";
 import { AdminCatalogSearchBar } from "../components/AdminCatalogSearchBar";
 import { AdminPagination } from "../components/AdminPagination";
 import { InlineLoading } from "../components/InlineLoading";
@@ -111,9 +112,9 @@ export function SeriesManagementSection() {
       </div>
 
       {isLoading && seriesOnly.length === 0 ? (
-        <div className="rounded-lg border border-border bg-surface">
+        <AdminCard title={tableTitleForFilter(listFilter)}>
           <InlineLoading label="Loading series" />
-        </div>
+        </AdminCard>
       ) : (
         <>
           <SeriesManagementTable
