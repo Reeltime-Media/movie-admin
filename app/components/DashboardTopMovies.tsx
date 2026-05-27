@@ -14,7 +14,6 @@ export function DashboardTopMovies() {
   });
 
   const movies = data?.items ?? [];
-  const maxPurchases = Math.max(...movies.map((m) => m.purchase_count), 0);
 
   return (
     <AdminCard title="Top movies" action="Full report" actionHref="/reports">
@@ -45,15 +44,9 @@ export function DashboardTopMovies() {
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-[12px] text-text-muted">
-            Top {TOP_COUNT} by purchases, then unique viewers.
-          </p>
+          <p className="text-[12px] text-text-muted">Top {TOP_COUNT} by purchases.</p>
           {movies.map((movie, index) => {
             const rank = index + 1;
-            const barWidth =
-              maxPurchases > 0
-                ? Math.max(8, Math.round((movie.purchase_count / maxPurchases) * 100))
-                : Math.max(8, 100 - index * 8);
             return (
               <Link
                 key={movie.id}
@@ -72,19 +65,8 @@ export function DashboardTopMovies() {
                     </div>
                     <p className="mt-1.5 text-[11px] text-text-muted">
                       {movie.purchase_count} purchase{movie.purchase_count !== 1 ? "s" : ""}
-                      {" · "}
-                      {movie.watch_count} viewer{movie.watch_count !== 1 ? "s" : ""}
-                      {Number.parseFloat(movie.revenue_usd) > 0
-                        ? ` · $${movie.revenue_usd} revenue`
-                        : null}
                     </p>
                   </div>
-                </div>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface">
-                  <div
-                    className="h-full rounded-full bg-brand"
-                    style={{ width: `${barWidth}%` }}
-                  />
                 </div>
               </Link>
             );

@@ -17,7 +17,7 @@ import {
 
 type StatusFilter = "all" | "queued" | "running" | "success" | "failed";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 const FILTERS: { key: StatusFilter; label: string }[] = [
   { key: "all", label: "All" },
@@ -138,6 +138,7 @@ export default function TranscodePage() {
   const total = jobsQuery.data?.total ?? 0;
   const counts = countsQuery.data ?? { all: 0, queued: 0, running: 0, success: 0, failed: 0 };
   const isLoading = jobsQuery.isLoading;
+  const hasJobsData = Boolean(jobsQuery.data);
   const error = jobsQuery.error
     ? jobsQuery.error instanceof Error
       ? jobsQuery.error.message
@@ -211,7 +212,7 @@ export default function TranscodePage() {
 
   return (
     <AdminShell title="Transcode jobs">
-      {!isLoading && !error && (
+      {hasJobsData && !error && (
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {(["queued", "running", "success", "failed"] as const).map((key) => (
             <button
@@ -248,7 +249,7 @@ export default function TranscodePage() {
       )}
 
       <AdminCard title="Encoding queue" action="Refresh" actionOnClick={reload}>
-        {!isLoading && !error && (
+        {hasJobsData && !error && (
           <div className="mb-4 flex gap-1 border-b border-border -mt-1">
             {FILTERS.map((tab) => {
               const count =
@@ -273,7 +274,7 @@ export default function TranscodePage() {
           </div>
         )}
 
-        {isLoading && !jobs.length ? (
+        {!hasJobsData ? (
           <InlineLoading label="Loading transcode jobs" />
         ) : error ? (
           <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-4 text-[12px] text-warning">
@@ -282,7 +283,7 @@ export default function TranscodePage() {
               Retry
             </button>
           </div>
-        ) : jobs.length === 0 && !isLoading ? (
+        ) : jobs.length === 0 ? (
           <div className="rounded-md border border-dashed border-border bg-bg px-4 py-8 text-center">
             <p className="text-[13px] font-semibold text-text">No jobs</p>
             <p className="mt-1 text-[12px] text-text-muted">

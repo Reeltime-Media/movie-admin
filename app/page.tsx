@@ -29,7 +29,7 @@ export default function Home() {
   const stats = [
     {
       label: "Total users",
-      value: summaryLoading ? "--" : String(summary?.users.total ?? "—"),
+      value: summary?.users.total != null ? String(summary.users.total) : "--",
       delta: `${summary?.users.active ?? 0} active accounts`,
       tone: "text-text-muted",
     },
@@ -73,11 +73,8 @@ export default function Home() {
         ))}
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <DashboardRevenue />
-      </div>
-
-      <div className="mt-6">
         <DashboardTopMovies />
       </div>
     </AdminShell>
