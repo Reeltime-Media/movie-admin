@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createAdminSubscriptionPlan,
@@ -24,10 +25,16 @@ import { queryKeys } from "../lib/queryKeys";
 import type { RevenueDateRange } from "../components/RevenuePanel";
 
 export function useDashboardSummary() {
+  const [isAuthReady, setIsAuthReady] = useState(false);
+
+  useEffect(() => {
+    setIsAuthReady(true);
+  }, []);
+
   return useQuery({
     queryKey: queryKeys.dashboardSummary,
     queryFn: getAdminDashboardSummary,
-    enabled: typeof window !== "undefined" && Boolean(getAdminToken()),
+    enabled: isAuthReady && Boolean(getAdminToken()),
     staleTime: 60_000,
   });
 }
