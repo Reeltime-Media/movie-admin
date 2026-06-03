@@ -71,7 +71,7 @@ export function MovieDetail({ movieId }: { movieId: string }) {
         </Link>
       </div>
 
-      <section className="overflow-hidden rounded-xl border border-border bg-surface shadow-2xl">
+      <section className="overflow-hidden rounded-xl border border-border bg-surface">
         <header className="border-b border-border bg-surface-elevated px-6 py-6 md:px-10">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-[18px] font-extrabold tracking-[-0.02em]">Movie metadata</h2>

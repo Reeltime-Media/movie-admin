@@ -36,7 +36,7 @@ export default function LoginPage() {
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "radial-gradient(circle at 25% 20%, rgba(229,9,20,0.34), transparent 34%), linear-gradient(140deg, #23070a, #101010 48%, #050505)",
+              "radial-gradient(circle at 25% 20%, rgba(229,9,20,0.14), transparent 34%), linear-gradient(140deg, #fef2f2, #f8fafc 48%, #eff6ff)",
           }}
         />
         <div className="relative z-10 flex items-center gap-2.5">
@@ -44,7 +44,7 @@ export default function LoginPage() {
             R
           </div>
           <div>
-            <div className="text-[13px] font-black tracking-[0.08em] text-white">REELTIME</div>
+            <div className="text-[13px] font-black tracking-[0.08em] text-text">REELTIME</div>
             <div className="text-[11px] font-semibold text-text-muted">Admin console</div>
           </div>
         </div>
@@ -53,7 +53,7 @@ export default function LoginPage() {
           <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-brand">
             Restricted access
           </div>
-          <h1 className="text-[34px] font-extrabold leading-tight tracking-[-0.04em] text-white">
+          <h1 className="text-[34px] font-extrabold leading-tight tracking-[-0.04em] text-text">
             Manage content, pricing, and subscribers from one console.
           </h1>
           <p className="mt-4 text-[13px] leading-relaxed text-text-muted">
@@ -69,10 +69,10 @@ export default function LoginPage() {
             <div className="grid h-8 w-8 place-items-center rounded-md bg-brand text-[15px] font-black text-white">
               R
             </div>
-            <span className="text-[13px] font-black tracking-[0.08em] text-white">REELTIME</span>
+            <span className="text-[13px] font-black tracking-[0.08em] text-text">REELTIME</span>
           </Link>
 
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-2xl shadow-black/25">
+          <div className="rounded-xl border border-border bg-surface p-6">
             <div>
               <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-muted">
                 Admin sign in

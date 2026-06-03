@@ -5,9 +5,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
+import { AdminEmptyState } from "../components/AdminEmptyState";
+import { AdminErrorAlert } from "../components/AdminErrorAlert";
 import { AdminPagination } from "../components/AdminPagination";
+import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from "../components/AdminTable";
 import { InlineLoading } from "../components/InlineLoading";
 import { AdminShell } from "../components/AdminShell";
+import { adminBadgeClass, adminTdClass, adminUnderlineTabClass } from "../lib/adminUi";
 import { useTranscodeJobs } from "../hooks/adminQueries";
 import {
   cancelTranscodeJob,
@@ -27,12 +31,11 @@ const FILTERS: { key: StatusFilter; label: string }[] = [
   { key: "failed", label: "Failed" },
 ];
 
-function statusClass(status: string) {
-  const base = "rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-widest";
-  if (status === "success") return `${base} bg-success/15 text-success`;
-  if (status === "running") return `${base} bg-brand/15 text-brand`;
-  if (status === "failed") return `${base} bg-danger/15 text-danger`;
-  return `${base} bg-text-disabled/25 text-text-muted`;
+function statusTone(status: string): "success" | "brand" | "danger" | "muted" {
+  if (status === "success") return "success";
+  if (status === "running") return "brand";
+  if (status === "failed") return "danger";
+  return "muted";
 }
 
 function formatDate(iso: string | null) {
@@ -213,7 +216,7 @@ export default function TranscodePage() {
   return (
     <AdminShell title="Transcode jobs">
       {hasJobsData && !error && (
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {(["queued", "running", "success", "failed"] as const).map((key) => (
             <button
               key={key}
@@ -248,9 +251,9 @@ export default function TranscodePage() {
         </div>
       )}
 
-      <AdminCard title="Encoding queue" action="Refresh" actionOnClick={reload}>
+      <AdminCard title="Encoding queue" action="Refresh" actionOnClick={reload} flush>
         {hasJobsData && !error && (
-          <div className="mb-4 flex gap-1 border-b border-border -mt-1">
+          <div className="mb-4 flex flex-wrap gap-1 border-b border-border">
             {FILTERS.map((tab) => {
               const count =
                 tab.key === "all" ? counts.all : counts[tab.key as keyof typeof counts] ?? 0;
@@ -259,12 +262,7 @@ export default function TranscodePage() {
                   key={tab.key}
                   type="button"
                   onClick={() => setFilterAndResetPage(tab.key)}
-                  className={[
-                    "border-b-2 px-3 py-2 text-[12px] font-semibold transition-colors -mb-px whitespace-nowrap",
-                    filter === tab.key
-                      ? "border-brand text-brand"
-                      : "border-transparent text-text-muted hover:text-text",
-                  ].join(" ")}
+                  className={adminUnderlineTabClass(filter === tab.key)}
                 >
                   {tab.label}
                   <span className="ml-1 opacity-60">({count})</span>
@@ -277,44 +275,39 @@ export default function TranscodePage() {
         {!hasJobsData ? (
           <InlineLoading label="Loading transcode jobs" />
         ) : error ? (
-          <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-4 text-[12px] text-warning">
-            <div>{error}</div>
-            <button type="button" onClick={reload} className="mt-2 font-bold hover:underline">
-              Retry
-            </button>
-          </div>
+          <AdminErrorAlert message={error} onRetry={reload} />
         ) : jobs.length === 0 ? (
-          <div className="rounded-md border border-dashed border-border bg-bg px-4 py-8 text-center">
-            <p className="text-[13px] font-semibold text-text">No jobs</p>
-            <p className="mt-1 text-[12px] text-text-muted">
-              {filter === "all"
+          <AdminEmptyState
+            title="No jobs"
+            description={
+              filter === "all"
                 ? "Transcode jobs will appear here after a movie is uploaded."
-                : `No ${filter} jobs.`}
-            </p>
-          </div>
+                : `No ${filter} jobs.`
+            }
+          />
         ) : (
-          <div className="-mx-5 overflow-x-auto">
-            <table className="w-full min-w-160 text-left">
-              <thead>
-                <tr className="border-b border-border text-[11px] uppercase tracking-widest text-text-disabled">
-                  <th className="px-5 pb-3 font-bold">Title</th>
-                  <th className="px-5 pb-3 font-bold">Job ID</th>
-                  <th className="px-5 pb-3 font-bold">Status</th>
-                  <th className="px-5 pb-3 font-bold w-48">Progress</th>
-                  <th className="px-5 pb-3 font-bold">Attempts</th>
-                  <th className="px-5 pb-3 font-bold">Started</th>
-                  <th className="px-5 pb-3 font-bold">Finished</th>
-                  <th className="px-5 pb-3 font-bold">Error</th>
-                  <th className="px-5 pb-3 font-bold" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {jobs.map((job) => {
+          <>
+            <AdminTableWrap>
+              <div className="-mx-5">
+                <AdminTable minWidth="960px">
+                  <AdminTableHead>
+                    <AdminTh>Title</AdminTh>
+                    <AdminTh>Job ID</AdminTh>
+                    <AdminTh>Status</AdminTh>
+                    <AdminTh className="w-48">Progress</AdminTh>
+                    <AdminTh>Attempts</AdminTh>
+                    <AdminTh>Started</AdminTh>
+                    <AdminTh>Finished</AdminTh>
+                    <AdminTh>Error</AdminTh>
+                    <AdminTh />
+                  </AdminTableHead>
+                  <tbody className="divide-y divide-border">
+                    {jobs.map((job) => {
                   const href = transcodeJobHref(job);
                   const label = transcodeJobLabel(job);
                   return (
-                  <tr key={job.id} className="text-[13px]">
-                    <td className="px-5 py-4 max-w-xs">
+                  <tr key={job.id}>
+                    <td className={`${adminTdClass} max-w-xs`}>
                       {href ? (
                         <Link
                           href={href}
@@ -341,26 +334,26 @@ export default function TranscodePage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-4 font-mono text-[11px] text-text-muted" title={job.id}>
+                    <td className={`${adminTdClass} font-mono text-[11px] text-text-muted`} title={job.id}>
                       {shortId(job.id)}
                     </td>
-                    <td className="px-5 py-4">
-                      <span className={statusClass(job.status)}>{job.status}</span>
+                    <td className={adminTdClass}>
+                      <span className={adminBadgeClass(statusTone(job.status))}>{job.status}</span>
                     </td>
-                    <td className="px-5 py-4 w-48">
+                    <td className={`${adminTdClass} w-48`}>
                       <ProgressBar
                         pct={progressMap[job.id] ?? (job.status === "success" ? 100 : 0)}
                         status={job.status}
                       />
                     </td>
-                    <td className="px-5 py-4 tabular-nums text-text-muted">{job.attempts}</td>
-                    <td className="px-5 py-4 text-[12px] text-text-muted whitespace-nowrap">
+                    <td className={`${adminTdClass} tabular-nums text-text-muted`}>{job.attempts}</td>
+                    <td className={`${adminTdClass} text-[12px] text-text-muted whitespace-nowrap`}>
                       {formatDate(job.started_at)}
                     </td>
-                    <td className="px-5 py-4 text-[12px] text-text-muted whitespace-nowrap">
+                    <td className={`${adminTdClass} text-[12px] text-text-muted whitespace-nowrap`}>
                       {formatDate(job.finished_at)}
                     </td>
-                    <td className="px-5 py-4 max-w-xs">
+                    <td className={`${adminTdClass} max-w-xs`}>
                       {job.error ? (
                         <span className="text-[11px] text-danger line-clamp-2" title={job.error}>
                           {job.error}
@@ -369,7 +362,7 @@ export default function TranscodePage() {
                         <span className="text-text-disabled">—</span>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-right">
+                    <td className={`${adminTdClass} text-right`}>
                       {job.status === "running" && (
                         <button
                           type="button"
@@ -395,7 +388,9 @@ export default function TranscodePage() {
                   );
                 })}
               </tbody>
-            </table>
+                </AdminTable>
+              </div>
+            </AdminTableWrap>
             <AdminPagination
               page={page}
               pages={pages}
@@ -404,7 +399,7 @@ export default function TranscodePage() {
               isLoading={jobsQuery.isFetching}
               onPageChange={setPage}
             />
-          </div>
+          </>
         )}
       </AdminCard>
     </AdminShell>

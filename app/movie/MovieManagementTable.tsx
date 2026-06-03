@@ -55,10 +55,12 @@ export function MovieManagementTable({
   entries,
   tableTitle = "All titles",
   listFilter = "all",
+  footer,
 }: {
   entries: CatalogEntry[];
   tableTitle?: string;
   listFilter?: ListFilter;
+  footer?: React.ReactNode;
 }) {
   const router = useRouter();
   const { movies, updateMovie, deleteMovie, refreshMovies } = useMovieCatalog();
@@ -210,7 +212,7 @@ export function MovieManagementTable({
 
   return (
     <>
-      <AdminCard title={tableTitle}>
+      <AdminCard title={tableTitle} flush>
         <div className="-mx-5 overflow-x-auto">
           <table className="w-full min-w-230 text-left">
             <thead>
@@ -284,6 +286,7 @@ export function MovieManagementTable({
             </tbody>
           </table>
         </div>
+        {footer}
       </AdminCard>
 
       {editing && editDraft ? (
@@ -583,7 +586,7 @@ export function MovieManagementTable({
           aria-modal="true"
           aria-labelledby="delete-movie-title"
         >
-          <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6">
             <h2 id="delete-movie-title" className="text-[16px] font-bold tracking-[-0.02em]">
               Delete movie
             </h2>

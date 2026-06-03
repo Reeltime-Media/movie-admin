@@ -1,9 +1,7 @@
 "use client";
 
 import { Search, X } from "lucide-react";
-
-const inputClass =
-  "w-full rounded-md border border-border bg-bg py-2 pl-9 pr-9 text-[13px] text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated";
+import { adminInputClass } from "../lib/adminUi";
 
 type AdminCatalogSearchBarProps = {
   value: string;
@@ -39,7 +37,7 @@ export function AdminCatalogSearchBar({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={inputClass}
+          className={`${adminInputClass} py-2 pl-9 pr-9`}
           autoComplete="off"
           aria-label="Search catalog"
         />

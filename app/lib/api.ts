@@ -162,6 +162,43 @@ export type ApiSubscriptionPlan = {
   updated_at: string;
 };
 
+export type ApiPromotionBanner = {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  image_key: string | null;
+  cta_label: string | null;
+  cta_href: string | null;
+  placement: string;
+  is_active: boolean;
+  sort_order: number;
+  starts_at: string | null;
+  ends_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PromotionBannerImageUploadStart = {
+  image_key: string;
+  upload_url: string;
+};
+
+export type ApiHeroFeaturedItem = {
+  id: string;
+  content_type: "movie" | "series";
+  content_id: string;
+  placement: string;
+  is_active: boolean;
+  sort_order: number;
+  starts_at: string | null;
+  ends_at: string | null;
+  created_at: string;
+  updated_at: string;
+  content_title: string | null;
+  content_slug: string | null;
+  poster_key: string | null;
+};
+
 export type ApiDashboardSummary = {
   users: {
     total: number;
@@ -1074,3 +1111,148 @@ export async function updateAdminComment(
 export async function deleteAdminComment(commentId: string): Promise<void> {
   await apiFetch<void>(`/admin/comments/${commentId}`, { method: "DELETE" });
 }
+
+export async function listAdminPromotionBanners(): Promise<ApiPromotionBanner[]> {
+  return apiFetch<ApiPromotionBanner[]>("/admin/promotion-banners");
+}
+
+export async function createAdminPromotionBanner(input: {
+  title: string;
+  subtitle?: string | null;
+  imageKey?: string | null;
+  ctaLabel?: string | null;
+  ctaHref?: string | null;
+  placement?: string;
+  isActive?: boolean;
+  sortOrder?: number;
+  startsAt?: string | null;
+  endsAt?: string | null;
+}): Promise<ApiPromotionBanner> {
+  return apiFetch<ApiPromotionBanner>("/admin/promotion-banners", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: input.title,
+      subtitle: input.subtitle ?? null,
+      image_key: input.imageKey ?? null,
+      cta_label: input.ctaLabel ?? null,
+      cta_href: input.ctaHref ?? null,
+      placement: input.placement ?? "home",
+      is_active: input.isActive ?? true,
+      sort_order: input.sortOrder ?? 0,
+      starts_at: input.startsAt ?? null,
+      ends_at: input.endsAt ?? null,
+    }),
+  });
+}
+
+export async function updateAdminPromotionBanner(
+  id: string,
+  input: Partial<{
+    title: string;
+    subtitle: string | null;
+    imageKey: string | null;
+    ctaLabel: string | null;
+    ctaHref: string | null;
+    placement: string;
+    isActive: boolean;
+    sortOrder: number;
+    startsAt: string | null;
+    endsAt: string | null;
+  }>,
+): Promise<ApiPromotionBanner> {
+  return apiFetch<ApiPromotionBanner>(`/admin/promotion-banners/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...(input.title !== undefined ? { title: input.title } : {}),
+      ...(input.subtitle !== undefined ? { subtitle: input.subtitle } : {}),
+      ...(input.imageKey !== undefined ? { image_key: input.imageKey } : {}),
+      ...(input.ctaLabel !== undefined ? { cta_label: input.ctaLabel } : {}),
+      ...(input.ctaHref !== undefined ? { cta_href: input.ctaHref } : {}),
+      ...(input.placement !== undefined ? { placement: input.placement } : {}),
+      ...(input.isActive !== undefined ? { is_active: input.isActive } : {}),
+      ...(input.sortOrder !== undefined ? { sort_order: input.sortOrder } : {}),
+      ...(input.startsAt !== undefined ? { starts_at: input.startsAt } : {}),
+      ...(input.endsAt !== undefined ? { ends_at: input.endsAt } : {}),
+    }),
+  });
+}
+
+export async function deleteAdminPromotionBanner(id: string): Promise<void> {
+  await apiFetch<void>(`/admin/promotion-banners/${id}`, { method: "DELETE" });
+}
+
+export async function startAdminPromotionBannerImageUpload(
+  bannerId: string,
+  contentType: string,
+): Promise<PromotionBannerImageUploadStart> {
+  return apiFetch<PromotionBannerImageUploadStart>(
+    `/admin/promotion-banners/${bannerId}/image/start`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content_type: contentType }),
+    },
+  );
+}
+
+export async function listAdminHeroFeatured(): Promise<ApiHeroFeaturedItem[]> {
+  return apiFetch<ApiHeroFeaturedItem[]>("/admin/hero-featured");
+}
+
+export async function createAdminHeroFeatured(input: {
+  contentType: "movie" | "series";
+  contentId: string;
+  placement?: string;
+  isActive?: boolean;
+  sortOrder?: number;
+  startsAt?: string | null;
+  endsAt?: string | null;
+}): Promise<ApiHeroFeaturedItem> {
+  return apiFetch<ApiHeroFeaturedItem>("/admin/hero-featured", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      content_type: input.contentType,
+      content_id: input.contentId,
+      placement: input.placement ?? "home",
+      is_active: input.isActive ?? true,
+      sort_order: input.sortOrder ?? 0,
+      starts_at: input.startsAt ?? null,
+      ends_at: input.endsAt ?? null,
+    }),
+  });
+}
+
+export async function updateAdminHeroFeatured(
+  id: string,
+  input: Partial<{
+    contentType: "movie" | "series";
+    contentId: string;
+    placement: string;
+    isActive: boolean;
+    sortOrder: number;
+    startsAt: string | null;
+    endsAt: string | null;
+  }>,
+): Promise<ApiHeroFeaturedItem> {
+  return apiFetch<ApiHeroFeaturedItem>(`/admin/hero-featured/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...(input.contentType !== undefined ? { content_type: input.contentType } : {}),
+      ...(input.contentId !== undefined ? { content_id: input.contentId } : {}),
+      ...(input.placement !== undefined ? { placement: input.placement } : {}),
+      ...(input.isActive !== undefined ? { is_active: input.isActive } : {}),
+      ...(input.sortOrder !== undefined ? { sort_order: input.sortOrder } : {}),
+      ...(input.startsAt !== undefined ? { starts_at: input.startsAt } : {}),
+      ...(input.endsAt !== undefined ? { ends_at: input.endsAt } : {}),
+    }),
+  });
+}
+
+export async function deleteAdminHeroFeatured(id: string): Promise<void> {
+  await apiFetch<void>(`/admin/hero-featured/${id}`, { method: "DELETE" });
+}
+

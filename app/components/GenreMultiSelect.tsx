@@ -7,7 +7,7 @@ const triggerClass =
   "flex w-full items-center justify-between gap-2 rounded-md border border-border bg-bg px-3 py-2.5 text-left text-[13px] outline-none transition-colors hover:border-border-hover focus:border-border-hover focus:bg-surface-elevated";
 
 const panelClass =
-  "absolute left-0 right-0 z-40 mt-1 max-h-60 overflow-y-auto rounded-md border border-border bg-surface-elevated py-1 shadow-lg";
+  "absolute left-0 right-0 z-40 mt-1 max-h-60 overflow-y-auto rounded-md border border-border bg-surface-elevated py-1";
 
 type GenreMultiSelectProps = {
   selected: string[];

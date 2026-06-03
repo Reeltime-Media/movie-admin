@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { AdminCard } from "../components/AdminCard";
+import { AdminEmptyState } from "../components/AdminEmptyState";
+import { AdminErrorAlert } from "../components/AdminErrorAlert";
 import { AdminPagination } from "../components/AdminPagination";
 import { InlineLoading } from "../components/InlineLoading";
 import { useTopTitles } from "../hooks/adminQueries";
@@ -36,21 +38,16 @@ export function ReportsTopTitles() {
   );
 
   return (
-    <AdminCard title="Top titles" action="Refresh" actionOnClick={() => void refetch()}>
+    <AdminCard title="Top titles" action="Refresh" actionOnClick={() => void refetch()} flush>
       {isLoading && !titles.length ? (
         <InlineLoading label="Loading report data" />
       ) : errorMessage ? (
-        <div className="rounded-md border border-dashed border-border bg-bg px-4 py-8 text-center">
-          <p className="text-[13px] font-semibold text-text">Could not load report data</p>
-          <p className="mt-1 text-[12px] text-text-muted">{errorMessage}</p>
-        </div>
+        <AdminErrorAlert message={errorMessage} onRetry={() => void refetch()} />
       ) : titles.length === 0 && !isLoading ? (
-        <div className="rounded-md border border-dashed border-border bg-bg px-4 py-8 text-center">
-          <p className="text-[13px] font-semibold text-text">No title data yet</p>
-          <p className="mt-1 text-[12px] text-text-muted">
-            Upload movies through the API to populate report rankings.
-          </p>
-        </div>
+        <AdminEmptyState
+          title="No title data yet"
+          description="Upload movies through the API to populate report rankings."
+        />
       ) : (
         <div className="space-y-4">
           {titles.map((item, index) => {

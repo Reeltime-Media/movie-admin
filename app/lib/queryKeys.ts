@@ -17,6 +17,8 @@ export const queryKeys = {
     ["transcode", "jobs", params] as const,
   transcodeCounts: ["transcode", "counts"] as const,
   subscriptionPlans: ["plans", "subscription"] as const,
+  promotionBanners: ["promotion-banners"] as const,
+  heroFeatured: ["hero-featured"] as const,
   comments: (params: { movieId: string; page: number; pageSize: number }) =>
     ["comments", params] as const,
 };

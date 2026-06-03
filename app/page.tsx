@@ -1,6 +1,8 @@
 "use client";
 
 import { AdminShell } from "./components/AdminShell";
+import { AdminStatCard, AdminStatGrid } from "./components/AdminStatCard";
+import { AdminErrorAlert } from "./components/AdminErrorAlert";
 import { DashboardRevenue } from "./components/DashboardRevenue";
 import { DashboardTopMovies } from "./components/DashboardTopMovies";
 import { useMovieCatalog } from "./hooks/useMovieCatalog";
@@ -30,50 +32,51 @@ export default function Home() {
     {
       label: "Total users",
       value: summary?.users.total != null ? String(summary.users.total) : "--",
-      delta: `${summary?.users.active ?? 0} active accounts`,
-      tone: "text-text-muted",
+      hint: `${summary?.users.active ?? 0} active accounts`,
+      hintClassName: "text-text-muted",
     },
     {
       label: "Movies",
       value: summaryLoading && moviesLoading ? "--" : String(summary?.content.movies ?? movieCount),
-      delta: `${summary?.content.published ?? movies.filter((m) => m.status === "Published").length} published`,
-      tone: "text-text-muted",
+      hint: `${summary?.content.published ?? movies.filter((m) => m.status === "Published").length} published`,
+      hintClassName: "text-text-muted",
     },
     {
       label: "Series",
       value: summaryLoading && moviesLoading ? "--" : String(summary?.content.series ?? seriesCount),
-      delta: "All series",
-      tone: "text-text-muted",
+      hint: "All series",
+      hintClassName: "text-text-muted",
     },
     {
       label: "Pending transcodes",
-      value: summaryLoading && moviesLoading ? "--" : String(summary?.transcodes.pending ?? pendingTranscodes),
-      delta: (summary?.transcodes.processing ?? 0) > 0 ? "Processing now" : "Queue clear",
-      tone: (summary?.transcodes.pending ?? pendingTranscodes) > 0 ? "text-warning" : "text-success",
+      value:
+        summaryLoading && moviesLoading
+          ? "--"
+          : String(summary?.transcodes.pending ?? pendingTranscodes),
+      hint:
+        (summary?.transcodes.processing ?? 0) > 0 ? "Processing now" : "Queue clear",
+      hintClassName:
+        (summary?.transcodes.pending ?? pendingTranscodes) > 0 ? "text-warning" : "text-success",
     },
   ];
 
   return (
     <AdminShell>
-      {summaryError ? (
-        <div className="mb-4 rounded-md border border-warning/30 bg-warning/10 p-3 text-[12px] text-warning">
-          {summaryError}
-        </div>
-      ) : null}
+      {summaryError ? <AdminErrorAlert message={summaryError} /> : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <AdminStatGrid>
         {stats.map((stat) => (
-          <div key={stat.label} className="rounded-lg border border-border bg-surface p-5">
-            <div className="text-[12px] font-semibold text-text-muted">{stat.label}</div>
-            <div className="mt-3 text-[28px] font-extrabold tracking-[-0.03em]">
-              {stat.value}
-            </div>
-            <div className={`mt-1 text-[12px] font-bold ${stat.tone}`}>{stat.delta}</div>
-          </div>
+          <AdminStatCard
+            key={stat.label}
+            label={stat.label}
+            value={stat.value}
+            hint={stat.hint}
+            hintClassName={stat.hintClassName}
+          />
         ))}
-      </div>
+      </AdminStatGrid>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-2">
         <DashboardRevenue />
         <DashboardTopMovies />
       </div>

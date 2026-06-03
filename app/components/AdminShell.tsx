@@ -14,6 +14,7 @@ const navItems = [
   { label: "Payments", href: "/payments" },
   { label: "Revenue", href: "/revenue" },
   { label: "Plans", href: "/plans" },
+  { label: "Home page", href: "/promotions" },
   { label: "Transcode", href: "/transcode" },
   { label: "Reports", href: "/reports", badge: "New" },
 ];
@@ -60,7 +61,7 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-64 overflow-y-auto border-r border-border bg-surface px-5 py-5 lg:block">
+      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-64 overflow-y-auto border-r border-border bg-surface/95 px-5 py-5 backdrop-blur-md lg:block">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="grid h-8 w-8 place-items-center rounded-md bg-brand text-[15px] font-black text-white">
             R
@@ -82,10 +83,10 @@ export function AdminShell({
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={[
-                  "flex items-center justify-between rounded-md px-3 py-2.5 text-[13px] font-semibold transition-colors",
+                  "flex items-center justify-between rounded-md border border-transparent px-3 py-2.5 text-[13px] font-semibold transition-colors",
                   active
-                    ? "bg-brand text-white"
-                    : "text-text-muted hover:bg-surface-elevated hover:text-text",
+                    ? "border-brand/40 bg-brand text-white"
+                    : "text-text-muted hover:border-border hover:bg-surface-elevated hover:text-text",
                 ].join(" ")}
               >
                 {item.label}
@@ -101,7 +102,7 @@ export function AdminShell({
       </aside>
 
       <div className="flex min-h-screen min-w-0 flex-col lg:ml-64">
-        <header className="sticky top-0 z-20 border-b border-border bg-bg/95 backdrop-blur">
+        <header className="sticky top-0 z-20 border-b border-border bg-surface-soft/90 backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 md:px-8">
               <div>
                 <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-muted">
@@ -119,7 +120,7 @@ export function AdminShell({
                     <button
                       type="button"
                       onClick={() => setUploadsOpen((o) => !o)}
-                      className="flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
+                    className="flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:bg-surface-elevated hover:text-text"
                     >
                       {activeJobs.length > 0 ? (
                         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand" />
@@ -142,7 +143,7 @@ export function AdminShell({
                     </button>
 
                     {uploadsOpen ? (
-                      <div className="absolute right-0 top-full z-50 mt-1.5 w-80 rounded-lg border border-border bg-surface shadow-2xl">
+                      <div className="absolute right-0 top-full z-50 mt-1.5 w-80 rounded-lg border border-border bg-surface">
                         <div className="border-b border-border px-4 py-2.5">
                           <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-disabled">
                             Upload jobs
@@ -152,7 +153,7 @@ export function AdminShell({
                           {jobs.map((job) => (
                             <div
                               key={job.id}
-                              className="rounded-md px-3 py-3 hover:bg-surface-elevated"
+                              className="rounded-md px-3 py-3 transition-colors hover:bg-surface-elevated"
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
@@ -223,7 +224,7 @@ export function AdminShell({
                 <button
                   type="button"
                   onClick={handleSignOut}
-                  className="rounded-md border border-border bg-surface px-3 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
+                  className="rounded-md border border-border bg-surface px-3 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:bg-surface-elevated hover:text-text"
                 >
                   Sign out
                 </button>
@@ -231,7 +232,9 @@ export function AdminShell({
           </div>
         </header>
 
-        <main className="flex-1 px-5 py-6 md:px-8">{children}</main>
+        <main className="flex-1 px-5 py-6 md:px-8">
+          <div className="space-y-6">{children}</div>
+        </main>
       </div>
     </div>
   );

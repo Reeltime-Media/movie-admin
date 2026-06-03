@@ -1,11 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
 export default function PinPage() {
-  const router = useRouter();
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,6 +17,7 @@ export default function PinPage() {
       const res = await fetch("/api/pin/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ pin: pin.trim() }),
       });
 
@@ -27,8 +26,10 @@ export default function PinPage() {
         return;
       }
 
-      toast.success("PIN accepted");
-      router.replace("/login");
+      toast.success("PIN accepted — redirecting to sign in");
+      // Full navigation so the new httpOnly cookie is sent before middleware runs.
+      window.location.assign("/login");
+      return;
     } catch {
       setError("Could not verify PIN. Please try again.");
     } finally {
@@ -38,7 +39,7 @@ export default function PinPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-bg px-6 text-text">
-      <div className="w-full max-w-[380px] rounded-xl border border-border bg-surface p-6 shadow-2xl shadow-black/25">
+      <div className="w-full max-w-[380px] rounded-xl border border-border bg-surface p-6">
         <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-muted">
           Security check
         </div>

@@ -2,16 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { AdminCard } from "../components/AdminCard";
+import { AdminEmptyState } from "../components/AdminEmptyState";
+import { AdminErrorAlert } from "../components/AdminErrorAlert";
 import { InlineLoading } from "../components/InlineLoading";
 import { AdminShell } from "../components/AdminShell";
 import { AdminPagination } from "../components/AdminPagination";
+import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from "../components/AdminTable";
 import { usePayments } from "../hooks/adminQueries";
 import { type ApiPaymentIntent } from "../lib/api";
+import {
+  adminBadgeClass,
+  adminFilterBarClass,
+  adminInputClass,
+  adminLabelClass,
+  adminTdClass,
+} from "../lib/adminUi";
 
 const PAGE_SIZE = 20;
-
-const inputClass =
-  "w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
@@ -21,12 +28,11 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-function statusClass(status: string) {
-  const base = "rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em]";
-  if (status === "succeeded") return `${base} bg-success/15 text-success`;
-  if (status === "pending") return `${base} bg-warning/15 text-warning`;
-  if (status === "failed") return `${base} bg-brand/15 text-brand`;
-  return `${base} bg-text-disabled/25 text-text-muted`;
+function paymentStatusTone(status: string): "success" | "warning" | "brand" | "muted" {
+  if (status === "succeeded") return "success";
+  if (status === "pending") return "warning";
+  if (status === "failed") return "brand";
+  return "muted";
 }
 
 function paymentTypeLabel(kind: string) {
@@ -39,7 +45,7 @@ function userLabel(payment: ApiPaymentIntent) {
     return (
       <>
         <span className="font-semibold text-text">{payment.user_full_name}</span>
-        <span className="block text-[11px] text-text-muted">{payment.user_email}</span>
+        <span className="mt-0.5 block text-[12px] text-text-muted">{payment.user_email}</span>
       </>
     );
   }
@@ -100,43 +106,38 @@ export default function PaymentsPage() {
         title="Recent transactions"
         action="Refresh"
         actionOnClick={() => void refetch()}
+        flush
       >
-        <div className="mb-5 flex flex-col gap-3 border-b border-border pb-5">
+        <div className={adminFilterBarClass}>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <label className="block sm:col-span-2 lg:col-span-2">
-              <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.1em] text-text-disabled">
-                Search user
-              </span>
+              <span className={adminLabelClass}>Search user</span>
               <input
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Name or email"
-                className={inputClass}
+                className={adminInputClass}
                 autoComplete="off"
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.1em] text-text-disabled">
-                From date
-              </span>
+              <span className={adminLabelClass}>From date</span>
               <input
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className={inputClass}
+                className={adminInputClass}
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.1em] text-text-disabled">
-                To date
-              </span>
+              <span className={adminLabelClass}>To date</span>
               <input
                 type="date"
                 value={dateTo}
                 min={dateFrom || undefined}
                 onChange={(e) => setDateTo(e.target.value)}
-                className={inputClass}
+                className={adminInputClass}
               />
             </label>
           </div>
@@ -159,64 +160,63 @@ export default function PaymentsPage() {
         {isLoading && !payments.length ? (
           <InlineLoading label="Loading transactions" />
         ) : error ? (
-          <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-4 text-[12px] text-warning">
-            <div>{error}</div>
-            <button
-              type="button"
-              onClick={() => void refetch()}
-              className="mt-2 font-bold hover:underline"
-            >
-              Retry
-            </button>
-          </div>
+          <AdminErrorAlert message={error} onRetry={() => void refetch()} />
         ) : payments.length === 0 && !isLoading ? (
-          <div className="rounded-md border border-dashed border-border bg-bg px-4 py-8 text-center">
-            <p className="text-[13px] font-semibold text-text">
-              {hasFilters ? "No transactions match your filters" : "No transactions yet"}
-            </p>
-            <p className="mt-1 text-[12px] text-text-muted">
-              {hasFilters
+          <AdminEmptyState
+            title={hasFilters ? "No transactions match your filters" : "No transactions yet"}
+            description={
+              hasFilters
                 ? "Try a different name, email, or date range."
-                : "Payment intents will appear here once users start checking out."}
-            </p>
-            {hasFilters ? (
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="mt-4 text-[12px] font-bold text-brand hover:underline"
-              >
-                Clear filters
-              </button>
-            ) : null}
-          </div>
+                : "Payment intents will appear here once users start checking out."
+            }
+            action={
+              hasFilters ? (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-[12px] font-bold text-brand hover:underline"
+                >
+                  Clear filters
+                </button>
+              ) : undefined
+            }
+          />
         ) : (
-          <div className="-mx-5 overflow-x-auto">
-            <table className="w-full min-w-180 text-left">
-              <thead>
-                <tr className="border-b border-border text-[11px] uppercase tracking-widest text-text-disabled">
-                  <th className="px-5 pb-3 font-bold">User</th>
-                  <th className="px-5 pb-3 font-bold">Order</th>
-                  <th className="px-5 pb-3 font-bold">Type</th>
-                  <th className="px-5 pb-3 font-bold">Amount</th>
-                  <th className="px-5 pb-3 font-bold">Status</th>
-                  <th className="px-5 pb-3 font-bold">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {payments.map((p) => (
-                  <tr key={p.intent_id} className="text-[13px]">
-                    <td className="px-5 py-4">{userLabel(p)}</td>
-                    <td className="px-5 py-4 font-bold">{p.order_id}</td>
-                    <td className="px-5 py-4 text-text-muted">{paymentTypeLabel(p.kind)}</td>
-                    <td className="px-5 py-4 text-text-muted">${p.amount_usd}</td>
-                    <td className="px-5 py-4">
-                      <span className={statusClass(p.status)}>{p.status}</span>
-                    </td>
-                    <td className="px-5 py-4 text-text-muted">{formatDate(p.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <>
+            <AdminTableWrap>
+              <div className="-mx-5">
+                <AdminTable minWidth="900px">
+                  <AdminTableHead>
+                    <AdminTh>User</AdminTh>
+                    <AdminTh>Order</AdminTh>
+                    <AdminTh>Type</AdminTh>
+                    <AdminTh>Amount</AdminTh>
+                    <AdminTh>Status</AdminTh>
+                    <AdminTh>Date</AdminTh>
+                  </AdminTableHead>
+                  <tbody className="divide-y divide-border">
+                    {payments.map((p) => (
+                      <tr key={p.intent_id}>
+                        <td className={adminTdClass}>{userLabel(p)}</td>
+                        <td className={`${adminTdClass} font-semibold text-text`}>{p.order_id}</td>
+                        <td className={`${adminTdClass} text-text-muted`}>
+                          {paymentTypeLabel(p.kind)}
+                        </td>
+                        <td className={`${adminTdClass} text-text-muted`}>${p.amount_usd}</td>
+                        <td className={adminTdClass}>
+                          <span className={adminBadgeClass(paymentStatusTone(p.status))}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className={`${adminTdClass} text-text-muted`}>
+                          {formatDate(p.created_at)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </AdminTable>
+              </div>
+            </AdminTableWrap>
             <AdminPagination
               page={page}
               pages={pages}
@@ -225,7 +225,7 @@ export default function PaymentsPage() {
               isLoading={isFetching}
               onPageChange={setPage}
             />
-          </div>
+          </>
         )}
       </AdminCard>
     </AdminShell>

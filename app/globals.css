@@ -1,24 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  --rt-bg: #050505;
-  --rt-surface: #101010;
-  --rt-surface-elevated: #181818;
-  --rt-border: #2a2a2a;
-  --rt-border-hover: #3a3a3a;
-  --rt-text: #fafafa;
-  --rt-text-muted: #a3a3a3;
-  --rt-text-disabled: #525252;
+  --rt-bg: #f3f6fb;
+  --rt-surface: #ffffff;
+  --rt-surface-elevated: #f8fafc;
+  --rt-surface-soft: #eef2f7;
+  --rt-border: #d7deea;
+  --rt-border-hover: #b9c5d8;
+  --rt-text: #0f172a;
+  --rt-text-muted: #475569;
+  --rt-text-disabled: #94a3b8;
   --rt-brand: #e50914;
   --rt-brand-hover: #f40612;
+  --rt-brand-soft: rgba(229, 9, 20, 0.12);
   --rt-success: #22c55e;
   --rt-warning: #f59e0b;
   --rt-danger: #ef4444;
 
   --background: var(--rt-bg);
   --foreground: var(--rt-text);
+
+  --toastify-toast-shadow: none;
 }
 
 @keyframes slide {
@@ -30,6 +34,7 @@
   --color-bg: var(--rt-bg);
   --color-surface: var(--rt-surface);
   --color-surface-elevated: var(--rt-surface-elevated);
+  --color-surface-soft: var(--rt-surface-soft);
   --color-border: var(--rt-border);
   --color-border-hover: var(--rt-border-hover);
   --color-text: var(--rt-text);
@@ -37,6 +42,7 @@
   --color-text-disabled: var(--rt-text-disabled);
   --color-brand: var(--rt-brand);
   --color-brand-hover: var(--rt-brand-hover);
+  --color-brand-soft: var(--rt-brand-soft);
   --color-success: var(--rt-success);
   --color-warning: var(--rt-warning);
   --color-danger: var(--rt-danger);
@@ -49,6 +55,16 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  background-image:
+    radial-gradient(1200px 600px at 15% -10%, rgba(59, 130, 246, 0.12), transparent 55%),
+    radial-gradient(900px 500px at 90% -15%, rgba(229, 9, 20, 0.1), transparent 58%),
+    linear-gradient(180deg, #f9fbff 0%, #f3f6fb 45%, #eef3f9 100%);
+  min-height: 100vh;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rt-border-hover) transparent;
 }
 
 button,
@@ -57,6 +73,15 @@ input,
 select,
 textarea {
   outline-color: var(--rt-brand);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--rt-brand);
+  outline-offset: 2px;
 }
 
 ::selection {

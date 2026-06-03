@@ -118,10 +118,12 @@ export function SeriesManagementTable({
   entries,
   tableTitle = "All series",
   listFilter = "all",
+  footer,
 }: {
   entries: CatalogEntry[];
   tableTitle?: string;
   listFilter?: SeriesListFilter;
+  footer?: React.ReactNode;
 }) {
   const router = useRouter();
   const { movies, updateMovie, deleteMovie } = useMovieCatalog();
@@ -201,7 +203,7 @@ export function SeriesManagementTable({
 
   return (
     <>
-      <AdminCard title={tableTitle}>
+      <AdminCard title={tableTitle} flush>
         <div className="-mx-5 overflow-x-auto">
           <table className="w-full min-w-200 text-left">
             <thead>
@@ -273,6 +275,7 @@ export function SeriesManagementTable({
             </tbody>
           </table>
         </div>
+        {footer}
       </AdminCard>
 
       {editing && editDraft ? (
@@ -284,7 +287,7 @@ export function SeriesManagementTable({
         >
           <form
             onSubmit={saveEdit}
-            className="max-h-[90vh] w-full max-w-[calc(100vw-2rem)] overflow-y-auto rounded-lg border border-border bg-surface p-6 shadow-2xl xl:max-w-[calc(100vw-4rem)]"
+            className="max-h-[90vh] w-full max-w-[calc(100vw-2rem)] overflow-y-auto rounded-lg border border-border bg-surface p-6 xl:max-w-[calc(100vw-4rem)]"
           >
             <h2 id="edit-series-title" className="text-[16px] font-bold tracking-[-0.02em]">
               Edit series
@@ -323,7 +326,7 @@ export function SeriesManagementTable({
           aria-modal="true"
           aria-labelledby="delete-series-title"
         >
-          <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6">
             <h2 id="delete-series-title" className="text-[16px] font-bold tracking-[-0.02em]">
               Delete series
             </h2>

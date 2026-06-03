@@ -4,8 +4,11 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { AdminCard } from "../components/AdminCard";
 import { AdminShell } from "../components/AdminShell";
+import { AdminStatCard, AdminStatGrid } from "../components/AdminStatCard";
+import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from "../components/AdminTable";
 import { RevenuePanel, useRevenueTimeline } from "../components/RevenuePanel";
 import { useDashboardSummary } from "../hooks/adminQueries";
+import { adminTdClass } from "../lib/adminUi";
 import { formatUsdDisplay } from "../lib/money";
 
 const DAY_OPTIONS = [7, 30, 90] as const;
@@ -42,9 +45,10 @@ export default function RevenuePage() {
     ? {
         label: "Revenue in range",
         value: loading ? "--" : `$${formatUsdDisplay(timeline?.period_revenue_usd ?? "0")}`,
-        hint: timeline?.date_from && timeline?.date_to
-          ? `${formatTableDate(timeline.date_from)} – ${formatTableDate(timeline.date_to)}`
-          : "Custom date range",
+        hint:
+          timeline?.date_from && timeline?.date_to
+            ? `${formatTableDate(timeline.date_from)} – ${formatTableDate(timeline.date_to)}`
+            : "Custom date range",
       }
     : {
         label: "All-time revenue",
@@ -79,17 +83,13 @@ export default function RevenuePage() {
 
   return (
     <AdminShell title="Revenue">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <AdminStatGrid>
         {stats.map((stat) => (
-          <div key={stat.label} className="rounded-lg border border-border bg-surface p-5">
-            <div className="text-[12px] font-semibold text-text-muted">{stat.label}</div>
-            <div className="mt-3 text-[28px] font-extrabold tracking-[-0.03em]">{stat.value}</div>
-            <div className="mt-1 text-[12px] font-bold text-text-muted">{stat.hint}</div>
-          </div>
+          <AdminStatCard key={stat.label} label={stat.label} value={stat.value} hint={stat.hint} />
         ))}
-      </div>
+      </AdminStatGrid>
 
-      <div className="mt-6 rounded-lg border border-border bg-surface p-5">
+      <AdminCard title="Revenue timeline" flush>
         <RevenuePanel
           bare
           days={days}
@@ -109,57 +109,56 @@ export default function RevenuePage() {
           }}
           chartHeight={300}
         />
-      </div>
+      </AdminCard>
 
-      <div className="mt-6">
-        <AdminCard title="Daily breakdown" action="All transactions" actionHref="/payments">
-          {loading ? (
-            <div className="flex h-32 items-center justify-center">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-brand" />
-            </div>
-          ) : error ? (
-            <p className="text-[13px] text-text-muted">{error}</p>
-          ) : dailyRows.length === 0 ? (
-            <p className="py-8 text-center text-[13px] text-text-muted">
-              No revenue recorded in this period.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[480px] text-left text-[13px]">
-                <thead>
-                  <tr className="border-b border-border text-[11px] font-bold uppercase tracking-wide text-text-muted">
-                    <th className="px-2 py-3">Date</th>
-                    <th className="px-2 py-3 text-right">Payments</th>
-                    <th className="px-2 py-3 text-right">Revenue</th>
-                  </tr>
-                </thead>
-                <tbody>
+      <AdminCard title="Daily breakdown" action="All transactions" actionHref="/payments" flush>
+        {loading ? (
+          <div className="flex h-32 items-center justify-center">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-brand" />
+          </div>
+        ) : error ? (
+          <p className="text-[13px] text-text-muted">{error}</p>
+        ) : dailyRows.length === 0 ? (
+          <p className="py-8 text-center text-[13px] text-text-muted">
+            No revenue recorded in this period.
+          </p>
+        ) : (
+          <AdminTableWrap>
+            <div className="-mx-5">
+              <AdminTable minWidth="480px">
+                <AdminTableHead>
+                  <AdminTh>Date</AdminTh>
+                  <AdminTh className="text-right">Payments</AdminTh>
+                  <AdminTh className="text-right">Revenue</AdminTh>
+                </AdminTableHead>
+                <tbody className="divide-y divide-border">
                   {dailyRows.map((row) => (
-                    <tr key={row.date} className="border-b border-border/60 last:border-0">
-                      <td className="px-2 py-3 font-semibold text-text">
+                    <tr key={row.date}>
+                      <td className={`${adminTdClass} font-semibold text-text`}>
                         {formatTableDate(row.date)}
                       </td>
-                      <td className="px-2 py-3 text-right text-text-muted">{row.payment_count}</td>
-                      <td className="px-2 py-3 text-right font-bold text-text">
+                      <td className={`${adminTdClass} text-right text-text-muted`}>
+                        {row.payment_count}
+                      </td>
+                      <td className={`${adminTdClass} text-right font-semibold text-text`}>
                         ${formatUsdDisplay(row.revenue_usd)}
                       </td>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </AdminTable>
             </div>
-          )}
-        </AdminCard>
-      </div>
+          </AdminTableWrap>
+        )}
+      </AdminCard>
 
-      <p className="mt-4 text-[12px] text-text-muted">
+      <p className="text-[12px] text-text-muted">
         Revenue is calculated from succeeded payment intents.{" "}
         <Link href="/payments" className="font-semibold text-brand hover:text-brand-hover">
           Open payments
         </Link>{" "}
         to review individual transactions.
       </p>
-
     </AdminShell>
   );
 }

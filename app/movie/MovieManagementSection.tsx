@@ -8,6 +8,7 @@ import { AdminPagination } from "../components/AdminPagination";
 import { InlineLoading } from "../components/InlineLoading";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
 import { matchesCatalogSearch } from "../lib/catalogSearch";
+import { adminPrimaryButtonClass, adminTabClass } from "../lib/adminUi";
 import { MovieManagementTable } from "./MovieManagementTable";
 import type { ListFilter } from "./movieListTypes";
 
@@ -61,7 +62,7 @@ export function MovieManagementSection() {
 
   return (
     <>
-      <div className="mb-6 space-y-4">
+      <div className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <p className="max-w-[72ch] text-[13px] leading-relaxed text-text-muted">
             Manage standalone movies surfaced in the Reeltime client. For series with seasons and
@@ -69,7 +70,7 @@ export function MovieManagementSection() {
           </p>
           <Link
             href="/movie/new"
-            className="shrink-0 rounded-md bg-brand px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
+            className={`shrink-0 ${adminPrimaryButtonClass}`}
           >
             Add movie
           </Link>
@@ -97,12 +98,7 @@ export function MovieManagementSection() {
                 key={key}
                 type="button"
                 onClick={() => setListFilter(key)}
-                className={[
-                  "rounded-md px-3 py-2 text-[12px] font-semibold transition-colors",
-                  active
-                    ? "bg-brand text-white"
-                    : "border border-border bg-surface text-text-muted hover:border-border-hover hover:text-text",
-                ].join(" ")}
+                className={adminTabClass(active)}
               >
                 {label}
               </button>
@@ -121,17 +117,19 @@ export function MovieManagementSection() {
             entries={paginatedEntries}
             tableTitle={tableTitleForFilter(listFilter)}
             listFilter={listFilter}
+            footer={
+              entries.length > 0 ? (
+                <AdminPagination
+                  page={page}
+                  pages={pages}
+                  total={entries.length}
+                  pageSize={TABLE_PAGE_SIZE}
+                  isLoading={isLoading}
+                  onPageChange={setPage}
+                />
+              ) : null
+            }
           />
-          {entries.length > 0 ? (
-            <AdminPagination
-              page={page}
-              pages={pages}
-              total={entries.length}
-              pageSize={TABLE_PAGE_SIZE}
-              isLoading={isLoading}
-              onPageChange={setPage}
-            />
-          ) : null}
         </>
       )}
     </>

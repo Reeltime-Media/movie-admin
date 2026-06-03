@@ -31,7 +31,7 @@ export function TrailerPreview({
   return (
     <div
       className={[
-        "mt-4 overflow-hidden rounded-xl border border-border bg-[#0a0a0a] shadow-xl shadow-black/40",
+        "mt-4 overflow-hidden rounded-xl border border-border bg-[#0a0a0a]",
         className,
       ]
         .filter(Boolean)

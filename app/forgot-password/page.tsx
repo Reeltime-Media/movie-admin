@@ -3,13 +3,13 @@ import Link from "next/link";
 export default function ForgotPasswordPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-bg px-6 py-12 text-text">
-      <section className="w-full max-w-[430px] rounded-xl border border-border bg-surface p-6 shadow-2xl shadow-black/25">
+      <section className="w-full max-w-[430px] rounded-xl border border-border bg-surface p-6">
         <Link href="/login" className="mb-8 flex items-center gap-2.5">
           <div className="grid h-8 w-8 place-items-center rounded-md bg-brand text-[15px] font-black text-white">
             R
           </div>
           <div>
-            <div className="text-[13px] font-black tracking-[0.08em] text-white">REELTIME</div>
+            <div className="text-[13px] font-black tracking-[0.08em] text-text">REELTIME</div>
             <div className="text-[11px] font-semibold text-text-muted">Admin console</div>
           </div>
         </Link>

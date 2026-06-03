@@ -262,6 +262,7 @@ export function MovieCommentsAdmin({ contentId }: MovieCommentsAdminProps) {
               </ul>
 
               <AdminPagination
+                inset="panel"
                 page={page}
                 pages={pages}
                 total={total}

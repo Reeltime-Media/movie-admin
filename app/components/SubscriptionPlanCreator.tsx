@@ -269,7 +269,7 @@ export function SubscriptionPlanCreator() {
         <form
           onSubmit={(e) => void handleSubmit(e)}
           onClick={(e) => e.stopPropagation()}
-          className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border border-border bg-surface p-6 shadow-2xl"
+          className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border border-border bg-surface p-6"
         >
           <div className="flex items-start justify-between gap-4">
             <div>
