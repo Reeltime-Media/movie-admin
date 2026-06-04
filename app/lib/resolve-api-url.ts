@@ -1,7 +1,7 @@
 const GCP_API_HOST = "34.124.135.215";
 const GCP_API_PORT = "8000";
+const VERCEL_API_PROXY = "/api-proxy";
 
-/** Same-origin proxy on Vercel; direct URL for local dev. */
 export function normalizeApiUrl(raw: string): string {
   const trimmed = raw.trim().replace(/\/$/, "");
   if (!trimmed || trimmed.startsWith("/")) return trimmed;
@@ -17,15 +17,24 @@ export function normalizeApiUrl(raw: string): string {
   }
 }
 
+/**
+ * Browser on HTTPS (Vercel) must use same-origin /api-proxy — never http:// GCP (mixed content).
+ * Server Components use API_PROXY_TARGET to call GCP directly.
+ */
 export function resolveApiUrl(): string {
-  const fromPublic = normalizeApiUrl(
-    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000",
-  );
-
-  if (typeof window === "undefined") {
-    const direct = process.env.API_PROXY_TARGET?.trim();
-    if (direct) return normalizeApiUrl(direct);
+  if (typeof window !== "undefined") {
+    if (window.location.protocol === "https:") {
+      return VERCEL_API_PROXY;
+    }
+    return normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000");
   }
 
-  return fromPublic;
+  const direct = process.env.API_PROXY_TARGET?.trim();
+  if (direct) return normalizeApiUrl(direct);
+
+  const fromPublic = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  if (fromPublic.trim().startsWith("/")) {
+    return normalizeApiUrl(direct ?? "http://localhost:8000");
+  }
+  return normalizeApiUrl(fromPublic);
 }
