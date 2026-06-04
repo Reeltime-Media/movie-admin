@@ -351,7 +351,7 @@ export async function cancelTranscodeJob(jobId: string): Promise<{ job_id: strin
 }
 
 export async function listUsers(query: PaginationQuery = {}) {
-  return apiFetch<PaginatedResponse<ApiUser>>(`/users/${paginationQuery(query)}`);
+  return apiFetch<PaginatedResponse<ApiUser>>(`/users${paginationQuery(query)}`);
 }
 
 export async function listAdminMovies(query: PaginationQuery = {}) {
