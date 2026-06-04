@@ -22,6 +22,9 @@ export function cspConnectSrc(): string {
 
   // Production GCP API (fallback if env not inlined on Edge)
   add(process.env.MOVIE_API_ORIGIN ?? "http://34.124.135.215:8000");
+  // Some env typos omit :8000 — allow both so requests are not CSP-blocked
+  add("http://34.124.135.215");
+  add("http://34.124.135.215:8000");
 
   return parts.join(" ");
 }

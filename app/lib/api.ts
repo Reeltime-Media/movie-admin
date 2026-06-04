@@ -7,7 +7,6 @@ import {
 
 import { resolveApiUrl } from "./resolve-api-url";
 
-const API_BASE_URL = resolveApiUrl();
 const TOKEN_KEY = "reeltime_admin_token";
 
 export type { PaginatedResponse, PaginationQuery } from "./pagination";
@@ -263,7 +262,8 @@ export type AdminRevenueTimelineQuery = {
 };
 
 function apiUrl(path: string) {
-  return `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  const base = resolveApiUrl();
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 async function errorMessageFromResponse(res: Response) {
