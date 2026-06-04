@@ -5,7 +5,9 @@ import {
   type PaginationQuery,
 } from "./pagination";
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/+$/, "");
+import { resolveApiUrl } from "./resolve-api-url";
+
+const API_BASE_URL = resolveApiUrl();
 const TOKEN_KEY = "reeltime_admin_token";
 
 export type { PaginatedResponse, PaginationQuery } from "./pagination";

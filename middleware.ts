@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { cspConnectSrc } from "./lib/csp-connect-src";
 
 const PUBLIC_PATHS = ["/login"];
 const PIN_PATH = "/pin";
@@ -22,7 +23,7 @@ export function middleware(request: NextRequest) {
       "img-src 'self' data: blob: https:",
       "media-src 'self' blob: data: https:",
       "font-src 'self' data:",
-      "connect-src 'self' https: http://localhost:* http://127.0.0.1:*",
+      `connect-src ${cspConnectSrc()}`,
       "frame-src https://www.youtube.com https://www.youtube-nocookie.com",
     ].join("; "),
   );
