@@ -8,13 +8,13 @@ import { AdminPagination } from "../components/AdminPagination";
 import { InlineLoading } from "../components/InlineLoading";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
 import { matchesCatalogSearch } from "../lib/catalogSearch";
-import { adminPrimaryButtonClass, adminTabClass } from "../lib/adminUi";
+import { adminPrimaryButtonClass } from "../lib/adminUi";
 import { SeriesManagementTable } from "./SeriesManagementTable";
 import type { SeriesListFilter } from "./seriesListTypes";
 
 const TABLE_PAGE_SIZE = 25;
 
-const tabs: { key: SeriesListFilter; label: string }[] = [
+const filterOptions: { key: SeriesListFilter; label: string }[] = [
   { key: "all", label: "All series" },
   { key: "drafts", label: "Drafts" },
 ];
@@ -89,22 +89,14 @@ export function SeriesManagementSection() {
           placeholder="Search series by title, genre, slug, episode, or description…"
           resultCount={entries.length}
           totalCount={seriesOnly.length}
+          filterValue={listFilter}
+          filterOptions={filterOptions.map(({ key, label }) => ({
+            value: key,
+            label,
+          }))}
+          onFilterChange={(next) => setListFilter(next as SeriesListFilter)}
+          filterLabel="Filter series"
         />
-        <div className="flex flex-wrap items-center gap-2">
-          {tabs.map(({ key, label }) => {
-            const active = listFilter === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setListFilter(key)}
-                className={adminTabClass(active)}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       {isLoading && seriesOnly.length === 0 ? (

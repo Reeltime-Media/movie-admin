@@ -24,12 +24,27 @@ import {
 import { queryKeys } from "../lib/queryKeys";
 import type { RevenueDateRange } from "../components/RevenuePanel";
 
-export function useDashboardSummary() {
+/** Avoid SSR/client mismatch: queries only run after mount (when auth token is readable). */
+export function useClientAuthReady() {
   const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
     setIsAuthReady(true);
   }, []);
+
+  return isAuthReady;
+}
+
+/** True while waiting for client mount or an in-flight fetch — safe for SSR + hydration. */
+export function useQueryLoadingBeforeAuth(
+  isAuthReady: boolean,
+  query: { isLoading: boolean; isFetching: boolean },
+) {
+  return !isAuthReady || query.isLoading || query.isFetching;
+}
+
+export function useDashboardSummary() {
+  const isAuthReady = useClientAuthReady();
 
   return useQuery({
     queryKey: queryKeys.dashboardSummary,
@@ -40,10 +55,11 @@ export function useDashboardSummary() {
 }
 
 export function useRevenueTimelineQuery(days: number, dateRange?: RevenueDateRange) {
+  const isAuthReady = useClientAuthReady();
   const dateFrom = dateRange?.from || undefined;
   const dateTo = dateRange?.to || undefined;
 
-  return useQuery({
+  const query = useQuery({
     queryKey: queryKeys.revenueTimeline({ days, dateFrom, dateTo }),
     queryFn: () =>
       getAdminRevenueTimeline({
@@ -51,9 +67,11 @@ export function useRevenueTimelineQuery(days: number, dateRange?: RevenueDateRan
         dateFrom,
         dateTo,
       }),
-    enabled: typeof window !== "undefined" && Boolean(getAdminToken()),
+    enabled: isAuthReady && Boolean(getAdminToken()),
     staleTime: 60_000,
   });
+
+  return { ...query, isAuthReady };
 }
 
 export function useTopTitles(params: {
@@ -61,23 +79,31 @@ export function useTopTitles(params: {
   pageSize: number;
   contentType?: string;
 }) {
-  return useQuery({
+  const isAuthReady = useClientAuthReady();
+
+  const query = useQuery({
     queryKey: queryKeys.topTitles(params),
     queryFn: () => listAdminTopTitles(params),
-    enabled: typeof window !== "undefined" && Boolean(getAdminToken()),
+    enabled: isAuthReady && Boolean(getAdminToken()),
     staleTime: 2 * 60_000,
     placeholderData: keepPreviousData,
   });
+
+  return { ...query, isAuthReady };
 }
 
 export function useUsers(page: number, pageSize: number) {
-  return useQuery({
+  const isAuthReady = useClientAuthReady();
+
+  const query = useQuery({
     queryKey: queryKeys.users({ page, pageSize }),
     queryFn: () => listUsers({ page, pageSize }),
-    enabled: typeof window !== "undefined" && Boolean(getAdminToken()),
+    enabled: isAuthReady && Boolean(getAdminToken()),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   });
+
+  return { ...query, isAuthReady };
 }
 
 export function usePayments(params: {
@@ -87,13 +113,17 @@ export function usePayments(params: {
   dateFrom?: string;
   dateTo?: string;
 }) {
-  return useQuery({
+  const isAuthReady = useClientAuthReady();
+
+  const query = useQuery({
     queryKey: queryKeys.payments(params),
     queryFn: () => listAdminPayments(params),
-    enabled: typeof window !== "undefined" && Boolean(getAdminToken()),
+    enabled: isAuthReady && Boolean(getAdminToken()),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   });
+
+  return { ...query, isAuthReady };
 }
 
 export function useTranscodeJobs(params: {
@@ -102,6 +132,7 @@ export function useTranscodeJobs(params: {
   status?: string;
 }) {
   const queryClient = useQueryClient();
+  const isAuthReady = useClientAuthReady();
 
   const jobsQuery = useQuery({
     queryKey: queryKeys.transcodeJobs(params),
@@ -111,7 +142,7 @@ export function useTranscodeJobs(params: {
         pageSize: params.pageSize,
         status: params.status,
       }),
-    enabled: typeof window !== "undefined" && Boolean(getAdminToken()),
+    enabled: isAuthReady && Boolean(getAdminToken()),
     staleTime: 10_000,
     placeholderData: keepPreviousData,
     refetchInterval: (query) => {
@@ -139,7 +170,7 @@ export function useTranscodeJobs(params: {
         failed: statusTotals[3],
       };
     },
-    enabled: typeof window !== "undefined" && Boolean(getAdminToken()),
+    enabled: isAuthReady && Boolean(getAdminToken()),
     staleTime: 10_000,
   });
 
@@ -152,16 +183,17 @@ export function useTranscodeJobs(params: {
     },
   });
 
-  return { jobsQuery, countsQuery, retryMutation };
+  return { jobsQuery, countsQuery, retryMutation, isAuthReady };
 }
 
 export function useSubscriptionPlans() {
   const queryClient = useQueryClient();
+  const isAuthReady = useClientAuthReady();
 
   const plansQuery = useQuery({
     queryKey: queryKeys.subscriptionPlans,
     queryFn: listAdminSubscriptionPlans,
-    enabled: typeof window !== "undefined" && Boolean(getAdminToken()),
+    enabled: isAuthReady && Boolean(getAdminToken()),
     staleTime: 5 * 60_000,
   });
 
@@ -169,7 +201,7 @@ export function useSubscriptionPlans() {
     void queryClient.invalidateQueries({ queryKey: queryKeys.subscriptionPlans });
   };
 
-  return { plansQuery, invalidate };
+  return { plansQuery, invalidate, isAuthReady };
 }
 
 export type {

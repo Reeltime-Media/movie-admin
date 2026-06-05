@@ -1,5 +1,7 @@
 "use client";
 
+import { pageTitleClassName } from "../lib/pageTitle";
+
 import { useState } from "react";
 import { toast } from "react-toastify";
 
@@ -43,7 +45,7 @@ export default function PinPage() {
         <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-muted">
           Security check
         </div>
-        <h1 className="mt-2 text-[26px] font-extrabold tracking-[-0.03em]">Enter admin PIN</h1>
+        <h1 className={["mt-2", pageTitleClassName].join(" ")}>Enter admin PIN</h1>
         <p className="mt-2 text-[13px] leading-relaxed text-text-muted">
           This PIN step is required before opening the admin sign-in page.
         </p>

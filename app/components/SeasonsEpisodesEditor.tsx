@@ -1,6 +1,7 @@
 "use client";
 
 import type { Episode, Season } from "../lib/adminData";
+import { adminDeleteButtonClass } from "../lib/adminUi";
 import { newEpisodeId, newSeasonId, renumberSeasons } from "../lib/seriesHelpers";
 
 const inputClass =
@@ -8,9 +9,6 @@ const inputClass =
 
 const btnGhost =
   "rounded-md border border-border bg-bg px-2.5 py-1.5 text-[11px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text";
-
-const btnDanger =
-  "rounded-md border border-border bg-bg px-2.5 py-1.5 text-[11px] font-semibold text-warning transition-colors hover:border-warning hover:bg-warning/10";
 
 type SeasonsEpisodesEditorProps = {
   seasons: Season[];
@@ -118,7 +116,7 @@ export function SeasonsEpisodesEditor({ seasons, onChange }: SeasonsEpisodesEdit
               </button>
               <button
                 type="button"
-                className={btnDanger}
+                className={adminDeleteButtonClass}
                 onClick={() => removeSeason(season.id)}
                 disabled={seasons.length <= 1}
               >
@@ -167,7 +165,7 @@ export function SeasonsEpisodesEditor({ seasons, onChange }: SeasonsEpisodesEdit
                 <div className="flex justify-end sm:block">
                   <button
                     type="button"
-                    className={btnDanger}
+                    className={adminDeleteButtonClass}
                     onClick={() => removeEpisode(season.id, ep.id)}
                     disabled={season.episodes.length <= 1}
                   >

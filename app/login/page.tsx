@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { pageTitleClassName } from "../lib/pageTitle";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-toastify";
@@ -53,7 +54,7 @@ export default function LoginPage() {
           <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-brand">
             Restricted access
           </div>
-          <h1 className="text-[34px] font-extrabold leading-tight tracking-[-0.04em] text-text">
+          <h1 className={pageTitleClassName}>
             Manage content, pricing, and subscribers from one console.
           </h1>
           <p className="mt-4 text-[13px] leading-relaxed text-text-muted">

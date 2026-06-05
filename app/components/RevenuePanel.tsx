@@ -45,10 +45,12 @@ export type RevenueDateRange = {
 
 export function useRevenueTimeline(days: number, dateRange?: RevenueDateRange) {
   const query = useRevenueTimelineQuery(days, dateRange);
+  const loading =
+    !query.isAuthReady || query.isLoading || query.isFetching;
 
   return {
     timeline: query.data ?? null,
-    loading: query.isLoading,
+    loading,
     error: query.error
       ? query.error instanceof Error
         ? query.error.message

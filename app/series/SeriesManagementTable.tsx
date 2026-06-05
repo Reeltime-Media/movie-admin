@@ -9,6 +9,7 @@ import { GenreMultiSelect } from "../components/GenreMultiSelect";
 import { SeasonsEpisodesEditor } from "../components/SeasonsEpisodesEditor";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
 import { statusClasses, type CatalogEntry, type Status } from "../lib/adminData";
+import { adminDeleteButtonClass, adminDeleteConfirmButtonClass } from "../lib/adminUi";
 import { formatGenres, parseGenresFromStored } from "../lib/genres";
 import { seriesStructureSummary, validateSeriesSeasons } from "../lib/seriesHelpers";
 import type { SeriesListFilter } from "./seriesListTypes";
@@ -263,7 +264,7 @@ export function SeriesManagementTable({
                             e.stopPropagation();
                             setConfirmDelete(item);
                           }}
-                          className="rounded-md border border-border bg-bg px-2.5 py-1.5 text-[11px] font-semibold text-warning transition-colors hover:border-warning hover:bg-warning/10"
+                          className={adminDeleteButtonClass}
                         >
                           Delete
                         </button>
@@ -346,7 +347,7 @@ export function SeriesManagementTable({
                 type="button"
                 onClick={confirmRemove}
                 disabled={isDeleting}
-                className="rounded-md bg-brand px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
+                className={adminDeleteConfirmButtonClass}
               >
                 {isDeleting ? "Deleting..." : "Delete"}
               </button>

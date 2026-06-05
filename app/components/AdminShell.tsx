@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { clearAdminToken, getAdminToken } from "../lib/api";
+import { pageTitleClassName } from "../lib/pageTitle";
 import { useUploadProgress } from "./UploadProgressContext";
 
 const navItems = [
@@ -108,7 +109,7 @@ export function AdminShell({
                 <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-muted">
                   Reeltime operations
                 </div>
-                <h1 className="mt-1 text-[24px] font-extrabold tracking-[-0.03em]">
+                <h1 className={["mt-1", pageTitleClassName].join(" ")}>
                   {title}
                 </h1>
               </div>

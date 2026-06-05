@@ -13,6 +13,7 @@ import {
   uploadFileToPresignedUrl,
 } from "../lib/api";
 import { statusClasses, type CatalogEntry, type Status } from "../lib/adminData";
+import { adminDeleteButtonClass, adminDeleteConfirmButtonClass } from "../lib/adminUi";
 import { formatGenres, parseGenresFromStored } from "../lib/genres";
 import type { ListFilter } from "./movieListTypes";
 import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../lib/money";
@@ -274,7 +275,7 @@ export function MovieManagementTable({
                             e.stopPropagation();
                             setConfirmDelete(item);
                           }}
-                          className="rounded-md border border-border bg-bg px-2.5 py-1.5 text-[11px] font-semibold text-warning transition-colors hover:border-warning hover:bg-warning/10"
+                          className={adminDeleteButtonClass}
                         >
                           Delete
                         </button>
@@ -606,7 +607,7 @@ export function MovieManagementTable({
                 type="button"
                 onClick={confirmRemove}
                 disabled={isDeleting}
-                className="rounded-md bg-brand px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
+                className={adminDeleteConfirmButtonClass}
               >
                 {isDeleting ? "Deleting..." : "Delete"}
               </button>

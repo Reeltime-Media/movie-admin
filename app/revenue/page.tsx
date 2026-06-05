@@ -107,7 +107,7 @@ export default function RevenuePage() {
             setDateFrom("");
             setDateTo("");
           }}
-          chartHeight={300}
+          chartHeight={200}
         />
       </AdminCard>
 

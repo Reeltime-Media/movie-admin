@@ -9,6 +9,7 @@ import {
   updateAdminComment,
   type ApiComment,
 } from "../lib/api";
+import { adminDeleteButtonClass } from "../lib/adminUi";
 import { formatMovieDate } from "./movieDetailUi";
 
 const COMMENTS_PAGE_SIZE = 5;
@@ -216,7 +217,7 @@ export function MovieCommentsAdmin({ contentId }: MovieCommentsAdminProps) {
                             type="button"
                             disabled={isBusy}
                             onClick={() => void handleDelete(comment.id)}
-                            className="rounded-md border border-warning/40 bg-warning/10 px-2.5 py-1.5 text-[11px] font-semibold text-warning transition-colors hover:bg-warning/20 disabled:opacity-50"
+                            className={adminDeleteButtonClass}
                           >
                             Delete
                           </button>

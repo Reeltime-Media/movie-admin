@@ -11,6 +11,7 @@ import {
   updateAdminSubscriptionPlan,
   type ApiSubscriptionPlan,
 } from "../lib/api";
+import { adminDeleteButtonClassWide } from "../lib/adminUi";
 import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../lib/money";
 
 type PlanFormState = {
@@ -245,7 +246,7 @@ export function SubscriptionPlanCreator() {
                       type="button"
                       onClick={() => void handleDelete(plan)}
                       disabled={isSaving}
-                      className="rounded-md border border-brand/30 bg-brand/10 px-3 py-2 text-[11px] font-semibold text-brand transition-colors hover:bg-brand/20 disabled:opacity-40"
+                      className={adminDeleteButtonClassWide}
                     >
                       Delete
                     </button>

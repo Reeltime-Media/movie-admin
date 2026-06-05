@@ -65,6 +65,15 @@ export const adminPrimaryButtonClass =
 export const adminGhostButtonClass =
   "rounded-md border border-border bg-surface px-3 py-1.5 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:bg-surface-elevated hover:text-text disabled:cursor-not-allowed disabled:opacity-40";
 
+export const adminDeleteButtonClass =
+  "rounded-md border border-danger/40 bg-danger/10 px-2.5 py-1.5 text-[11px] font-semibold text-danger transition-colors hover:border-danger/55 hover:bg-danger/15 disabled:cursor-not-allowed disabled:opacity-40";
+
+export const adminDeleteButtonClassWide =
+  "rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-[11px] font-semibold text-danger transition-colors hover:border-danger/55 hover:bg-danger/15 disabled:cursor-not-allowed disabled:opacity-40";
+
+export const adminDeleteConfirmButtonClass =
+  "rounded-md bg-danger px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-danger/90 disabled:opacity-50";
+
 export const adminPaginationWrapClass =
   "mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-4";
 

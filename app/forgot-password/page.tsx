@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { pageTitleClassName } from "../lib/pageTitle";
 
 export default function ForgotPasswordPage() {
   return (
@@ -17,7 +18,7 @@ export default function ForgotPasswordPage() {
         <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-muted">
           Account recovery
         </div>
-        <h1 className="mt-2 text-[26px] font-extrabold tracking-[-0.03em]">
+        <h1 className={["mt-2", pageTitleClassName].join(" ")}>
           Reset your password
         </h1>
         <p className="mt-2 text-[13px] leading-relaxed text-text-muted">

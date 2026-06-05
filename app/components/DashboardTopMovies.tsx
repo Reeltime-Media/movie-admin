@@ -2,22 +2,26 @@
 
 import Link from "next/link";
 import { AdminCard } from "./AdminCard";
-import { useTopTitles } from "../hooks/adminQueries";
+import { useQueryLoadingBeforeAuth, useTopTitles } from "../hooks/adminQueries";
 
 const TOP_COUNT = 10;
 
 export function DashboardTopMovies() {
-  const { data, isLoading, error, refetch } = useTopTitles({
+  const { data, isLoading, isFetching, isAuthReady, error, refetch } = useTopTitles({
     page: 1,
     pageSize: TOP_COUNT,
     contentType: "single",
   });
 
   const movies = data?.items ?? [];
+  const showLoading = useQueryLoadingBeforeAuth(isAuthReady, {
+    isLoading,
+    isFetching,
+  });
 
   return (
     <AdminCard title="Top movies" action="Full report" actionHref="/reports">
-      {isLoading && !movies.length ? (
+      {showLoading && !movies.length ? (
         <div className="flex h-40 items-center justify-center">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-brand" />
         </div>

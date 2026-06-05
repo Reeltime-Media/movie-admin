@@ -8,13 +8,13 @@ import { AdminPagination } from "../components/AdminPagination";
 import { InlineLoading } from "../components/InlineLoading";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
 import { matchesCatalogSearch } from "../lib/catalogSearch";
-import { adminPrimaryButtonClass, adminTabClass } from "../lib/adminUi";
+import { adminPrimaryButtonClass } from "../lib/adminUi";
 import { MovieManagementTable } from "./MovieManagementTable";
 import type { ListFilter } from "./movieListTypes";
 
 const TABLE_PAGE_SIZE = 25;
 
-const tabs: { key: ListFilter; label: string }[] = [
+const filterOptions: { key: ListFilter; label: string }[] = [
   { key: "all", label: "All movies" },
   { key: "drafts", label: "Drafts" },
 ];
@@ -64,10 +64,7 @@ export function MovieManagementSection() {
     <>
       <div className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <p className="max-w-[72ch] text-[13px] leading-relaxed text-text-muted">
-            Manage standalone movies surfaced in the Reeltime client. For series with seasons and
-            episodes, use the Series section.
-          </p>
+          <p className="max-w-[72ch] text-[13px] leading-relaxed text-text-muted"></p>
           <Link
             href="/movie/new"
             className={`shrink-0 ${adminPrimaryButtonClass}`}
@@ -89,22 +86,14 @@ export function MovieManagementSection() {
           placeholder="Search movies by title, genre, slug, or description…"
           resultCount={entries.length}
           totalCount={moviesOnly.length}
+          filterValue={listFilter}
+          filterOptions={filterOptions.map(({ key, label }) => ({
+            value: key,
+            label,
+          }))}
+          onFilterChange={(next) => setListFilter(next as ListFilter)}
+          filterLabel="Filter movies"
         />
-        <div className="flex flex-wrap items-center gap-2">
-          {tabs.map(({ key, label }) => {
-            const active = listFilter === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setListFilter(key)}
-                className={adminTabClass(active)}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       {isLoading && moviesOnly.length === 0 ? (
