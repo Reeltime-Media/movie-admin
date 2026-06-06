@@ -45,6 +45,8 @@ export type CatalogEntry = {
   releaseYear?: number | null;
   posterKey?: string | null;
   posterUrl?: string | null;
+  bannerKey?: string | null;
+  bannerUrl?: string | null;
   hlsMasterKey?: string | null;
   hlsMasterUrl?: string | null;
   trailerUrl?: string | null;

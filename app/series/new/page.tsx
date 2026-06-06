@@ -16,6 +16,7 @@ import {
   EPISODE_UPLOAD_CONCURRENCY,
   runPool,
   uploadEpisodeWithAssets,
+  uploadSeriesAssets,
 } from "../../lib/api";
 import { TrailerPreview } from "../../components/TrailerPreview";
 import { useUploadProgress } from "../../components/UploadProgressContext";
@@ -78,6 +79,7 @@ export default function NewSeriesPage() {
   const [genres, setGenres] = useState<string[]>([]);
   const [seasons, setSeasons] = useState<Season[]>(() => defaultSeasons());
   const [seriesPosterFile, setSeriesPosterFile] = useState<File | null>(null);
+  const [seriesBannerFile, setSeriesBannerFile] = useState<File | null>(null);
   const [trailerUrl, setTrailerUrl] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [detailsError, setDetailsError] = useState<string | null>(null);
@@ -161,8 +163,15 @@ export default function NewSeriesPage() {
           releaseYear: parseOptionalNumber(fd.get("releaseYear")),
           rating: String(fd.get("rating") || "").trim() || undefined,
           trailerUrl: String(fd.get("trailerUrl") || "").trim() || undefined,
-          poster: seriesPosterFile ?? undefined,
         });
+
+        if (seriesPosterFile || seriesBannerFile) {
+          setJobLabel(seriesJobId, "Uploading series artwork…");
+          await uploadSeriesAssets(series.slug, {
+            poster: seriesPosterFile,
+            banner: seriesBannerFile,
+          });
+        }
 
         const allEpisodes = seasons.flatMap((s) => s.episodes.map((ep) => ({ season: s, ep })));
         const episodesWithVideo = allEpisodes.filter((x) => x.ep.videoFile);
@@ -349,21 +358,37 @@ export default function NewSeriesPage() {
         <div className={step === 2 ? "block" : "hidden"} aria-hidden={step !== 2}>
           <AdminCard title="Episode media">
             <p className="mb-5 text-[13px] text-text-muted">
-              Upload a series key art poster (optional), then attach each episode&apos;s video
+              Upload series poster and banner (optional), then attach each episode&apos;s video
               (required for Upload) and episode poster (optional).
             </p>
 
-            <div className="mb-8 rounded-lg border border-border bg-bg p-4">
-              <span className="block text-[12px] font-semibold text-text-muted">Series poster</span>
-              <input
-                type="file"
-                accept="image/*"
-                className={fileInputClass}
-                onChange={(e) => setSeriesPosterFile(e.target.files?.[0] ?? null)}
-              />
-              {seriesPosterFile ? (
-                <p className="mt-2 text-[11px] text-text-muted">{seriesPosterFile.name}</p>
-              ) : null}
+            <div className="mb-8 grid gap-4 md:grid-cols-2">
+              <div className="rounded-lg border border-border bg-bg p-4">
+                <Field label="Series poster" hint="Portrait key art for catalog cards.">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className={fileInputClass}
+                    onChange={(e) => setSeriesPosterFile(e.target.files?.[0] ?? null)}
+                  />
+                  {seriesPosterFile ? (
+                    <p className="mt-2 text-[11px] text-text-muted">{seriesPosterFile.name}</p>
+                  ) : null}
+                </Field>
+              </div>
+              <div className="rounded-lg border border-border bg-bg p-4">
+                <Field label="Series banner" hint="Wide cinematic image for the home hero.">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className={fileInputClass}
+                    onChange={(e) => setSeriesBannerFile(e.target.files?.[0] ?? null)}
+                  />
+                  {seriesBannerFile ? (
+                    <p className="mt-2 text-[11px] text-text-muted">{seriesBannerFile.name}</p>
+                  ) : null}
+                </Field>
+              </div>
             </div>
 
             <EpisodeAssetsUploader seasons={seasons} onChange={setSeasons} />

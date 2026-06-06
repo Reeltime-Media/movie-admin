@@ -126,6 +126,12 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
         >
           Back to series
         </Link>
+        <Link
+          href={`/series/${series.id}/edit`}
+          className="rounded-md bg-brand px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
+        >
+          Edit
+        </Link>
       </div>
 
       <section className="overflow-hidden rounded-xl border border-border bg-surface">
@@ -149,19 +155,35 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
         </header>
 
         <div className="grid gap-0 lg:grid-cols-[340px_1fr]">
-          <aside className="border-b border-border bg-bg p-5 lg:border-b-0 lg:border-r">
-            <div className="mb-3 text-[16px] font-bold tracking-[-0.02em]">Poster</div>
-            {series.posterUrl ? (
-              <img
-                src={series.posterUrl}
-                alt={`${series.title} poster`}
-                className="aspect-2/3 w-full rounded-lg border border-border object-cover"
-              />
-            ) : (
-              <div className="grid aspect-2/3 place-items-center rounded-lg border border-dashed border-border bg-surface text-center text-[13px] text-text-muted">
-                No poster available
-              </div>
-            )}
+          <aside className="space-y-6 border-b border-border bg-bg p-5 lg:border-b-0 lg:border-r">
+            <div>
+              <div className="mb-3 text-[16px] font-bold tracking-[-0.02em]">Poster</div>
+              {series.posterUrl ? (
+                <img
+                  src={series.posterUrl}
+                  alt={`${series.title} poster`}
+                  className="aspect-2/3 w-full rounded-lg border border-border object-cover"
+                />
+              ) : (
+                <div className="grid aspect-2/3 place-items-center rounded-lg border border-dashed border-border bg-surface text-center text-[13px] text-text-muted">
+                  No poster available
+                </div>
+              )}
+            </div>
+            <div>
+              <div className="mb-3 text-[16px] font-bold tracking-[-0.02em]">Banner</div>
+              {series.bannerUrl ? (
+                <img
+                  src={series.bannerUrl}
+                  alt={`${series.title} banner`}
+                  className="aspect-21/9 w-full rounded-lg border border-border object-cover"
+                />
+              ) : (
+                <div className="grid aspect-21/9 place-items-center rounded-lg border border-dashed border-border bg-surface text-center text-[13px] text-text-muted">
+                  No banner available
+                </div>
+              )}
+            </div>
           </aside>
 
           <main className="space-y-5 bg-bg p-5">

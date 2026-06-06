@@ -5,6 +5,7 @@ import {
   type PaginationQuery,
 } from "./pagination";
 
+import { imageContentType, inferFileContentType, videoContentType } from "./media";
 import { resolveApiUrl } from "./resolve-api-url";
 
 const TOKEN_KEY = "reeltime_admin_token";
@@ -22,6 +23,8 @@ export type ApiSeries = {
   rating: string | null;
   monthly_price_usd: string | null;
   poster_key: string | null;
+  banner_key: string | null;
+  trailer_url: string | null;
   is_published: boolean;
   created_at: string;
   updated_at: string;
@@ -61,6 +64,8 @@ export type MovieUploadStartResponse = {
   part_urls: MultipartPartUrl[];
   poster_key: string | null;
   poster_upload_url: string | null;
+  banner_key: string | null;
+  banner_upload_url: string | null;
 };
 
 export type EpisodeUploadStartResponse = {
@@ -83,6 +88,8 @@ export type MovieAssetUploadStartResponse = {
   video_upload_url: string | null;
   poster_key: string | null;
   poster_upload_url: string | null;
+  banner_key: string | null;
+  banner_upload_url: string | null;
 };
 
 export type ApiContent = {
@@ -100,6 +107,7 @@ export type ApiContent = {
   runtime: string | null;
   duration_seconds: number | null;
   poster_key: string | null;
+  banner_key: string | null;
   trailer_url: string | null;
   hls_master_key: string | null;
   price_usd: string | null;
@@ -425,21 +433,88 @@ export async function deleteAdminMovie(id: string) {
   });
 }
 
+function normalizeAssetContentType(value?: string | null) {
+  const trimmed = value?.trim();
+  return trimmed || null;
+}
+
 export async function startAdminMovieAssetUpload(
   id: string,
   input: {
-    videoContentType?: string;
-    posterContentType?: string;
+    videoContentType?: string | null;
+    posterContentType?: string | null;
+    bannerContentType?: string | null;
   },
 ) {
   return apiFetch<MovieAssetUploadStartResponse>(`/admin/movies/${id}/assets/start`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      video_content_type: input.videoContentType ?? null,
-      poster_content_type: input.posterContentType ?? null,
+      video_content_type: normalizeAssetContentType(input.videoContentType),
+      poster_content_type: normalizeAssetContentType(input.posterContentType),
+      banner_content_type: normalizeAssetContentType(input.bannerContentType),
     }),
   });
+}
+
+export async function uploadAdminMovieAsset(
+  id: string,
+  kind: "poster" | "banner" | "video",
+  file: File,
+  onProgress?: (percent: number) => void,
+) {
+  const contentType = kind === "video" ? videoContentType(file) : imageContentType(file);
+  const startInput =
+    kind === "poster"
+      ? { posterContentType: contentType }
+      : kind === "banner"
+        ? { bannerContentType: contentType }
+        : { videoContentType: contentType };
+
+  const upload = await startAdminMovieAssetUpload(id, startInput);
+
+  const uploadUrl =
+    kind === "poster"
+      ? upload.poster_upload_url
+      : kind === "banner"
+        ? upload.banner_upload_url
+        : upload.video_upload_url;
+  const assetKey =
+    kind === "poster"
+      ? upload.poster_key
+      : kind === "banner"
+        ? upload.banner_key
+        : upload.source_key;
+
+  if (!uploadUrl || !assetKey) {
+    throw new Error(`Could not start ${kind} upload. Restart the API if you are uploading a banner.`);
+  }
+
+  await uploadFileToPresignedUrl(uploadUrl, file, onProgress, contentType);
+  await completeAdminMovieAssetUpload(id, {
+    sourceKey: kind === "video" ? assetKey : null,
+    posterKey: kind === "poster" ? assetKey : null,
+    bannerKey: kind === "banner" ? assetKey : null,
+  });
+}
+
+function hasUploadFile(file: File | null | undefined): file is File {
+  return Boolean(file && file.size > 0);
+}
+
+export async function uploadAdminMovieAssets(
+  id: string,
+  assets: { poster?: File | null; banner?: File | null; video?: File | null },
+  onVideoProgress?: (percent: number) => void,
+) {
+  const poster = hasUploadFile(assets.poster) ? assets.poster : null;
+  const banner = hasUploadFile(assets.banner) ? assets.banner : null;
+  const video = hasUploadFile(assets.video) ? assets.video : null;
+  if (!poster && !banner && !video) return;
+
+  if (poster) await uploadAdminMovieAsset(id, "poster", poster);
+  if (banner) await uploadAdminMovieAsset(id, "banner", banner);
+  if (video) await uploadAdminMovieAsset(id, "video", video, onVideoProgress);
 }
 
 export async function completeAdminMovieAssetUpload(
@@ -447,6 +522,7 @@ export async function completeAdminMovieAssetUpload(
   input: {
     sourceKey?: string | null;
     posterKey?: string | null;
+    bannerKey?: string | null;
   },
 ) {
   return apiFetch<ApiContent>(`/admin/movies/${id}/assets/complete`, {
@@ -455,6 +531,7 @@ export async function completeAdminMovieAssetUpload(
     body: JSON.stringify({
       source_key: input.sourceKey ?? null,
       poster_key: input.posterKey ?? null,
+      banner_key: input.bannerKey ?? null,
     }),
   });
 }
@@ -464,6 +541,7 @@ export async function startMovieUpload(input: {
   fileSizeBytes: number;
   videoContentType: string;
   posterContentType?: string;
+  bannerContentType?: string;
 }) {
   return apiFetch<MovieUploadStartResponse>("/movies/uploads/start", {
     method: "POST",
@@ -473,6 +551,7 @@ export async function startMovieUpload(input: {
       file_size_bytes: input.fileSizeBytes,
       video_content_type: input.videoContentType,
       poster_content_type: input.posterContentType ?? null,
+      banner_content_type: input.bannerContentType ?? null,
     }),
   });
 }
@@ -505,6 +584,7 @@ export async function completeMovieUpload(input: {
   runtimeMinutes?: number;
   status: string;
   posterKey?: string | null;
+  bannerKey?: string | null;
   trailerUrl?: string | null;
 }) {
   return apiFetch<ApiContent>("/movies/uploads/complete", {
@@ -528,6 +608,7 @@ export async function completeMovieUpload(input: {
       runtime_minutes: input.runtimeMinutes ?? null,
       status: input.status,
       poster_key: input.posterKey ?? null,
+      banner_key: input.bannerKey ?? null,
       trailer_url: input.trailerUrl || null,
     }),
   });
@@ -571,10 +652,10 @@ export function uploadFileToPresignedUrl(
   url: string,
   file: File,
   onProgress?: (percent: number) => void,
+  contentType?: string,
 ) {
-  return uploadBlobToPresignedUrl(url, file, file.type || "application/octet-stream", onProgress).then(
-    () => undefined,
-  );
+  const resolvedType = contentType || file.type || inferFileContentType(file);
+  return uploadBlobToPresignedUrl(url, file, resolvedType, onProgress).then(() => undefined);
 }
 
 async function runWithConcurrency<T, R>(
@@ -748,18 +829,76 @@ export async function createSeries(input: {
   releaseYear?: number;
   rating?: string;
   trailerUrl?: string;
-  poster?: File;
 }): Promise<ApiSeries> {
-  const fd = new FormData();
-  fd.append("title", input.title);
-  fd.append("monthly_price_usd", input.monthlyPriceUsd || "0");
-  if (input.description) fd.append("description", input.description);
-  if (input.genres.length) fd.append("genres", JSON.stringify(input.genres));
-  if (input.releaseYear) fd.append("release_year", String(input.releaseYear));
-  if (input.rating) fd.append("rating", input.rating);
-  if (input.trailerUrl) fd.append("trailer_url", input.trailerUrl);
-  if (input.poster) fd.append("poster", input.poster);
-  return multipartPost<ApiSeries>("/series/", fd);
+  return apiFetch<ApiSeries>("/series/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: input.title,
+      monthly_price_usd: input.monthlyPriceUsd || "0",
+      description: input.description ?? null,
+      genres: input.genres,
+      release_year: input.releaseYear ?? null,
+      rating: input.rating ?? null,
+      trailer_url: input.trailerUrl ?? null,
+    }),
+  });
+}
+
+type SeriesPosterStartResponse = {
+  series_id: string;
+  poster_key: string;
+  poster_upload_url: string;
+};
+
+type SeriesBannerStartResponse = {
+  series_id: string;
+  banner_key: string;
+  banner_upload_url: string;
+};
+
+export async function uploadSeriesAsset(
+  slug: string,
+  kind: "poster" | "banner",
+  file: File,
+) {
+  const contentType = imageContentType(file);
+  const start =
+    kind === "poster"
+      ? await apiFetch<SeriesPosterStartResponse>(`/series/${slug}/poster/start`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ poster_content_type: contentType }),
+        })
+      : await apiFetch<SeriesBannerStartResponse>(`/series/${slug}/banner/start`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ banner_content_type: contentType }),
+        });
+
+  const uploadUrl =
+    kind === "poster"
+      ? (start as SeriesPosterStartResponse).poster_upload_url
+      : (start as SeriesBannerStartResponse).banner_upload_url;
+  const assetKey =
+    kind === "poster"
+      ? (start as SeriesPosterStartResponse).poster_key
+      : (start as SeriesBannerStartResponse).banner_key;
+
+  await uploadFileToPresignedUrl(uploadUrl, file, undefined, contentType);
+  await updateSeriesApi(slug, {
+    ...(kind === "poster" ? { poster_key: assetKey } : { banner_key: assetKey }),
+  });
+}
+
+export async function uploadSeriesAssets(
+  slug: string,
+  assets: { poster?: File | null; banner?: File | null },
+) {
+  const poster = hasUploadFile(assets.poster) ? assets.poster : null;
+  const banner = hasUploadFile(assets.banner) ? assets.banner : null;
+  if (poster) await uploadSeriesAsset(slug, "poster", poster);
+  if (banner) await uploadSeriesAsset(slug, "banner", banner);
 }
 
 export async function updateSeriesApi(
@@ -771,6 +910,10 @@ export async function updateSeriesApi(
     rating: string | null;
     monthly_price_usd: string;
     is_published: boolean;
+    poster_key: string | null;
+    banner_key: string | null;
+    trailer_url: string | null;
+    release_year: number | null;
   }>,
 ): Promise<ApiSeries> {
   return apiFetch<ApiSeries>(`/series/${slug}`, {

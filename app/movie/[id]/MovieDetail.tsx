@@ -69,6 +69,12 @@ export function MovieDetail({ movieId }: { movieId: string }) {
         >
           Back to movies
         </Link>
+        <Link
+          href={`/movie/${movie.id}/edit`}
+          className="rounded-md bg-brand px-3 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
+        >
+          Edit movie
+        </Link>
       </div>
 
       <section className="overflow-hidden rounded-xl border border-border bg-surface">
@@ -109,6 +115,22 @@ export function MovieDetail({ movieId }: { movieId: string }) {
             ) : (
               <div className="grid aspect-2/3 place-items-center rounded-lg border border-dashed border-border bg-surface text-center text-[13px] text-text-muted">
                 No poster available
+              </div>
+            )}
+
+            <div className="mb-3 mt-6 text-[16px] font-bold tracking-[-0.02em]">Banner</div>
+            <p className="mb-3 text-[11px] text-text-disabled">
+              Wide image for the pay page hero. Not shown on the watch page.
+            </p>
+            {movie.bannerUrl ? (
+              <img
+                src={movie.bannerUrl}
+                alt={`${movie.title} banner`}
+                className="aspect-21/9 w-full rounded-lg border border-border object-cover"
+              />
+            ) : (
+              <div className="grid aspect-21/9 place-items-center rounded-lg border border-dashed border-border bg-surface text-center text-[13px] text-text-muted">
+                No banner uploaded
               </div>
             )}
           </aside>

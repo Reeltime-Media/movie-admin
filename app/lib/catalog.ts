@@ -64,6 +64,8 @@ export function apiContentToCatalogEntry(content: ApiContent): CatalogEntry {
     releaseYear: content.release_year,
     posterKey: content.poster_key,
     posterUrl: mediaUrl(content.poster_key),
+    bannerKey: content.banner_key,
+    bannerUrl: mediaUrl(content.banner_key),
     hlsMasterKey: content.hls_master_key,
     hlsMasterUrl: mediaUrl(content.hls_master_key),
     trailerUrl: content.trailer_url,
@@ -114,9 +116,11 @@ export function apiSeriesToCatalogEntry(series: ApiSeries, apiSeasons: ApiSeason
     releaseYear: series.release_year,
     posterKey: series.poster_key,
     posterUrl: mediaUrl(series.poster_key),
+    bannerKey: series.banner_key,
+    bannerUrl: mediaUrl(series.banner_key),
     hlsMasterKey: null,
     hlsMasterUrl: null,
-    trailerUrl: null,
+    trailerUrl: series.trailer_url,
     transcodeStatus: undefined,
     createdAt: series.created_at,
     updatedAt: series.updated_at,
@@ -158,6 +162,8 @@ export async function updateCatalogEntry(
       description: entry.description ?? null,
       genres: parseGenresFromStored(entry.genre),
       is_published: entry.status === "Published",
+      trailer_url: entry.trailerUrl ?? null,
+      release_year: entry.releaseYear ?? null,
     };
     const rating = ratingToApi(entry.rating);
     if (rating != null) patch.rating = rating;

@@ -10,14 +10,14 @@ import { GenreMultiSelect } from "../../components/GenreMultiSelect";
 import { useMovieCatalog } from "../../components/MovieCatalogProvider";
 import type { Status } from "../../lib/adminData";
 import {
-  completeAdminMovieAssetUpload,
   completeMovieUpload,
   createAdminMovieDraft,
-  startAdminMovieAssetUpload,
   startMovieUpload,
+  uploadAdminMovieAsset,
   uploadFileToPresignedUrl,
   uploadMovieVideoMultipart,
 } from "../../lib/api";
+import { imageContentType } from "../../lib/media";
 import { TrailerPreview } from "../../components/TrailerPreview";
 import { useUploadProgress } from "../../components/UploadProgressContext";
 import { formatGenres } from "../../lib/genres";
@@ -135,14 +135,11 @@ export default function NewMoviePage() {
   };
 
   const uploadPosterForMovie = async (movieId: string, poster: File) => {
-    const upload = await startAdminMovieAssetUpload(movieId, {
-      posterContentType: poster.type,
-    });
-    if (!upload.poster_upload_url || !upload.poster_key) {
-      throw new Error("Could not start poster upload.");
-    }
-    await uploadFileToPresignedUrl(upload.poster_upload_url, poster);
-    await completeAdminMovieAssetUpload(movieId, { posterKey: upload.poster_key });
+    await uploadAdminMovieAsset(movieId, "poster", poster);
+  };
+
+  const uploadBannerForMovie = async (movieId: string, banner: File) => {
+    await uploadAdminMovieAsset(movieId, "banner", banner);
   };
 
   const getWizardForm = () =>
@@ -159,7 +156,9 @@ export default function NewMoviePage() {
     }
 
     const posterFile = fd.get("poster");
+    const bannerFile = fd.get("banner");
     const poster = posterFile instanceof File && posterFile.size > 0 ? posterFile : null;
+    const banner = bannerFile instanceof File && bannerFile.size > 0 ? bannerFile : null;
 
     setSubmitError(null);
     setDetailsError(null);
@@ -179,6 +178,10 @@ export default function NewMoviePage() {
 
       if (poster) {
         await uploadPosterForMovie(created.id, poster);
+      }
+
+      if (banner) {
+        await uploadBannerForMovie(created.id, banner);
       }
 
       await refreshMovies();
@@ -209,12 +212,14 @@ export default function NewMoviePage() {
 
     const videoFile = fd.get("video");
     const posterFile = fd.get("poster");
+    const bannerFile = fd.get("banner");
     const video = videoFile instanceof File && videoFile.size > 0 ? videoFile : null;
     const posterImage = posterFile instanceof File && posterFile.size > 0 ? posterFile : null;
+    const bannerImage = bannerFile instanceof File && bannerFile.size > 0 ? bannerFile : null;
 
     if (intent === "draft") {
       if (video) {
-        await uploadMovieWithStatus(fd, fields, video, posterImage, "Draft");
+        await uploadMovieWithStatus(fd, fields, video, posterImage, bannerImage, "Draft");
       } else {
         await saveDraftFromForm(fd);
       }
@@ -250,7 +255,7 @@ export default function NewMoviePage() {
       return;
     }
 
-    await uploadMovieWithStatus(fd, fields, video!, posterImage, status);
+    await uploadMovieWithStatus(fd, fields, video!, posterImage, bannerImage, status);
   };
 
   const handleSaveDraftClick = () => {
@@ -267,6 +272,7 @@ export default function NewMoviePage() {
     fields: Extract<ReturnType<typeof readCommonFields>, { ok: true }>,
     video: File,
     posterImage: File | null,
+    bannerImage: File | null,
     status: Status,
   ) => {
     const movieJobId = `movie-${fields.title}-${Date.now()}`;
@@ -286,12 +292,18 @@ export default function NewMoviePage() {
           title: fields.title,
           fileSizeBytes: video.size,
           videoContentType: video.type || "video/mp4",
-          posterContentType: posterImage?.type,
+          posterContentType: posterImage ? imageContentType(posterImage) : undefined,
+          bannerContentType: bannerImage ? imageContentType(bannerImage) : undefined,
         });
 
         if (posterImage && upload.poster_upload_url) {
           setJobLabel(movieJobId, "Uploading poster…");
           await uploadFileToPresignedUrl(upload.poster_upload_url, posterImage);
+        }
+
+        if (bannerImage && upload.banner_upload_url) {
+          setJobLabel(movieJobId, "Uploading banner…");
+          await uploadFileToPresignedUrl(upload.banner_upload_url, bannerImage);
         }
 
         setJobLabel(movieJobId, "Uploading video…");
@@ -320,6 +332,7 @@ export default function NewMoviePage() {
           runtimeMinutes: fields.runtimeMinutes,
           status: toApiStatus(status),
           posterKey: upload.poster_key,
+          bannerKey: upload.banner_key,
           trailerUrl: fields.trailerUrl,
         });
 
@@ -483,15 +496,22 @@ export default function NewMoviePage() {
         <div className={step === 1 ? "block" : "hidden"} aria-hidden={step !== 1}>
           <AdminCard title="Upload assets">
             <p className="mb-5 text-[13px] text-text-muted">
-              Attach poster and main video. The video is sent directly to R2, then the API queues
-              transcoding. Save draft without a video to finish uploading later from the movie list.
+              Attach poster, banner, and main video. The video is sent directly to R2, then the API
+              queues transcoding. Save draft without a video to finish uploading later from the movie
+              list.
             </p>
             <div className="space-y-4">
               <Field
                 label="Poster image"
-                hint="Required for Published. Optional when saving a draft."
+                hint="Portrait key art. Required for Published. Optional when saving a draft."
               >
                 <input name="poster" type="file" accept="image/*" className={fileInputClass} />
+              </Field>
+              <Field
+                label="Banner image"
+                hint="Wide cinematic image for the movie page hero. Optional."
+              >
+                <input name="banner" type="file" accept="image/*" className={fileInputClass} />
               </Field>
               <Field
                 label="Movie file"
