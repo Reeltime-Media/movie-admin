@@ -42,7 +42,7 @@ function ArtworkField({
   newFile: File | null;
   onFileChange: (file: File | null) => void;
 }) {
-  const aspectClass = label === "Banner" ? "aspect-21/9" : "aspect-2/3";
+  const aspectClass = label === "Banner" ? "aspect-video" : "aspect-2/3";
 
   return (
     <div className="rounded-lg border border-border bg-bg p-4">

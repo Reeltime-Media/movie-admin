@@ -126,10 +126,10 @@ export function MovieDetail({ movieId }: { movieId: string }) {
               <img
                 src={movie.bannerUrl}
                 alt={`${movie.title} banner`}
-                className="aspect-21/9 w-full rounded-lg border border-border object-cover"
+                className="aspect-video w-full rounded-lg border border-border object-cover"
               />
             ) : (
-              <div className="grid aspect-21/9 place-items-center rounded-lg border border-dashed border-border bg-surface text-center text-[13px] text-text-muted">
+              <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-surface text-center text-[13px] text-text-muted">
                 No banner uploaded
               </div>
             )}
