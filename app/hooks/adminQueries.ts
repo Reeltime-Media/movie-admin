@@ -1,20 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  createAdminSubscriptionPlan,
-  deleteAdminSubscriptionPlan,
+  createGenre,
+  deleteGenre,
   getAdminDashboardSummary,
   getAdminRevenueTimeline,
   getAdminToken,
   listAdminPayments,
   listAdminSubscriptionPlans,
   listAdminTopTitles,
+  listGenres,
   listTranscodeJobs,
   listUsers,
   retryTranscodeJob,
-  updateAdminSubscriptionPlan,
+  type ApiGenre,
   type ApiPaymentIntent,
   type ApiSubscriptionPlan,
   type ApiTopTitleReport,
@@ -24,15 +25,15 @@ import {
 import { queryKeys } from "../lib/queryKeys";
 import type { RevenueDateRange } from "../components/RevenuePanel";
 
+const emptySubscribe = () => () => {};
+
 /** Avoid SSR/client mismatch: queries only run after mount (when auth token is readable). */
 export function useClientAuthReady() {
-  const [isAuthReady, setIsAuthReady] = useState(false);
-
-  useEffect(() => {
-    setIsAuthReady(true);
-  }, []);
-
-  return isAuthReady;
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
 }
 
 /** True while waiting for client mount or an in-flight fetch — safe for SSR + hydration. */
@@ -204,7 +205,38 @@ export function useSubscriptionPlans() {
   return { plansQuery, invalidate, isAuthReady };
 }
 
+export function useGenres() {
+  const isAuthReady = useClientAuthReady();
+  return useQuery({
+    queryKey: queryKeys.genres,
+    queryFn: listGenres,
+    enabled: isAuthReady,
+    staleTime: 60_000,
+  });
+}
+
+export function useCreateGenre() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => createGenre(name),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.genres });
+    },
+  });
+}
+
+export function useDeleteGenre() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteGenre(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.genres });
+    },
+  });
+}
+
 export type {
+  ApiGenre,
   ApiPaymentIntent,
   ApiSubscriptionPlan,
   ApiTopTitleReport,

@@ -81,7 +81,7 @@ export function AdminCatalogSearchBar({
             <span className="sr-only">{filterLabel}</span>
             <select
               value={filterValue}
-              onChange={(e) => onFilterChange(e.target.value)}
+              onChange={(e) => onFilterChange?.(e.target.value)}
               aria-label={filterLabel}
               className={`${adminInputClass} appearance-none py-2 pl-3 pr-9`}
             >

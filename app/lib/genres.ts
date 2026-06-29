@@ -24,8 +24,7 @@ export const GENRE_OPTIONS = [
 export type GenreOption = (typeof GENRE_OPTIONS)[number];
 
 export function formatGenres(selected: string[]): string {
-  const allowed = new Set<string>(GENRE_OPTIONS);
-  return selected.filter((g) => allowed.has(g)).join(", ");
+  return selected.filter(Boolean).join(", ");
 }
 
 export function parseGenresFromStored(stored: string): string[] {

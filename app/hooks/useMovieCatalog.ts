@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deleteCatalogEntry,
@@ -10,16 +9,13 @@ import {
 } from "../lib/catalog";
 import { getAdminToken } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
+import { useClientAuthReady } from "./adminQueries";
 
 export type { MovieDraft } from "../lib/catalog";
 
 export function useMovieCatalog() {
   const queryClient = useQueryClient();
-  const [isAuthReady, setIsAuthReady] = useState(false);
-
-  useEffect(() => {
-    setIsAuthReady(true);
-  }, []);
+  const isAuthReady = useClientAuthReady();
 
   const catalogQuery = useQuery({
     queryKey: queryKeys.catalog,

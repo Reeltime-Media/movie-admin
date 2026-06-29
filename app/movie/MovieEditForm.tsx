@@ -8,6 +8,7 @@ import { AdminCard } from "../components/AdminCard";
 import { GenreMultiSelect } from "../components/GenreMultiSelect";
 import { InlineLoading } from "../components/InlineLoading";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
+import { useDeleteGenre, useGenres } from "../hooks/adminQueries";
 import { uploadAdminMovieAssets } from "../lib/api";
 import type { CatalogEntry, Status } from "../lib/adminData";
 import { formatGenres, parseGenresFromStored } from "../lib/genres";
@@ -41,16 +42,36 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
   const [editVideoFile, setEditVideoFile] = useState<File | null>(null);
   const [editUploadProgress, setEditUploadProgress] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [prevMovieId, setPrevMovieId] = useState<string | null>(null);
+  const [prevMovieUpdatedAt, setPrevMovieUpdatedAt] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!movie) return;
+  if (movie && (movie.id !== prevMovieId || movie.updatedAt !== prevMovieUpdatedAt)) {
+    setPrevMovieId(movie.id);
+    setPrevMovieUpdatedAt(movie.updatedAt ?? null);
     setEditDraft(structuredClone(toMovieDraft(movie)));
     setEditSaveError(null);
     setEditPosterFile(null);
     setEditBannerFile(null);
     setEditVideoFile(null);
     setEditUploadProgress(null);
-  }, [movie?.id, movie?.updatedAt]);
+  }
+
+  const { data: genreData } = useGenres();
+  const deleteGenreMutation = useDeleteGenre();
+  const genreOptions = genreData?.map((g) => g.name);
+
+  const handleDeleteGenre = (name: string) => {
+    const genre = genreData?.find((g) => g.name === name);
+    if (!genre) return;
+    deleteGenreMutation.mutate(genre.id, {
+      onSuccess: () => {
+        if (editDraft) {
+          patchDraft({ genre: formatGenres(parseGenresFromStored(editDraft.genre).filter((g) => g !== name)) });
+        }
+      },
+      onError: () => toast.error("Could not delete genre"),
+    });
+  };
 
   const editPosterPreviewUrl = useMemo(
     () => (editPosterFile ? URL.createObjectURL(editPosterFile) : null),
@@ -248,6 +269,8 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
               <GenreMultiSelect
                 selected={parseGenresFromStored(editDraft.genre)}
                 onChange={(next) => patchDraft({ genre: formatGenres(next) })}
+                options={genreOptions}
+                onDeleteGenre={handleDeleteGenre}
               />
             </EditField>
             <EditField label="Price">

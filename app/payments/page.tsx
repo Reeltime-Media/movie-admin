@@ -66,9 +66,18 @@ export default function PaymentsPage() {
     return () => window.clearTimeout(timer);
   }, [search]);
 
-  useEffect(() => {
+  const [prevSearch, setPrevSearch] = useState(debouncedSearch);
+  const [prevDateFrom, setPrevDateFrom] = useState(dateFrom);
+  const [prevDateTo, setPrevDateTo] = useState(dateTo);
+
+  let currentPage = page;
+  if (debouncedSearch !== prevSearch || dateFrom !== prevDateFrom || dateTo !== prevDateTo) {
+    setPrevSearch(debouncedSearch);
+    setPrevDateFrom(dateFrom);
+    setPrevDateTo(dateTo);
+    currentPage = 1;
     setPage(1);
-  }, [debouncedSearch, dateFrom, dateTo]);
+  }
 
   const {
     data,
@@ -77,7 +86,7 @@ export default function PaymentsPage() {
     error: queryError,
     refetch,
   } = usePayments({
-    page,
+    page: currentPage,
     pageSize: PAGE_SIZE,
     search: debouncedSearch || undefined,
     dateFrom: dateFrom || undefined,

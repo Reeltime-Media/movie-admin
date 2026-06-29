@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { AdminCard } from "./AdminCard";
@@ -85,15 +85,22 @@ export function PromotionBannerManager() {
     void queryClient.invalidateQueries({ queryKey: queryKeys.promotionBanners });
   };
 
-  useEffect(() => {
-    if (!imageFile) {
-      setImagePreviewUrl(null);
-      return;
-    }
-    const url = URL.createObjectURL(imageFile);
-    setImagePreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [imageFile]);
+  const updateImageFile = (file: File | null) => {
+    setImageFile(file);
+    setImagePreviewUrl((prev) => {
+      if (prev) {
+        URL.revokeObjectURL(prev);
+      }
+      return file ? URL.createObjectURL(file) : null;
+    });
+  };
+
+  const closeForm = useCallback(() => {
+    setShowForm(false);
+    setEditingBanner(null);
+    setForm(emptyForm());
+    updateImageFile(null);
+  }, []);
 
   useEffect(() => {
     if (!showForm) return;
@@ -107,12 +114,12 @@ export function PromotionBannerManager() {
       document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = prevOverflow;
     };
-  }, [showForm, isSaving]);
+  }, [showForm, isSaving, closeForm]);
 
   const openCreateForm = () => {
     setEditingBanner(null);
     setForm(emptyForm());
-    setImageFile(null);
+    updateImageFile(null);
     setShowForm(true);
   };
 
@@ -129,15 +136,8 @@ export function PromotionBannerManager() {
       startsAt: toDatetimeLocalValue(banner.starts_at),
       endsAt: toDatetimeLocalValue(banner.ends_at),
     });
-    setImageFile(null);
+    updateImageFile(null);
     setShowForm(true);
-  };
-
-  const closeForm = () => {
-    setShowForm(false);
-    setEditingBanner(null);
-    setForm(emptyForm());
-    setImageFile(null);
   };
 
   const uploadBannerImage = async (bannerId: string, file: File) => {
@@ -374,7 +374,7 @@ export function PromotionBannerManager() {
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
-                  onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+                  onChange={(e) => updateImageFile(e.target.files?.[0] ?? null)}
                   className="mt-1 w-full text-[12px] text-text-muted"
                 />
                 {previewSrc ? (

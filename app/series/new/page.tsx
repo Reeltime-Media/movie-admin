@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../../components/AdminCard";
 import { AdminShell } from "../../components/AdminShell";
 import { EpisodeAssetsUploader } from "../../components/EpisodeAssetsUploader";
 import { GenreMultiSelect } from "../../components/GenreMultiSelect";
 import { useMovieCatalog } from "../../components/MovieCatalogProvider";
+import { useCreateGenre, useDeleteGenre, useGenres } from "../../hooks/adminQueries";
 import { SeasonsEpisodesEditor } from "../../components/SeasonsEpisodesEditor";
 import type { Season, Status } from "../../lib/adminData";
 import {
@@ -18,9 +19,7 @@ import {
   uploadEpisodeWithAssets,
   uploadSeriesAssets,
 } from "../../lib/api";
-import { TrailerPreview } from "../../components/TrailerPreview";
 import { useUploadProgress } from "../../components/UploadProgressContext";
-import { formatGenres } from "../../lib/genres";
 import {
   defaultSeasons,
   episodesAllHaveVideo,
@@ -80,13 +79,28 @@ export default function NewSeriesPage() {
   const [seasons, setSeasons] = useState<Season[]>(() => defaultSeasons());
   const [seriesPosterFile, setSeriesPosterFile] = useState<File | null>(null);
   const [seriesBannerFile, setSeriesBannerFile] = useState<File | null>(null);
-  const [trailerUrl, setTrailerUrl] = useState("");
+  const [showNewGenre, setShowNewGenre] = useState(false);
+  const [newGenreName, setNewGenreName] = useState("");
+  const { data: genreData } = useGenres();
+  const createGenreMutation = useCreateGenre();
+  const deleteGenreMutation = useDeleteGenre();
+  const genreOptions = genreData?.map((g) => g.name);
+
+  const handleDeleteGenre = (name: string) => {
+    const genre = genreData?.find((g) => g.name === name);
+    if (!genre) return;
+    deleteGenreMutation.mutate(genre.id, {
+      onSuccess: () => setGenres((prev) => prev.filter((g) => g !== name)),
+      onError: () => toast.error("Could not delete genre"),
+    });
+  };
+
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [detailsError, setDetailsError] = useState<string | null>(null);
   const [seasonsError, setSeasonsError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { jobs, startJob, updateJob, setJobLabel, finishJob, failJob } = useUploadProgress();
-  const jobIdRef = useRef<string | null>(null);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
 
   const continueFromSeasons = () => {
     setSeasonsError(null);
@@ -99,6 +113,19 @@ export default function NewSeriesPage() {
     setStep(2);
   };
 
+  const handleAddGenre = async () => {
+    const name = newGenreName.trim();
+    if (!name) return;
+    try {
+      const created = await createGenreMutation.mutateAsync(name);
+      setGenres((prev) => [...prev, created.name]);
+      setNewGenreName("");
+      setShowNewGenre(false);
+    } catch {
+      toast.error("Could not create genre");
+    }
+  };
+
   const continueFromDetails = () => {
     setDetailsError(null);
     const form = document.getElementById("series-wizard-form") as HTMLFormElement | null;
@@ -109,8 +136,7 @@ export default function NewSeriesPage() {
       toast.warning(message);
       return;
     }
-    const genre = formatGenres(genres);
-    if (!genre) {
+    if (genres.length === 0) {
       const message = "Select at least one genre.";
       setDetailsError(message);
       toast.warning(message);
@@ -127,8 +153,7 @@ export default function NewSeriesPage() {
     const title = String(fd.get("title") || "").trim();
     if (!title) return;
 
-    const genre = formatGenres(genres);
-    if (!genre) return;
+    if (genres.length === 0) return;
 
     setSubmitError(null);
 
@@ -148,7 +173,7 @@ export default function NewSeriesPage() {
 
     const status: Status = intent === "draft" ? "Draft" : parseStatus(String(fd.get("status")));
     const seriesJobId = `series-${title}-${Date.now()}`;
-    jobIdRef.current = seriesJobId;
+    setActiveJobId(seriesJobId);
     startJob(seriesJobId, title, "Creating series…");
     setIsSubmitting(true);
     router.push("/series");
@@ -209,7 +234,7 @@ export default function NewSeriesPage() {
     })();
   };
 
-  const currentJob = jobIdRef.current ? (jobs.find((j) => j.id === jobIdRef.current) ?? null) : null;
+  const currentJob = activeJobId ? (jobs.find((j) => j.id === activeJobId) ?? null) : null;
 
   return (
     <AdminShell title="Upload new series">
@@ -256,9 +281,40 @@ export default function NewSeriesPage() {
                 <input name="title" required placeholder="Echo Valley" className={textInputClass} />
               </Field>
 
-              <div className="md:col-span-2">
-                <div className="mb-1.5 text-[12px] font-semibold text-text-muted">Genres</div>
-                <GenreMultiSelect selected={genres} onChange={setGenres} />
+              <div>
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <span className="text-[12px] font-semibold text-text-muted">Genres</span>
+                  <button
+                    type="button"
+                    onClick={() => { setShowNewGenre((v) => !v); setNewGenreName(""); }}
+                    className="flex items-center gap-1 rounded-md border border-border bg-surface-elevated px-2 py-1 text-[11px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
+                  >
+                    <svg className="h-3 w-3" viewBox="0 0 12 12" fill="currentColor" aria-hidden><path d="M6.5 1.5a.5.5 0 0 0-1 0V5.5H1.5a.5.5 0 0 0 0 1H5.5v4a.5.5 0 0 0 1 0V6.5h4a.5.5 0 0 0 0-1H6.5V1.5Z"/></svg>
+                    New genre
+                  </button>
+                </div>
+                {showNewGenre ? (
+                  <div className="mb-2 flex gap-2">
+                    <input
+                      type="text"
+                      value={newGenreName}
+                      onChange={(e) => setNewGenreName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleAddGenre(); } }}
+                      placeholder="Genre name"
+                      className={textInputClass}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void handleAddGenre()}
+                      disabled={createGenreMutation.isPending || !newGenreName.trim()}
+                      className="shrink-0 rounded-md bg-brand px-3 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover disabled:opacity-40"
+                    >
+                      {createGenreMutation.isPending ? "Adding…" : "Add"}
+                    </button>
+                  </div>
+                ) : null}
+                <GenreMultiSelect selected={genres} onChange={setGenres} options={genreOptions} onDeleteGenre={handleDeleteGenre} />
               </div>
 
               <Field label="Release year">
@@ -285,11 +341,8 @@ export default function NewSeriesPage() {
                     type="url"
                     placeholder="https://www.youtube.com/watch?v=..."
                     className={textInputClass}
-                    value={trailerUrl}
-                    onChange={(e) => setTrailerUrl(e.target.value)}
                   />
                 </Field>
-                <TrailerPreview url={trailerUrl} />
               </div>
 
               <div className="md:col-span-2">

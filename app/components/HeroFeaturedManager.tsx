@@ -140,8 +140,6 @@ export function HeroFeaturedManager() {
 
   useEffect(() => {
     let cancelled = false;
-    setCatalogLoading(true);
-    setCatalogError(null);
     Promise.all([listAllAdminMovies(), listAllAdminSeries()])
       .then(([movieRows, seriesRows]) => {
         if (cancelled) return;
@@ -198,13 +196,13 @@ export function HeroFeaturedManager() {
     setShowForm(true);
   };
 
-  const closeForm = () => {
+  function closeForm() {
     setShowForm(false);
     setEditingItem(null);
     setForm(emptyForm());
     setCatalogSearch("");
     setTypeFilter("all");
-  };
+  }
 
   const selectEntry = (entry: CatalogEntry) => {
     setForm((prev) => ({

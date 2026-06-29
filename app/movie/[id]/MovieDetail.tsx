@@ -198,7 +198,7 @@ export function MovieDetail({ movieId }: { movieId: string }) {
         </div>
       </section>
 
-      <MovieCommentsAdmin contentId={movie.id} />
+      <MovieCommentsAdmin key={movie.id} contentId={movie.id} />
     </div>
   );
 }

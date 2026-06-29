@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AdminCard } from "../components/AdminCard";
 import { AdminCatalogSearchBar } from "../components/AdminCatalogSearchBar";
 import { AdminPagination } from "../components/AdminPagination";
@@ -45,20 +45,28 @@ export function MovieManagementSection() {
     return list;
   }, [moviesOnly, listFilter, search]);
 
+  const [prevListFilter, setPrevListFilter] = useState(listFilter);
+  const [prevSearch, setPrevSearch] = useState(search);
+
+  let currentPage = page;
+  if (listFilter !== prevListFilter || search !== prevSearch) {
+    setPrevListFilter(listFilter);
+    setPrevSearch(search);
+    currentPage = 1;
+    setPage(1);
+  }
+
   const pages = Math.max(1, Math.ceil(entries.length / TABLE_PAGE_SIZE));
 
+  if (currentPage > pages) {
+    currentPage = pages;
+    setPage(pages);
+  }
+
   const paginatedEntries = useMemo(() => {
-    const start = (page - 1) * TABLE_PAGE_SIZE;
+    const start = (currentPage - 1) * TABLE_PAGE_SIZE;
     return entries.slice(start, start + TABLE_PAGE_SIZE);
-  }, [entries, page]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [listFilter, search]);
-
-  useEffect(() => {
-    if (page > pages) setPage(pages);
-  }, [page, pages]);
+  }, [entries, currentPage]);
 
   return (
     <>

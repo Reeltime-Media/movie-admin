@@ -803,14 +803,6 @@ export async function listSeriesEpisodesApi(slug: string): Promise<ApiSeasonRead
   return apiFetch<ApiSeasonRead[]>(`/admin/series/${slug}/episodes`);
 }
 
-async function multipartPost<T>(path: string, body: FormData): Promise<T> {
-  const token = getAdminToken();
-  const headers = new Headers();
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-  const res = await fetch(apiUrl(path), { method: "POST", headers, body });
-  return parseApiResponse<T>(res);
-}
-
 export async function listAdminSeries(
   query: PaginationQuery = {},
 ): Promise<PaginatedResponse<ApiSeries>> {
@@ -1399,5 +1391,27 @@ export async function updateAdminHeroFeatured(
 
 export async function deleteAdminHeroFeatured(id: string): Promise<void> {
   await apiFetch<void>(`/admin/hero-featured/${id}`, { method: "DELETE" });
+}
+
+export type ApiGenre = {
+  id: string;
+  name: string;
+  created_at: string;
+};
+
+export async function listGenres(): Promise<ApiGenre[]> {
+  return apiFetch<ApiGenre[]>("/genres/");
+}
+
+export async function createGenre(name: string): Promise<ApiGenre> {
+  return apiFetch<ApiGenre>("/genres/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+}
+
+export async function deleteGenre(id: string): Promise<void> {
+  await apiFetch<void>(`/genres/${id}`, { method: "DELETE" });
 }
 

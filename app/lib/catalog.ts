@@ -20,8 +20,6 @@ import { runtimeMinutesFromApi } from "./runtime";
 
 export type MovieDraft = Omit<CatalogEntry, "id">;
 
-const statuses: Status[] = ["Published", "Draft", "Scheduled", "Review"];
-
 function toStatus(status: string): Status {
   const normalized = status.toLowerCase();
   if (normalized === "published") return "Published";

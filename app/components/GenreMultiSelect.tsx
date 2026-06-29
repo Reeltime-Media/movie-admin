@@ -13,12 +13,17 @@ type GenreMultiSelectProps = {
   selected: string[];
   onChange: (next: string[]) => void;
   disabled?: boolean;
+  options?: string[];
+  onDeleteGenre?: (name: string) => void;
 };
 
-export function GenreMultiSelect({ selected, onChange, disabled }: GenreMultiSelectProps) {
+export function GenreMultiSelect({ selected, onChange, disabled, options, onDeleteGenre }: GenreMultiSelectProps) {
   const [open, setOpen] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const listId = useId();
+
+  const allOptions = options ?? GENRE_OPTIONS;
 
   useEffect(() => {
     if (!open) return;
@@ -41,6 +46,16 @@ export function GenreMultiSelect({ selected, onChange, disabled }: GenreMultiSel
       onChange(selected.filter((g) => g !== genre));
     } else {
       onChange([...selected, genre]);
+    }
+  };
+
+  const handleDelete = async (genre: string) => {
+    if (!onDeleteGenre) return;
+    setDeleting(genre);
+    try {
+      onDeleteGenre(genre);
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -68,9 +83,7 @@ export function GenreMultiSelect({ selected, onChange, disabled }: GenreMultiSel
       >
         <span className="min-w-0 truncate">{summary}</span>
         <svg
-          className={["h-4 w-4 shrink-0 text-text-muted transition-transform", open ? "rotate-180" : ""].join(
-            " ",
-          )}
+          className={["h-4 w-4 shrink-0 text-text-muted transition-transform", open ? "rotate-180" : ""].join(" ")}
           viewBox="0 0 20 20"
           fill="currentColor"
           aria-hidden
@@ -81,21 +94,37 @@ export function GenreMultiSelect({ selected, onChange, disabled }: GenreMultiSel
 
       {open ? (
         <div className={panelClass} role="listbox" aria-labelledby={listId} aria-multiselectable>
-          {GENRE_OPTIONS.map((genre) => {
+          {allOptions.map((genre) => {
             const checked = selected.includes(genre);
+            const isDeleting = deleting === genre;
             return (
-              <label
+              <div
                 key={genre}
-                className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-[13px] text-text hover:bg-bg"
+                className="group flex items-center gap-2.5 px-3 py-2 text-[13px] text-text hover:bg-bg"
               >
-                <input
-                  type="checkbox"
-                  className="h-3.5 w-3.5 rounded border-border accent-brand"
-                  checked={checked}
-                  onChange={() => toggle(genre)}
-                />
-                <span>{genre}</span>
-              </label>
+                <label className="flex flex-1 cursor-pointer items-center gap-2.5 min-w-0">
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5 shrink-0 rounded border-border accent-brand"
+                    checked={checked}
+                    onChange={() => toggle(genre)}
+                  />
+                  <span className="truncate">{genre}</span>
+                </label>
+                {onDeleteGenre ? (
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={() => void handleDelete(genre)}
+                    aria-label={`Delete ${genre}`}
+                    className="shrink-0 rounded p-0.5 text-text-disabled opacity-0 transition-opacity hover:text-danger group-hover:opacity-100 disabled:opacity-40"
+                  >
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                      <path d="M6.5 1a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3ZM3 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1H12v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4H3.5a.5.5 0 0 1-.5-.5ZM5 4v8h6V4H5Z"/>
+                    </svg>
+                  </button>
+                ) : null}
+              </div>
             );
           })}
         </div>

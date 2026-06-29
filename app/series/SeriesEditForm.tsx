@@ -10,6 +10,7 @@ import { InlineLoading } from "../components/InlineLoading";
 import { SeasonsEpisodesEditor } from "../components/SeasonsEpisodesEditor";
 import { TrailerPreview } from "../components/TrailerPreview";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
+import { useDeleteGenre, useGenres } from "../hooks/adminQueries";
 import { uploadSeriesAssets } from "../lib/api";
 import type { CatalogEntry, Status } from "../lib/adminData";
 import { formatGenres, parseGenresFromStored } from "../lib/genres";
@@ -88,14 +89,34 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
   const [editPosterFile, setEditPosterFile] = useState<File | null>(null);
   const [editBannerFile, setEditBannerFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [prevSeriesId, setPrevSeriesId] = useState<string | null>(null);
+  const [prevSeriesUpdatedAt, setPrevSeriesUpdatedAt] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!series) return;
+  if (series && (series.id !== prevSeriesId || series.updatedAt !== prevSeriesUpdatedAt)) {
+    setPrevSeriesId(series.id);
+    setPrevSeriesUpdatedAt(series.updatedAt ?? null);
     setEditDraft(structuredClone(toSeriesDraft(series)));
     setEditSaveError(null);
     setEditPosterFile(null);
     setEditBannerFile(null);
-  }, [series?.id, series?.updatedAt]);
+  }
+
+  const { data: genreData } = useGenres();
+  const deleteGenreMutation = useDeleteGenre();
+  const genreOptions = genreData?.map((g) => g.name);
+
+  const handleDeleteGenre = (name: string) => {
+    const genre = genreData?.find((g) => g.name === name);
+    if (!genre) return;
+    deleteGenreMutation.mutate(genre.id, {
+      onSuccess: () => {
+        if (editDraft) {
+          patchDraft({ genre: formatGenres(parseGenresFromStored(editDraft.genre).filter((g) => g !== name)) });
+        }
+      },
+      onError: () => toast.error("Could not delete genre"),
+    });
+  };
 
   const editPosterPreviewUrl = useMemo(
     () => (editPosterFile ? URL.createObjectURL(editPosterFile) : null),
@@ -297,6 +318,8 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
             <GenreMultiSelect
               selected={parseGenresFromStored(editDraft.genre)}
               onChange={(next) => patchDraft({ genre: formatGenres(next) })}
+              options={genreOptions}
+              onDeleteGenre={handleDeleteGenre}
             />
           </label>
 

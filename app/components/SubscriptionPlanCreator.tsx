@@ -97,11 +97,11 @@ export function SubscriptionPlanCreator() {
     setShowForm(true);
   };
 
-  const closeForm = () => {
+  function closeForm() {
     setShowForm(false);
     setEditingPlan(null);
     setForm(emptyForm());
-  };
+  }
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();

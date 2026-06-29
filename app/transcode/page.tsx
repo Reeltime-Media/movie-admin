@@ -122,6 +122,8 @@ function ProgressBar({ pct, status }: { pct: number; status: string }) {
   );
 }
 
+const EMPTY_JOBS: TranscodeJob[] = [];
+
 export default function TranscodePage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
@@ -136,11 +138,10 @@ export default function TranscodePage() {
     status: filter === "all" ? undefined : filter,
   });
 
-  const jobs = jobsQuery.data?.items ?? [];
+  const jobs = jobsQuery.data?.items ?? EMPTY_JOBS;
   const pages = jobsQuery.data?.pages ?? 1;
   const total = jobsQuery.data?.total ?? 0;
   const counts = countsQuery.data ?? { all: 0, queued: 0, running: 0, success: 0, failed: 0 };
-  const isLoading = jobsQuery.isLoading;
   const hasJobsData = Boolean(jobsQuery.data);
   const error = jobsQuery.error
     ? jobsQuery.error instanceof Error

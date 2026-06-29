@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ChevronDown, ChevronRight, Lock, PlayCircle } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AdminCard } from "../../components/AdminCard";
 import { AdminHlsPlayer } from "../../components/AdminHlsPlayer";
 import { InlineLoading } from "../../components/InlineLoading";
@@ -48,28 +48,33 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
     );
   }, [series]);
 
-  const selected = useMemo(() => {
-    if (!selectedEpisodeId) return null;
-    for (const { season, ep } of playableEpisodes) {
-      if (ep.id === selectedEpisodeId) return { season, ep };
-    }
-    return null;
-  }, [playableEpisodes, selectedEpisodeId]);
+  const [prevPlayableEpisodes, setPrevPlayableEpisodes] = useState(playableEpisodes);
+  const [prevSeriesId, setPrevSeriesId] = useState<string | null>(null);
 
-  useEffect(() => {
+  let currentSelectedEpisodeId = selectedEpisodeId;
+  if (playableEpisodes !== prevPlayableEpisodes) {
+    setPrevPlayableEpisodes(playableEpisodes);
     if (playableEpisodes.length === 0) {
+      currentSelectedEpisodeId = null;
       setSelectedEpisodeId(null);
-      return;
-    }
-    if (!selectedEpisodeId || !playableEpisodes.some(({ ep }) => ep.id === selectedEpisodeId)) {
+    } else if (!selectedEpisodeId || !playableEpisodes.some(({ ep }) => ep.id === selectedEpisodeId)) {
+      currentSelectedEpisodeId = playableEpisodes[0].ep.id;
       setSelectedEpisodeId(playableEpisodes[0].ep.id);
     }
-  }, [playableEpisodes, selectedEpisodeId]);
+  }
 
-  useEffect(() => {
-    if (!series) return;
+  if (series && series.id !== prevSeriesId) {
+    setPrevSeriesId(series.id);
     setExpandedSeasons(new Set(series.seasons.map((s) => s.id)));
-  }, [series?.id]);
+  }
+
+  const selected = (() => {
+    if (!currentSelectedEpisodeId) return null;
+    for (const { season, ep } of playableEpisodes) {
+      if (ep.id === currentSelectedEpisodeId) return { season, ep };
+    }
+    return null;
+  })();
 
   function toggleSeason(id: string) {
     setExpandedSeasons((prev) => {

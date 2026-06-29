@@ -63,20 +63,19 @@ export function MovieCommentsAdmin({ contentId }: MovieCommentsAdminProps) {
   );
 
   useEffect(() => {
-    void loadCount();
+    const timer = setTimeout(() => {
+      void loadCount();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [loadCount]);
 
   useEffect(() => {
     if (!open) return;
-    void loadPage(page);
+    const timer = setTimeout(() => {
+      void loadPage(page);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [open, page, loadPage]);
-
-  useEffect(() => {
-    setPage(1);
-    setComments([]);
-    setEditingId(null);
-    void loadCount();
-  }, [contentId, loadCount]);
 
   function startEdit(comment: ApiComment) {
     setEditingId(comment.id);

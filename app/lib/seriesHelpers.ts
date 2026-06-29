@@ -1,4 +1,4 @@
-import type { CatalogEntry, Episode, Season } from "./adminData";
+import type { CatalogEntry, Season } from "./adminData";
 
 export function newSeasonId() {
   return `s-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
