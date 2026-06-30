@@ -543,6 +543,31 @@ export function HeroFeaturedManager() {
                     </label>
                   </div>
                 </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+                      Starts (optional)
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={form.startsAt}
+                      onChange={(e) => setForm((prev) => ({ ...prev, startsAt: e.target.value }))}
+                      className={adminInputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+                      Ends (optional)
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={form.endsAt}
+                      onChange={(e) => setForm((prev) => ({ ...prev, endsAt: e.target.value }))}
+                      className={adminInputClass}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 border-t border-border px-6 py-4">

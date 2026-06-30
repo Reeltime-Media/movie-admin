@@ -288,6 +288,11 @@ export default function NewMoviePage() {
 
   const handleUploadSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Pressing Enter on the Details step should advance, not trigger the upload.
+    if (step !== 1) {
+      continueFromDetails();
+      return;
+    }
     void runWizardAction("upload");
   };
 

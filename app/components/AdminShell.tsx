@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Menu, X } from "lucide-react";
 import { clearAdminToken, getAdminToken } from "../lib/api";
 import { pageTitleClassName } from "../lib/pageTitle";
 import { useUploadProgress } from "./UploadProgressContext";
@@ -20,6 +21,41 @@ const navItems = [
   { label: "Reports", href: "/reports", badge: "New" },
 ];
 
+function NavList({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname();
+
+  return (
+    <nav className="space-y-1">
+      {navItems.map((item) => {
+        const active =
+          pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
+
+        return (
+          <Link
+            key={item.label}
+            href={item.href}
+            onClick={onNavigate}
+            aria-current={active ? "page" : undefined}
+            className={[
+              "flex items-center justify-between rounded-md border border-transparent px-3 py-2.5 text-[13px] font-semibold transition-colors",
+              active
+                ? "border-brand/40 bg-brand text-white"
+                : "text-text-muted hover:border-border hover:bg-surface-elevated hover:text-text",
+            ].join(" ")}
+          >
+            {item.label}
+            {item.badge ? (
+              <span className="rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] text-warning">
+                {item.badge}
+              </span>
+            ) : null}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
 export function AdminShell({
   title = "Content dashboard",
   children,
@@ -27,10 +63,10 @@ export function AdminShell({
   title?: string;
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
   const router = useRouter();
   const { jobs, dismissJob } = useUploadProgress();
   const [uploadsOpen, setUploadsOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const activeJobs = jobs.filter((j) => j.status === "uploading");
@@ -43,6 +79,16 @@ export function AdminShell({
     window.addEventListener("reeltime-admin-auth-cleared", handleAuthCleared);
     return () => window.removeEventListener("reeltime-admin-auth-cleared", handleAuthCleared);
   }, [router]);
+
+  // Prevent background scroll while the mobile drawer is open.
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [mobileNavOpen]);
 
   useEffect(() => {
     if (!uploadsOpen) return;
@@ -73,45 +119,73 @@ export function AdminShell({
           </div>
         </Link>
 
-        <nav className="mt-8 space-y-1">
-          {navItems.map((item) => {
-            const active =
-              pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
-
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                aria-current={active ? "page" : undefined}
-                className={[
-                  "flex items-center justify-between rounded-md border border-transparent px-3 py-2.5 text-[13px] font-semibold transition-colors",
-                  active
-                    ? "border-brand/40 bg-brand text-white"
-                    : "text-text-muted hover:border-border hover:bg-surface-elevated hover:text-text",
-                ].join(" ")}
-              >
-                {item.label}
-                {item.badge ? (
-                  <span className="rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] text-warning">
-                    {item.badge}
-                  </span>
-                ) : null}
-              </Link>
-            );
-          })}
-        </nav>
+        <div className="mt-8">
+          <NavList />
+        </div>
       </aside>
+
+      {/* Mobile navigation drawer */}
+      {mobileNavOpen ? (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={() => setMobileNavOpen(false)}
+            className="absolute inset-0 bg-black/50"
+          />
+          <aside className="absolute left-0 top-0 flex h-full w-72 max-w-[80%] flex-col overflow-y-auto border-r border-border bg-surface px-5 py-5">
+            <div className="flex items-center justify-between gap-2.5">
+              <Link
+                href="/"
+                onClick={() => setMobileNavOpen(false)}
+                className="flex items-center gap-2.5"
+              >
+                <div className="grid h-8 w-8 place-items-center rounded-md bg-brand text-[15px] font-black text-white">
+                  R
+                </div>
+                <div>
+                  <div className="text-[14px] font-extrabold tracking-[0.06em]">REELTIME</div>
+                  <div className="text-[11px] font-semibold text-text-muted">Admin console</div>
+                </div>
+              </Link>
+              <button
+                type="button"
+                aria-label="Close menu"
+                onClick={() => setMobileNavOpen(false)}
+                className="grid h-8 w-8 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:border-border-hover hover:text-text"
+              >
+                <X size={16} aria-hidden />
+              </button>
+            </div>
+
+            <div className="mt-8">
+              <NavList onNavigate={() => setMobileNavOpen(false)} />
+            </div>
+          </aside>
+        </div>
+      ) : null}
 
       <div className="flex min-h-screen min-w-0 flex-col lg:ml-64">
         <header className="sticky top-0 z-20 border-b border-border bg-surface-soft/90 backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 md:px-8">
-              <div>
-                <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-muted">
-                  Reeltime operations
+              <div className="flex min-w-0 items-center gap-3">
+                <button
+                  type="button"
+                  aria-label="Open menu"
+                  aria-expanded={mobileNavOpen}
+                  onClick={() => setMobileNavOpen(true)}
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:border-border-hover hover:text-text lg:hidden"
+                >
+                  <Menu size={18} aria-hidden />
+                </button>
+                <div className="min-w-0">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-muted">
+                    Reeltime operations
+                  </div>
+                  <h1 className={["mt-1 truncate", pageTitleClassName].join(" ")}>
+                    {title}
+                  </h1>
                 </div>
-                <h1 className={["mt-1", pageTitleClassName].join(" ")}>
-                  {title}
-                </h1>
               </div>
 
               <div className="flex items-center gap-2">

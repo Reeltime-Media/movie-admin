@@ -12,7 +12,7 @@ import { adminPrimaryButtonClass } from "../lib/adminUi";
 import { MovieManagementTable } from "./MovieManagementTable";
 import type { ListFilter } from "./movieListTypes";
 
-const TABLE_PAGE_SIZE = 25;
+const TABLE_PAGE_SIZE = 10;
 
 const filterOptions: { key: ListFilter; label: string }[] = [
   { key: "all", label: "All movies" },

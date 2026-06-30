@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { pageTitleClassName } from "../lib/pageTitle";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-toastify";
@@ -31,42 +30,10 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen bg-bg text-text">
-      <section className="relative hidden w-[44%] flex-col justify-between overflow-hidden border-r border-border p-10 lg:flex">
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(circle at 25% 20%, rgba(229,9,20,0.14), transparent 34%), linear-gradient(140deg, #fef2f2, #f8fafc 48%, #eff6ff)",
-          }}
-        />
-        <div className="relative z-10 flex items-center gap-2.5">
-          <div className="grid h-8 w-8 place-items-center rounded-md bg-brand text-[15px] font-black text-white">
-            R
-          </div>
-          <div>
-            <div className="text-[13px] font-black tracking-[0.08em] text-text">REELTIME</div>
-            <div className="text-[11px] font-semibold text-text-muted">Admin console</div>
-          </div>
-        </div>
-
-        <div className="relative z-10 max-w-md">
-          <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-brand">
-            Restricted access
-          </div>
-          <h1 className={pageTitleClassName}>
-            Manage content, pricing, and subscribers from one console.
-          </h1>
-          <p className="mt-4 text-[13px] leading-relaxed text-text-muted">
-            This admin area controls what appears in the Reeltime client, including rentals,
-            premium series, publishing queues, and customer payments.
-          </p>
-        </div>
-      </section>
-
+    <main className="flex min-h-screen items-center justify-center bg-bg text-text">
       <section className="flex flex-1 items-center justify-center px-6 py-12">
         <div className="w-full max-w-[410px]">
-          <Link href="/" className="mb-8 inline-flex items-center gap-2.5 lg:hidden">
+          <Link href="/" className="mb-8 inline-flex items-center gap-2.5">
             <div className="grid h-8 w-8 place-items-center rounded-md bg-brand text-[15px] font-black text-white">
               R
             </div>

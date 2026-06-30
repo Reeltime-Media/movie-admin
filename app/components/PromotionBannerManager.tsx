@@ -95,6 +95,13 @@ export function PromotionBannerManager() {
     });
   };
 
+  // Revoke the last object URL if the component unmounts while a preview is set.
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    };
+  }, [imagePreviewUrl]);
+
   const closeForm = useCallback(() => {
     setShowForm(false);
     setEditingBanner(null);
