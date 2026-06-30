@@ -18,7 +18,7 @@ const navItems = [
   { label: "Plans", href: "/plans" },
   { label: "Home page", href: "/promotions" },
   { label: "Transcode", href: "/transcode" },
-  { label: "Reports", href: "/reports", badge: "New" },
+  { label: "Reports", href: "/reports" },
 ];
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
@@ -44,11 +44,6 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
             ].join(" ")}
           >
             {item.label}
-            {item.badge ? (
-              <span className="rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] text-warning">
-                {item.badge}
-              </span>
-            ) : null}
           </Link>
         );
       })}
