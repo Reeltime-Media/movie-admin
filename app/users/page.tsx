@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
 import { AdminEmptyState } from "../components/AdminEmptyState";
 import { AdminErrorAlert } from "../components/AdminErrorAlert";
@@ -9,7 +10,13 @@ import { AdminStatCard } from "../components/AdminStatCard";
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from "../components/AdminTable";
 import { InlineLoading } from "../components/InlineLoading";
 import { AdminShell } from "../components/AdminShell";
-import { adminBadgeClass, adminTdClass } from "../lib/adminUi";
+import {
+  adminBadgeClass,
+  adminDeleteButtonClass,
+  adminDeleteConfirmButtonClass,
+  adminTdClass,
+} from "../lib/adminUi";
+import { deleteUser, setUserActive, type ApiUser } from "../lib/api";
 import { useDashboardSummary, useUsers } from "../hooks/adminQueries";
 
 const PAGE_SIZE = 20;
@@ -41,6 +48,37 @@ export default function UsersPage() {
       ? usersError.message
       : "Could not load users."
     : null;
+
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<ApiUser | null>(null);
+
+  const handleToggleActive = async (user: ApiUser) => {
+    setBusyId(user.id);
+    try {
+      await setUserActive(user.id, !user.is_active);
+      toast.success(user.is_active ? "User suspended" : "User reactivated");
+      await refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not update user");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const confirmRemoveUser = async () => {
+    if (!confirmDelete) return;
+    setBusyId(confirmDelete.id);
+    try {
+      await deleteUser(confirmDelete.id);
+      toast.success("User deleted");
+      setConfirmDelete(null);
+      await refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not delete user");
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   const stats = [
     {
@@ -84,20 +122,20 @@ export default function UsersPage() {
               <div className="-mx-5">
                 <AdminTable>
                   <AdminTableHead>
-                    <AdminTh>User</AdminTh>
+                    <AdminTh>Name</AdminTh>
+                    <AdminTh>Email</AdminTh>
                     <AdminTh>Role</AdminTh>
                     <AdminTh>Status</AdminTh>
                     <AdminTh>Joined</AdminTh>
+                    <AdminTh className="text-right">Actions</AdminTh>
                   </AdminTableHead>
                   <tbody className="divide-y divide-border">
                     {users.map((user) => (
                       <tr key={user.id}>
-                        <td className={adminTdClass}>
-                          <div className="font-semibold text-text">
-                            {user.full_name || "Unnamed user"}
-                          </div>
-                          <div className="mt-0.5 text-[12px] text-text-muted">{user.email}</div>
+                        <td className={`${adminTdClass} font-semibold text-text`}>
+                          {user.full_name || "Unnamed user"}
                         </td>
+                        <td className={`${adminTdClass} text-text-muted`}>{user.email}</td>
                         <td className={`${adminTdClass} text-text-muted`}>{user.role}</td>
                         <td className={adminTdClass}>
                           <span
@@ -108,6 +146,26 @@ export default function UsersPage() {
                         </td>
                         <td className={`${adminTdClass} text-text-muted`}>
                           {formatDate(user.created_at)}
+                        </td>
+                        <td className={`${adminTdClass} text-right`}>
+                          <div className="flex flex-wrap justify-end gap-2">
+                            <button
+                              type="button"
+                              disabled={busyId === user.id}
+                              onClick={() => void handleToggleActive(user)}
+                              className="rounded-md border border-border bg-bg px-2.5 py-1.5 text-[11px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              {user.is_active ? "Suspend" : "Reactivate"}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busyId === user.id}
+                              onClick={() => setConfirmDelete(user)}
+                              className={adminDeleteButtonClass}
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -126,6 +184,46 @@ export default function UsersPage() {
           </>
         )}
       </AdminCard>
+
+      {confirmDelete ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-user-title"
+        >
+          <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6">
+            <h2 id="delete-user-title" className="text-[16px] font-bold tracking-[-0.02em]">
+              Delete user
+            </h2>
+            <p className="mt-3 text-[13px] leading-relaxed text-text-muted">
+              Permanently delete{" "}
+              <span className="font-bold text-text">
+                {confirmDelete.full_name || confirmDelete.email}
+              </span>
+              ? This cannot be undone. Users with payments or purchases can&rsquo;t be deleted —
+              suspend them instead.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(null)}
+                className="rounded-md border border-border bg-bg px-4 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmRemoveUser()}
+                disabled={busyId === confirmDelete.id}
+                className={adminDeleteConfirmButtonClass}
+              >
+                {busyId === confirmDelete.id ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AdminShell>
   );
 }

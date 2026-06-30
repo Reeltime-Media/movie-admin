@@ -1,7 +1,8 @@
 "use client";
 
-import { ChevronDown, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { adminInputClass } from "../lib/adminUi";
+import { AdminSelect } from "./AdminSelect";
 
 export type AdminCatalogFilterOption = {
   value: string;
@@ -18,6 +19,9 @@ type AdminCatalogSearchBarProps = {
   filterOptions?: AdminCatalogFilterOption[];
   onFilterChange?: (value: string) => void;
   filterLabel?: string;
+  className?: string;
+  /** Max width of the search+filter row (default "max-w-2xl"; pass "" to fill) */
+  maxWidthClassName?: string;
 };
 
 export function AdminCatalogSearchBar({
@@ -30,6 +34,8 @@ export function AdminCatalogSearchBar({
   filterOptions,
   onFilterChange,
   filterLabel = "Status",
+  className,
+  maxWidthClassName = "max-w-2xl",
 }: AdminCatalogSearchBarProps) {
   const showCount =
     value.trim().length > 0 &&
@@ -40,11 +46,11 @@ export function AdminCatalogSearchBar({
   const hasFilter = Boolean(filterOptions?.length && onFilterChange && filterValue != null);
 
   return (
-    <div className="space-y-1.5">
+    <div className={["space-y-1.5", className].filter(Boolean).join(" ")}>
       <div
         className={[
           hasFilter ? "flex flex-col gap-3 sm:flex-row sm:items-stretch" : "",
-          hasFilter ? "max-w-2xl" : "",
+          hasFilter ? maxWidthClassName : "",
         ]
           .filter(Boolean)
           .join(" ")}
@@ -77,26 +83,15 @@ export function AdminCatalogSearchBar({
         </div>
 
         {hasFilter ? (
-          <label className="relative shrink-0 sm:w-[11.5rem]">
-            <span className="sr-only">{filterLabel}</span>
-            <select
-              value={filterValue}
-              onChange={(e) => onFilterChange?.(e.target.value)}
+          <div className="shrink-0 sm:w-[11.5rem]">
+            <AdminSelect
+              value={filterValue ?? ""}
+              onChange={(v) => onFilterChange?.(v)}
+              options={filterOptions ?? []}
               aria-label={filterLabel}
-              className={`${adminInputClass} appearance-none py-2 pl-3 pr-9`}
-            >
-              {filterOptions!.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              size={15}
-              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-text-muted"
-              aria-hidden
+              className={`${adminInputClass} py-2`}
             />
-          </label>
+          </div>
         ) : null}
       </div>
       {showCount ? (

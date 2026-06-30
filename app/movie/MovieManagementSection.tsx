@@ -71,15 +71,6 @@ export function MovieManagementSection() {
   return (
     <>
       <div className="space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <p className="max-w-[72ch] text-[13px] leading-relaxed text-text-muted"></p>
-          <Link
-            href="/movie/new"
-            className={`shrink-0 ${adminPrimaryButtonClass}`}
-          >
-            Add movie
-          </Link>
-        </div>
         {error ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-warning/30 bg-warning/10 p-3 text-[12px] text-warning">
             <span>{error}</span>
@@ -88,20 +79,30 @@ export function MovieManagementSection() {
             </button>
           </div>
         ) : null}
-        <AdminCatalogSearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder="Search movies by title, genre, slug, or description…"
-          resultCount={entries.length}
-          totalCount={moviesOnly.length}
-          filterValue={listFilter}
-          filterOptions={filterOptions.map(({ key, label }) => ({
-            value: key,
-            label,
-          }))}
-          onFilterChange={(next) => setListFilter(next as ListFilter)}
-          filterLabel="Filter movies"
-        />
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <AdminCatalogSearchBar
+            className="flex-1"
+            maxWidthClassName=""
+            value={search}
+            onChange={setSearch}
+            placeholder="Search movies by title, genre, slug, or description…"
+            resultCount={entries.length}
+            totalCount={moviesOnly.length}
+            filterValue={listFilter}
+            filterOptions={filterOptions.map(({ key, label }) => ({
+              value: key,
+              label,
+            }))}
+            onFilterChange={(next) => setListFilter(next as ListFilter)}
+            filterLabel="Filter movies"
+          />
+          <Link
+            href="/movie/new"
+            className={`shrink-0 ${adminPrimaryButtonClass}`}
+          >
+            Add movie
+          </Link>
+        </div>
       </div>
 
       {isLoading && moviesOnly.length === 0 ? (
@@ -112,7 +113,6 @@ export function MovieManagementSection() {
         <>
           <MovieManagementTable
             entries={paginatedEntries}
-            tableTitle={tableTitleForFilter(listFilter)}
             listFilter={listFilter}
             footer={
               entries.length > 0 ? (

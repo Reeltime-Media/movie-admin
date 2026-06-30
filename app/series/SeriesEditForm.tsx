@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
 import { AdminSectionTabs } from "../components/AdminSectionTabs";
+import { AdminSelect } from "../components/AdminSelect";
 import { GenreMultiSelect } from "../components/GenreMultiSelect";
 import { InlineLoading } from "../components/InlineLoading";
 import { SeasonsEpisodesEditor } from "../components/SeasonsEpisodesEditor";
@@ -281,7 +282,7 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
       {/* Active section */}
       <div>
           <div className={tab === "overview" ? "block" : "hidden"}>
-            <div className="-mx-5 border-y border-border bg-surface md:-mx-8">
+            <div className="min-h-[calc(100vh-13rem)] rounded-xl border border-border bg-surface">
               <table className="w-full text-left text-[13px]">
                 <tbody className="divide-y divide-border">
                   <EditRow label="Title">
@@ -293,17 +294,13 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
                     />
                   </EditRow>
                   <EditRow label="Status">
-                    <select
+                    <AdminSelect
                       className={movieEditSelectClass}
                       value={editDraft.status}
-                      onChange={(e) => patchDraft({ status: e.target.value as Status })}
-                    >
-                      {statuses.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(v) => patchDraft({ status: v as Status })}
+                      options={statuses.map((s) => ({ value: s, label: s }))}
+                      aria-label="Status"
+                    />
                   </EditRow>
                   <EditRow label="Monthly price (USD)">
                     <input

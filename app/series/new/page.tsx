@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../../components/AdminCard";
 import { AdminShell } from "../../components/AdminShell";
+import { AdminSelect } from "../../components/AdminSelect";
 import { EpisodeAssetsUploader } from "../../components/EpisodeAssetsUploader";
 import { GenreMultiSelect } from "../../components/GenreMultiSelect";
 import { useMovieCatalog } from "../../components/MovieCatalogProvider";
@@ -75,6 +76,7 @@ export default function NewSeriesPage() {
   const router = useRouter();
   const { refreshMovies } = useMovieCatalog();
   const [step, setStep] = useState(0);
+  const [status, setStatus] = useState("Published");
   const [genres, setGenres] = useState<string[]>([]);
   const [seasons, setSeasons] = useState<Season[]>(() => defaultSeasons());
   const [seriesPosterFile, setSeriesPosterFile] = useState<File | null>(null);
@@ -326,12 +328,19 @@ export default function NewSeriesPage() {
               </Field>
 
               <Field label="Status">
-                <select name="status" defaultValue="Published" className={selectClass}>
-                  <option>Draft</option>
-                  <option>Review</option>
-                  <option>Scheduled</option>
-                  <option>Published</option>
-                </select>
+                <AdminSelect
+                  value={status}
+                  onChange={setStatus}
+                  options={[
+                    { value: "Draft", label: "Draft" },
+                    { value: "Review", label: "Review" },
+                    { value: "Scheduled", label: "Scheduled" },
+                    { value: "Published", label: "Published" },
+                  ]}
+                  className={selectClass}
+                  aria-label="Status"
+                />
+                <input type="hidden" name="status" value={status} />
               </Field>
 
               <div className="md:col-span-2">

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../../components/AdminCard";
 import { AdminShell } from "../../components/AdminShell";
+import { AdminSelect } from "../../components/AdminSelect";
 import { GenreMultiSelect } from "../../components/GenreMultiSelect";
 import { useMovieCatalog } from "../../components/MovieCatalogProvider";
 import { useCreateGenre, useDeleteGenre, useGenres } from "../../hooks/adminQueries";
@@ -76,6 +77,7 @@ export default function NewMoviePage() {
   const router = useRouter();
   const { refreshMovies } = useMovieCatalog();
   const [step, setStep] = useState(0);
+  const [status, setStatus] = useState("Published");
   const [genres, setGenres] = useState<string[]>([]);
   const [showNewGenre, setShowNewGenre] = useState(false);
   const [newGenreName, setNewGenreName] = useState("");
@@ -485,12 +487,19 @@ export default function NewMoviePage() {
               </Field>
 
               <Field label="Status" hint="Published requires a poster and video on the Assets step. Save draft does not.">
-                <select name="status" defaultValue="Published" className={selectClass}>
-                  <option>Draft</option>
-                  <option>Review</option>
-                  <option>Scheduled</option>
-                  <option>Published</option>
-                </select>
+                <AdminSelect
+                  value={status}
+                  onChange={setStatus}
+                  options={[
+                    { value: "Draft", label: "Draft" },
+                    { value: "Review", label: "Review" },
+                    { value: "Scheduled", label: "Scheduled" },
+                    { value: "Published", label: "Published" },
+                  ]}
+                  className={selectClass}
+                  aria-label="Status"
+                />
+                <input type="hidden" name="status" value={status} />
               </Field>
 
               <Field label="Price (USD)" hint={ADMIN_PRICE_HINT}>

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { AdminCard } from "../components/AdminCard";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
 import { statusClasses, type CatalogEntry } from "../lib/adminData";
 import { adminDeleteButtonClass, adminDeleteConfirmButtonClass } from "../lib/adminUi";
@@ -13,12 +12,10 @@ import type { SeriesListFilter } from "./seriesListTypes";
 
 export function SeriesManagementTable({
   entries,
-  tableTitle = "All series",
   listFilter = "all",
   footer,
 }: {
   entries: CatalogEntry[];
-  tableTitle?: string;
   listFilter?: SeriesListFilter;
   footer?: React.ReactNode;
 }) {
@@ -58,7 +55,8 @@ export function SeriesManagementTable({
 
   return (
     <>
-      <AdminCard title={tableTitle} flush>
+      <section className="rounded-xl border border-border bg-surface">
+        <div className="px-5 pb-5 pt-5">
         <div className="-mx-5 overflow-x-auto">
           <table className="w-full min-w-200 text-left">
             <thead>
@@ -128,7 +126,8 @@ export function SeriesManagementTable({
           </table>
         </div>
         {footer}
-      </AdminCard>
+        </div>
+      </section>
 
       {confirmDelete ? (
         <div

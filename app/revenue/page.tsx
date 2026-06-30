@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { AdminCard } from "../components/AdminCard";
+import { AdminEmptyState } from "../components/AdminEmptyState";
+import { AdminErrorAlert } from "../components/AdminErrorAlert";
 import { AdminShell } from "../components/AdminShell";
 import { AdminStatCard, AdminStatGrid } from "../components/AdminStatCard";
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from "../components/AdminTable";
+import { InlineLoading } from "../components/InlineLoading";
 import { RevenuePanel, useRevenueTimeline } from "../components/RevenuePanel";
 import { useDashboardSummary } from "../hooks/adminQueries";
 import { adminTdClass } from "../lib/adminUi";
@@ -113,15 +116,14 @@ export default function RevenuePage() {
 
       <AdminCard title="Daily breakdown" action="All transactions" actionHref="/payments" flush>
         {loading ? (
-          <div className="flex h-32 items-center justify-center">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-brand" />
-          </div>
+          <InlineLoading label="Loading breakdown" minHeight="sm" />
         ) : error ? (
-          <p className="text-[13px] text-text-muted">{error}</p>
+          <AdminErrorAlert message={error} onRetry={reload} />
         ) : dailyRows.length === 0 ? (
-          <p className="py-8 text-center text-[13px] text-text-muted">
-            No revenue recorded in this period.
-          </p>
+          <AdminEmptyState
+            title="No revenue in this period"
+            description="Succeeded payments will appear here once customers check out."
+          />
         ) : (
           <AdminTableWrap>
             <div className="-mx-5">

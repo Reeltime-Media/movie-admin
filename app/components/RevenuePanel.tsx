@@ -2,8 +2,11 @@
 
 import { useMemo } from "react";
 import { AdminCard } from "./AdminCard";
+import { AdminErrorAlert } from "./AdminErrorAlert";
+import { InlineLoading } from "./InlineLoading";
 import { type ApiRevenueTimeline } from "../lib/api";
 import { useRevenueTimelineQuery } from "../hooks/adminQueries";
+import { adminInputClass, adminLabelClass, adminTabClass } from "../lib/adminUi";
 import { formatUsdDisplay } from "../lib/money";
 
 const CHART_WIDTH = 800;
@@ -148,21 +151,9 @@ export function RevenuePanel({
   }, [timeline, plotHeight, plotWidth]);
 
   const body = loading ? (
-    <div className="flex h-52 items-center justify-center">
-      <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-brand" />
-    </div>
+    <InlineLoading label="Loading revenue" minHeight="md" />
   ) : error ? (
-    <div className="rounded-md border border-dashed border-border bg-bg px-4 py-8 text-center">
-      <p className="text-[13px] font-semibold text-text">Could not load revenue</p>
-      <p className="mt-1 text-[12px] text-text-muted">{error}</p>
-      <button
-        type="button"
-        onClick={() => void onRetry()}
-        className="mt-4 text-[12px] font-semibold text-brand hover:text-brand-hover"
-      >
-        Retry
-      </button>
-    </div>
+    <AdminErrorAlert message={error} onRetry={() => void onRetry()} />
   ) : (
     <div className="space-y-6">
       <div className="flex flex-col gap-3">
@@ -175,12 +166,7 @@ export function RevenuePanel({
                   key={option}
                   type="button"
                   onClick={() => onDaysChange(option)}
-                  className={[
-                    "rounded-md border px-3 py-1.5 text-[12px] font-semibold transition-colors",
-                    active
-                      ? "border-brand bg-brand/15 text-text"
-                      : "border-border bg-bg text-text-muted hover:border-border-hover hover:text-text",
-                  ].join(" ")}
+                  className={adminTabClass(active)}
                 >
                   Last {option} days
                 </button>
@@ -192,27 +178,23 @@ export function RevenuePanel({
         {showDateFilters ? (
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.1em] text-text-disabled">
-                From date
-              </span>
+              <span className={adminLabelClass}>From date</span>
               <input
                 type="date"
                 value={dateFrom}
                 max={dateTo || undefined}
                 onChange={(e) => onDateFromChange?.(e.target.value)}
-                className="w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text outline-none transition-colors focus:border-border-hover focus:bg-surface-elevated"
+                className={adminInputClass}
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.1em] text-text-disabled">
-                To date
-              </span>
+              <span className={adminLabelClass}>To date</span>
               <input
                 type="date"
                 value={dateTo}
                 min={dateFrom || undefined}
                 onChange={(e) => onDateToChange?.(e.target.value)}
-                className="w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text outline-none transition-colors focus:border-border-hover focus:bg-surface-elevated"
+                className={adminInputClass}
               />
             </label>
           </div>

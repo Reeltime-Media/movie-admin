@@ -362,6 +362,18 @@ export async function listUsers(query: PaginationQuery = {}) {
   return apiFetch<PaginatedResponse<ApiUser>>(`/users${paginationQuery(query)}`);
 }
 
+export async function setUserActive(userId: string, isActive: boolean): Promise<ApiUser> {
+  return apiFetch<ApiUser>(`/users/${userId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ is_active: isActive }),
+  });
+}
+
+export async function deleteUser(userId: string): Promise<void> {
+  await apiFetch<void>(`/users/${userId}`, { method: "DELETE" });
+}
+
 export async function listAdminMovies(query: PaginationQuery = {}) {
   return apiFetch<PaginatedResponse<ApiContent>>(`/admin/movies${paginationQuery(query)}`);
 }

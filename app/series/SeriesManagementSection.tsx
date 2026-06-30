@@ -71,14 +71,6 @@ export function SeriesManagementSection() {
   return (
     <>
       <div className="space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <Link
-            href="/series/new"
-            className={`shrink-0 ${adminPrimaryButtonClass}`}
-          >
-            Add series
-          </Link>
-        </div>
         {error ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-warning/30 bg-warning/10 p-3 text-[12px] text-warning">
             <span>{error}</span>
@@ -87,20 +79,30 @@ export function SeriesManagementSection() {
             </button>
           </div>
         ) : null}
-        <AdminCatalogSearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder="Search series by title, genre, slug, episode, or description…"
-          resultCount={entries.length}
-          totalCount={seriesOnly.length}
-          filterValue={listFilter}
-          filterOptions={filterOptions.map(({ key, label }) => ({
-            value: key,
-            label,
-          }))}
-          onFilterChange={(next) => setListFilter(next as SeriesListFilter)}
-          filterLabel="Filter series"
-        />
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <AdminCatalogSearchBar
+            className="flex-1"
+            maxWidthClassName=""
+            value={search}
+            onChange={setSearch}
+            placeholder="Search series by title, genre, slug, episode, or description…"
+            resultCount={entries.length}
+            totalCount={seriesOnly.length}
+            filterValue={listFilter}
+            filterOptions={filterOptions.map(({ key, label }) => ({
+              value: key,
+              label,
+            }))}
+            onFilterChange={(next) => setListFilter(next as SeriesListFilter)}
+            filterLabel="Filter series"
+          />
+          <Link
+            href="/series/new"
+            className={`shrink-0 ${adminPrimaryButtonClass}`}
+          >
+            Add series
+          </Link>
+        </div>
       </div>
 
       {isLoading && seriesOnly.length === 0 ? (
@@ -111,7 +113,6 @@ export function SeriesManagementSection() {
         <>
           <SeriesManagementTable
             entries={paginatedEntries}
-            tableTitle={tableTitleForFilter(listFilter)}
             listFilter={listFilter}
             footer={
               entries.length > 0 ? (
