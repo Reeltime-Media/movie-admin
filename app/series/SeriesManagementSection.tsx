@@ -72,11 +72,6 @@ export function SeriesManagementSection() {
     <>
       <div className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <p className="max-w-[72ch] text-[13px] leading-relaxed text-text-muted">
-            Manage series with seasons and episodes. Use Edit to open the full edit page for metadata,
-            poster, banner, and episode structure. Review episode readiness and
-            publish to the Reeltime catalog.
-          </p>
           <Link
             href="/series/new"
             className={`shrink-0 ${adminPrimaryButtonClass}`}

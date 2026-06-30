@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { clearAdminToken, getAdminToken } from "../lib/api";
 import { pageTitleClassName } from "../lib/pageTitle";
 import { useUploadProgress } from "./UploadProgressContext";
@@ -108,7 +108,7 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-64 overflow-y-auto border-r border-border bg-surface/95 px-5 py-5 backdrop-blur-md lg:block">
+      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-64 flex-col overflow-y-auto border-r border-border bg-surface/95 px-5 py-5 backdrop-blur-md lg:flex">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="grid h-8 w-8 place-items-center rounded-md bg-brand text-[15px] font-black text-white">
             R
@@ -122,6 +122,15 @@ export function AdminShell({
         <div className="mt-8">
           <NavList />
         </div>
+
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="mt-auto flex items-center gap-2 rounded-md border border-border px-3 py-2.5 text-[13px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:bg-surface-elevated hover:text-text"
+        >
+          <LogOut size={16} aria-hidden />
+          Sign out
+        </button>
       </aside>
 
       {/* Mobile navigation drawer */}
@@ -161,6 +170,15 @@ export function AdminShell({
             <div className="mt-8">
               <NavList onNavigate={() => setMobileNavOpen(false)} />
             </div>
+
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="mt-auto flex items-center gap-2 rounded-md border border-border px-3 py-2.5 text-[13px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:bg-surface-elevated hover:text-text"
+            >
+              <LogOut size={16} aria-hidden />
+              Sign out
+            </button>
           </aside>
         </div>
       ) : null}
@@ -295,14 +313,6 @@ export function AdminShell({
                     ) : null}
                   </div>
                 ) : null}
-
-                <button
-                  type="button"
-                  onClick={handleSignOut}
-                  className="rounded-md border border-border bg-surface px-3 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:bg-surface-elevated hover:text-text"
-                >
-                  Sign out
-                </button>
               </div>
           </div>
         </header>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
+import { AdminSectionTabs } from "../components/AdminSectionTabs";
 import { GenreMultiSelect } from "../components/GenreMultiSelect";
 import { InlineLoading } from "../components/InlineLoading";
 import { SeasonsEpisodesEditor } from "../components/SeasonsEpisodesEditor";
@@ -18,7 +19,6 @@ import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../lib/money";
 import { validateSeriesSeasons } from "../lib/seriesHelpers";
 import { pickAssetFile, pickFileFromInput } from "../movie/movieEditHelpers";
 import {
-  EditField,
   formatMovieDate,
   movieEditInputClass,
   movieEditSelectClass,
@@ -27,6 +27,20 @@ import {
 import { toSeriesDraft } from "./seriesEditHelpers";
 
 const statuses: Status[] = ["Published", "Draft", "Scheduled", "Review"];
+
+function EditRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <tr>
+      <th
+        scope="row"
+        className="w-44 px-5 py-3 text-left align-top font-semibold text-text-muted"
+      >
+        {label}
+      </th>
+      <td className="px-5 py-3 align-top">{children}</td>
+    </tr>
+  );
+}
 
 function ArtworkField({
   label,
@@ -43,7 +57,9 @@ function ArtworkField({
   newFile: File | null;
   onFileChange: (file: File | null) => void;
 }) {
-  const aspectClass = label === "Banner" ? "aspect-video" : "aspect-2/3";
+  const isBanner = label === "Banner";
+  const imgClass = isBanner ? "w-full" : "aspect-2/3 w-40 object-cover";
+  const placeholderClass = isBanner ? "aspect-video w-full" : "aspect-2/3 w-40";
 
   return (
     <div className="rounded-lg border border-border bg-bg p-4">
@@ -53,11 +69,11 @@ function ArtworkField({
         <img
           src={previewUrl}
           alt={`${label} preview`}
-          className={`${aspectClass} w-full rounded-lg border border-border object-cover`}
+          className={`${imgClass} rounded-lg border border-border`}
         />
       ) : (
         <div
-          className={`grid ${aspectClass} place-items-center rounded-lg border border-dashed border-border bg-surface text-center text-[13px] text-text-muted`}
+          className={`grid ${placeholderClass} place-items-center rounded-lg border border-dashed border-border bg-surface text-center text-[13px] text-text-muted`}
         >
           No {label.toLowerCase()} uploaded
         </div>
@@ -89,6 +105,7 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
   const [editPosterFile, setEditPosterFile] = useState<File | null>(null);
   const [editBannerFile, setEditBannerFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [tab, setTab] = useState<"overview" | "media" | "episodes">("overview");
   const [prevSeriesId, setPrevSeriesId] = useState<string | null>(null);
   const [prevSeriesUpdatedAt, setPrevSeriesUpdatedAt] = useState<string | null>(null);
 
@@ -228,167 +245,174 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
     );
   }
 
+  const tabs = [
+    { key: "overview", label: "Overview" },
+    { key: "media", label: "Media" },
+    { key: "episodes", label: "Episodes" },
+  ];
+
   return (
-    <form onSubmit={saveEdit} className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href={`/series/${series.id}`}
-          className="rounded-md border border-border bg-surface px-3 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-        >
-          Cancel
-        </Link>
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="rounded-md bg-brand px-4 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isSaving ? "Saving…" : "Save changes"}
-        </button>
+    <form onSubmit={saveEdit} className="space-y-5">
+      {/* Tabs + actions */}
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border">
+        <AdminSectionTabs
+          tabs={tabs}
+          active={tab}
+          onChange={(k) => setTab(k as "overview" | "media" | "episodes")}
+          bare
+        />
+        <div className="flex shrink-0 flex-wrap items-center gap-2 pb-2">
+          <Link
+            href={`/series/${series.id}`}
+            className="rounded-md border border-border bg-bg px-4 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
+          >
+            Cancel
+          </Link>
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="rounded-md bg-brand px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSaving ? "Saving…" : "Save changes"}
+          </button>
+        </div>
       </div>
 
-      <section className="overflow-hidden rounded-xl border border-border bg-surface">
-        <header className="border-b border-border bg-surface-elevated px-6 py-6 md:px-10">
-          <h2 className="mb-1 text-[18px] font-extrabold tracking-[-0.02em]">Edit series</h2>
-          <p className="text-[13px] text-text-muted">{series.title}</p>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <EditField label="Title">
-              <input
-                className={movieEditInputClass}
-                value={editDraft.title}
-                onChange={(e) => patchDraft({ title: e.target.value })}
-                required
-              />
-            </EditField>
-            <EditField label="Status">
-              <select
-                className={movieEditSelectClass}
-                value={editDraft.status}
-                onChange={(e) => patchDraft({ status: e.target.value as Status })}
-              >
-                {statuses.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </EditField>
-            <EditField label="Monthly price (USD)">
-              <input
-                className={movieEditInputClass}
-                value={editDraft.price.replace(/^\$/, "")}
-                onChange={(e) => patchDraft({ price: e.target.value ? `$${e.target.value}` : "Free" })}
-                placeholder="6.99"
-              />
-              <p className="mt-1 text-[11px] text-text-disabled">{ADMIN_PRICE_HINT}</p>
-            </EditField>
-            <EditField label="Rating">
-              <input
-                className={movieEditInputClass}
-                value={editDraft.rating === "-" ? "" : editDraft.rating}
-                onChange={(e) => patchDraft({ rating: e.target.value || "-" })}
-                placeholder="8.7"
-              />
-            </EditField>
-            <EditField label="Release year">
-              <input
-                className={movieEditInputClass}
-                type="number"
-                min={1900}
-                max={2100}
-                value={editDraft.releaseYear ?? ""}
-                onChange={(e) =>
-                  patchDraft({
-                    releaseYear: e.target.value ? Number(e.target.value) : undefined,
-                  })
-                }
-              />
-            </EditField>
-            <EditField label="Updated">
-              <span className="text-[13px] font-semibold text-text">
-                {formatMovieDate(series.updatedAt)}
-              </span>
-            </EditField>
-          </div>
-
-          <label className="mt-4 block">
-            <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-text-disabled">
-              Genres
-            </span>
-            <GenreMultiSelect
-              selected={parseGenresFromStored(editDraft.genre)}
-              onChange={(next) => patchDraft({ genre: formatGenres(next) })}
-              options={genreOptions}
-              onDeleteGenre={handleDeleteGenre}
-            />
-          </label>
-
-          <label className="mt-4 block">
-            <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-text-disabled">
-              Description
-            </span>
-            <textarea
-              className={`${movieEditInputClass} min-h-20 resize-y font-normal`}
-              value={editDraft.description ?? ""}
-              onChange={(e) => patchDraft({ description: e.target.value || null })}
-              placeholder="Brief synopsis shown on the series page…"
-            />
-          </label>
-
-          <label className="mt-4 block">
-            <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-text-disabled">
-              Trailer URL
-            </span>
-            <input
-              className={movieEditInputClass}
-              type="url"
-              value={editDraft.trailerUrl ?? ""}
-              onChange={(e) => patchDraft({ trailerUrl: e.target.value || null })}
-              placeholder="https://www.youtube.com/watch?v=..."
-            />
-            <TrailerPreview url={editDraft.trailerUrl ?? ""} />
-          </label>
-        </header>
-
-        <div className="space-y-8 border-b border-border bg-bg p-6 md:p-10">
-          <div>
-            <h3 className="mb-1 text-[16px] font-bold tracking-[-0.02em]">Artwork</h3>
-            <p className="mb-5 text-[13px] text-text-muted">
-              Upload a portrait poster for catalog cards and a wide banner for the home page hero.
-            </p>
-            <div className="grid gap-5 lg:grid-cols-2">
-              <ArtworkField
-                label="Poster"
-                hint="Portrait key art shown on series cards."
-                previewUrl={posterPreviewUrl}
-                currentKey={series.posterKey}
-                newFile={editPosterFile}
-                onFileChange={setEditPosterFile}
-              />
-              <ArtworkField
-                label="Banner"
-                hint="Wide cinematic image used on the home page hero."
-                previewUrl={bannerPreviewUrl}
-                currentKey={series.bannerKey}
-                newFile={editBannerFile}
-                onFileChange={setEditBannerFile}
-              />
+      {/* Active section */}
+      <div>
+          <div className={tab === "overview" ? "block" : "hidden"}>
+            <div className="-mx-5 border-y border-border bg-surface md:-mx-8">
+              <table className="w-full text-left text-[13px]">
+                <tbody className="divide-y divide-border">
+                  <EditRow label="Title">
+                    <input
+                      className={movieEditInputClass}
+                      value={editDraft.title}
+                      onChange={(e) => patchDraft({ title: e.target.value })}
+                      required
+                    />
+                  </EditRow>
+                  <EditRow label="Status">
+                    <select
+                      className={movieEditSelectClass}
+                      value={editDraft.status}
+                      onChange={(e) => patchDraft({ status: e.target.value as Status })}
+                    >
+                      {statuses.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </EditRow>
+                  <EditRow label="Monthly price (USD)">
+                    <input
+                      className={movieEditInputClass}
+                      value={editDraft.price.replace(/^\$/, "")}
+                      onChange={(e) =>
+                        patchDraft({ price: e.target.value ? `$${e.target.value}` : "Free" })
+                      }
+                      placeholder="6.99"
+                    />
+                    <p className="mt-1 text-[11px] text-text-disabled">{ADMIN_PRICE_HINT}</p>
+                  </EditRow>
+                  <EditRow label="Rating">
+                    <input
+                      className={movieEditInputClass}
+                      value={editDraft.rating === "-" ? "" : editDraft.rating}
+                      onChange={(e) => patchDraft({ rating: e.target.value || "-" })}
+                      placeholder="8.7"
+                    />
+                  </EditRow>
+                  <EditRow label="Release year">
+                    <input
+                      className={movieEditInputClass}
+                      type="number"
+                      min={1900}
+                      max={2100}
+                      value={editDraft.releaseYear ?? ""}
+                      onChange={(e) =>
+                        patchDraft({
+                          releaseYear: e.target.value ? Number(e.target.value) : undefined,
+                        })
+                      }
+                    />
+                  </EditRow>
+                  <EditRow label="Genres">
+                    <GenreMultiSelect
+                      selected={parseGenresFromStored(editDraft.genre)}
+                      onChange={(next) => patchDraft({ genre: formatGenres(next) })}
+                      options={genreOptions}
+                      onDeleteGenre={handleDeleteGenre}
+                    />
+                  </EditRow>
+                  <EditRow label="Updated">
+                    <span className="font-semibold text-text">
+                      {formatMovieDate(series.updatedAt)}
+                    </span>
+                  </EditRow>
+                  <EditRow label="Description">
+                    <textarea
+                      className={`${movieEditInputClass} min-h-20 resize-y font-normal`}
+                      value={editDraft.description ?? ""}
+                      onChange={(e) => patchDraft({ description: e.target.value || null })}
+                      placeholder="Brief synopsis shown on the series page…"
+                    />
+                  </EditRow>
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <div>
-            <h3 className="mb-1 text-[16px] font-bold tracking-[-0.02em]">Seasons and episodes</h3>
-            <p className="mb-5 text-[13px] text-text-muted">
-              Edit season and episode metadata. Episode video uploads are managed when creating a
-              series or from the series detail page.
-            </p>
-            <SeasonsEpisodesEditor
-              seasons={editDraft.seasons}
-              onChange={(next) => patchDraft({ seasons: next })}
-            />
+          <div className={tab === "media" ? "block" : "hidden"}>
+            <div className="rounded-xl border border-border bg-surface p-6">
+              <div className="grid gap-6 lg:grid-cols-2">
+                <ArtworkField
+                  label="Poster"
+                  hint="Portrait key art shown on series cards."
+                  previewUrl={posterPreviewUrl}
+                  currentKey={series.posterKey}
+                  newFile={editPosterFile}
+                  onFileChange={setEditPosterFile}
+                />
+                <ArtworkField
+                  label="Banner"
+                  hint="Wide cinematic image used on the home page hero."
+                  previewUrl={bannerPreviewUrl}
+                  currentKey={series.bannerKey}
+                  newFile={editBannerFile}
+                  onFileChange={setEditBannerFile}
+                />
+                <div className="rounded-lg border border-border bg-bg p-4">
+                  <div className="mb-1 text-[14px] font-bold tracking-[-0.02em]">Trailer</div>
+                  <p className="mb-3 text-[12px] text-text-muted">Paste a YouTube URL.</p>
+                  <input
+                    className={movieEditInputClass}
+                    type="url"
+                    value={editDraft.trailerUrl ?? ""}
+                    onChange={(e) => patchDraft({ trailerUrl: e.target.value || null })}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                  />
+                  <TrailerPreview url={editDraft.trailerUrl ?? ""} />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+
+          <div className={tab === "episodes" ? "block" : "hidden"}>
+            <div className="rounded-xl border border-border bg-surface p-6">
+              <h3 className="mb-1 text-[14px] font-bold tracking-[-0.02em]">Seasons and episodes</h3>
+              <p className="mb-5 text-[13px] text-text-muted">
+                Edit season and episode metadata. Episode video uploads are managed when creating a
+                series or from the series detail page.
+              </p>
+              <SeasonsEpisodesEditor
+                seasons={editDraft.seasons}
+                onChange={(next) => patchDraft({ seasons: next })}
+              />
+            </div>
+          </div>
+      </div>
 
       {editSaveError ? (
         <p className="text-[12px] font-semibold text-warning">{editSaveError}</p>
