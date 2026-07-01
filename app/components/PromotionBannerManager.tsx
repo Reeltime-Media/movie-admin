@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -15,7 +16,7 @@ import {
   uploadFileToPresignedUrl,
   type ApiPromotionBanner,
 } from "../lib/api";
-import { adminDeleteButtonClassWide } from "../lib/adminUi";
+import { adminDeleteButtonClassWide, adminPrimaryButtonClass } from "../lib/adminUi";
 import { mediaUrl } from "../lib/media";
 import { queryKeys } from "../lib/queryKeys";
 
@@ -222,7 +223,19 @@ export function PromotionBannerManager() {
 
   return (
     <>
-      <AdminCard title="Home promotion banners" action="Add banner" actionOnClick={openCreateForm}>
+      <AdminCard
+        title="Home promotion banners"
+        headerAction={
+          <button
+            type="button"
+            onClick={openCreateForm}
+            className={`inline-flex shrink-0 items-center gap-1.5 ${adminPrimaryButtonClass}`}
+          >
+            <Plus size={14} strokeWidth={2.5} aria-hidden />
+            Add banner
+          </button>
+        }
+      >
         <p className="mb-4 text-[13px] leading-relaxed text-text-muted">
           Create promotional strips shown on the client home page. Lower sort order appears first.
           Leave schedule empty to show anytime while active.
@@ -324,7 +337,7 @@ export function PromotionBannerManager() {
 
       {showForm ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           role="dialog"
           aria-modal="true"
           onClick={() => {
@@ -334,140 +347,230 @@ export function PromotionBannerManager() {
           <form
             onSubmit={(e) => void handleSubmit(e)}
             onClick={(e) => e.stopPropagation()}
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border border-border bg-surface p-6"
+            className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-[0_24px_80px_-12px_rgba(0,0,0,0.18)]"
           >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-[16px] font-bold tracking-[-0.02em]">
-                  {editingBanner ? "Edit banner" : "New banner"}
-                </h2>
-                <p className="mt-1 text-[12px] text-text-muted">
-                  Shown on the client home page when active.
+            {/* ── Header ── */}
+            <div className="relative border-b border-border px-6 py-5">
+              <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-brand via-brand-hover to-brand/60" />
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-[17px] font-bold tracking-[-0.02em]">
+                    {editingBanner ? "Edit banner" : "New promotion banner"}
+                  </h2>
+                  <p className="mt-1 text-[12px] leading-relaxed text-text-muted">
+                    Promotional strips shown on the client home page when active.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeForm}
+                  disabled={isSaving}
+                  aria-label="Close"
+                  className="shrink-0 flex items-center justify-center size-8 rounded-lg border border-border bg-bg text-text-muted transition-all hover:border-border-hover hover:bg-surface-elevated hover:text-text"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M11 3L3 11M3 3l8 8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/></svg>
+                </button>
+              </div>
+            </div>
+
+            {/* ── Body ── */}
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              {/* Section: Content */}
+              <div className="px-6 py-5 space-y-4">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M4.5 5h5M4.5 7.5h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+                  Content
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                    Title <span className="text-brand">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.title}
+                    onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                    placeholder="Enter banner title…"
+                    className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                    Subtitle
+                  </label>
+                  <textarea
+                    value={form.subtitle}
+                    onChange={(e) => setForm((f) => ({ ...f, subtitle: e.target.value }))}
+                    rows={2}
+                    placeholder="Optional supporting text…"
+                    className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10 resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Section: Banner Image */}
+              <div className="border-t border-border px-6 py-5 space-y-3">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2.5" width="11" height="9" rx="2" stroke="currentColor" strokeWidth="1.4"/><circle cx="5" cy="6" r="1.25" stroke="currentColor" strokeWidth="1.2"/><path d="M1.5 9.5l2.5-2.5 2 2 3-3 3.5 3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  Banner Image
+                </div>
+                <label className="group relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-bg/50 px-4 py-6 transition-all hover:border-brand/40 hover:bg-brand/[0.02]">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(e) => updateImageFile(e.target.files?.[0] ?? null)}
+                    className="absolute inset-0 cursor-pointer opacity-0"
+                  />
+                  {previewSrc ? (
+                    <div className="relative h-28 w-full overflow-hidden rounded-lg border border-border">
+                      <Image src={previewSrc} alt="" fill className="object-cover" sizes="400px" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                        <span className="rounded-md bg-white/90 px-3 py-1.5 text-[11px] font-bold text-text">
+                          Change image
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mb-2 flex size-10 items-center justify-center rounded-full bg-surface-elevated text-text-disabled transition-colors group-hover:bg-brand/10 group-hover:text-brand">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                      </div>
+                      <p className="text-[12px] font-semibold text-text-muted">
+                        Click to upload or drag & drop
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-text-disabled">
+                        JPG, PNG or WebP
+                      </p>
+                    </>
+                  )}
+                </label>
+              </div>
+
+              {/* Section: Call-to-Action */}
+              <div className="border-t border-border px-6 py-5 space-y-4">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7h6M11.5 7l-3-3m3 3l-3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  Call to Action
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">Button label</label>
+                    <input
+                      type="text"
+                      value={form.ctaLabel}
+                      onChange={(e) => setForm((f) => ({ ...f, ctaLabel: e.target.value }))}
+                      placeholder="e.g. Subscribe now"
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">Button link</label>
+                    <input
+                      type="text"
+                      value={form.ctaHref}
+                      onChange={(e) => setForm((f) => ({ ...f, ctaHref: e.target.value }))}
+                      placeholder="/pricing"
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section: Display Settings */}
+              <div className="border-t border-border px-6 py-5 space-y-4">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4"/><path d="M7 4.5v3l2 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  Display Settings
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">Sort order</label>
+                    <input
+                      type="number"
+                      value={form.sortOrder}
+                      onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))}
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                    />
+                  </div>
+                  <div className="flex items-end pb-1">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={form.isActive}
+                      onClick={() => setForm((f) => ({ ...f, isActive: !f.isActive }))}
+                      className="group flex items-center gap-3"
+                    >
+                      <span
+                        className={[
+                          "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200",
+                          form.isActive ? "bg-success" : "bg-text-disabled/30",
+                        ].join(" ")}
+                      >
+                        <span
+                          className={[
+                            "pointer-events-none inline-block size-5 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200",
+                            form.isActive ? "translate-x-5" : "translate-x-0",
+                          ].join(" ")}
+                        />
+                      </span>
+                      <span className="text-[12px] font-semibold text-text">
+                        {form.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                      <span className="flex items-center gap-1.5">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v2M6 9v2M1 6h2M9 6h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                        Starts at
+                      </span>
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={form.startsAt}
+                      onChange={(e) => setForm((f) => ({ ...f, startsAt: e.target.value }))}
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                      <span className="flex items-center gap-1.5">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v2M6 9v2M1 6h2M9 6h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                        Ends at
+                      </span>
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={form.endsAt}
+                      onChange={(e) => setForm((f) => ({ ...f, endsAt: e.target.value }))}
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                    />
+                  </div>
+                </div>
+                <p className="text-[11px] text-text-disabled">
+                  Leave empty to show anytime while active.
                 </p>
               </div>
+            </div>
+
+            {/* ── Footer ── */}
+            <div className="flex items-center justify-end gap-2.5 border-t border-border bg-bg/50 px-6 py-4">
               <button
                 type="button"
                 onClick={closeForm}
                 disabled={isSaving}
-                aria-label="Close"
-                className="shrink-0 rounded-md border border-border px-2 py-1 text-[18px] leading-none text-text-muted"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              <label className="block">
-                <span className="text-[11px] font-semibold text-text-muted">Title</span>
-                <input
-                  type="text"
-                  value={form.title}
-                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text"
-                  required
-                />
-              </label>
-              <label className="block">
-                <span className="text-[11px] font-semibold text-text-muted">Subtitle</span>
-                <textarea
-                  value={form.subtitle}
-                  onChange={(e) => setForm((f) => ({ ...f, subtitle: e.target.value }))}
-                  rows={2}
-                  className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text"
-                />
-              </label>
-              <label className="block">
-                <span className="text-[11px] font-semibold text-text-muted">Banner image</span>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={(e) => updateImageFile(e.target.files?.[0] ?? null)}
-                  className="mt-1 w-full text-[12px] text-text-muted"
-                />
-                {previewSrc ? (
-                  <div className="relative mt-2 h-24 w-full overflow-hidden rounded-md border border-border">
-                    <Image src={previewSrc} alt="" fill className="object-cover" sizes="400px" />
-                  </div>
-                ) : null}
-              </label>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="block">
-                  <span className="text-[11px] font-semibold text-text-muted">Button label</span>
-                  <input
-                    type="text"
-                    value={form.ctaLabel}
-                    onChange={(e) => setForm((f) => ({ ...f, ctaLabel: e.target.value }))}
-                    placeholder="e.g. Subscribe now"
-                    className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text"
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-[11px] font-semibold text-text-muted">Button link</span>
-                  <input
-                    type="text"
-                    value={form.ctaHref}
-                    onChange={(e) => setForm((f) => ({ ...f, ctaHref: e.target.value }))}
-                    placeholder="/pricing"
-                    className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text"
-                  />
-                </label>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="block">
-                  <span className="text-[11px] font-semibold text-text-muted">Sort order</span>
-                  <input
-                    type="number"
-                    value={form.sortOrder}
-                    onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))}
-                    className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text"
-                  />
-                </label>
-                <label className="flex items-end gap-2 pb-2">
-                  <input
-                    id="banner-active"
-                    type="checkbox"
-                    checked={form.isActive}
-                    onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
-                    className="size-4 rounded border-border"
-                  />
-                  <span className="text-[12px] font-semibold text-text">Active</span>
-                </label>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="block">
-                  <span className="text-[11px] font-semibold text-text-muted">Starts (optional)</span>
-                  <input
-                    type="datetime-local"
-                    value={form.startsAt}
-                    onChange={(e) => setForm((f) => ({ ...f, startsAt: e.target.value }))}
-                    className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text"
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-[11px] font-semibold text-text-muted">Ends (optional)</span>
-                  <input
-                    type="datetime-local"
-                    value={form.endsAt}
-                    onChange={(e) => setForm((f) => ({ ...f, endsAt: e.target.value }))}
-                    className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text"
-                  />
-                </label>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={closeForm}
-                disabled={isSaving}
-                className="rounded-md border border-border px-4 py-2 text-[12px] font-semibold text-text-muted"
+                className="rounded-lg border border-border bg-surface px-4 py-2.5 text-[12px] font-semibold text-text-muted transition-all hover:border-border-hover hover:bg-surface-elevated hover:text-text disabled:opacity-40"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSaving}
-                className="rounded-md bg-brand px-4 py-2 text-[12px] font-bold text-white hover:bg-brand-hover disabled:opacity-60"
+                className="rounded-lg bg-brand px-5 py-2.5 text-[12px] font-bold text-white shadow-[0_1px_3px_rgba(229,9,20,0.3)] transition-all hover:bg-brand-hover hover:shadow-[0_2px_8px_rgba(229,9,20,0.4)] active:scale-[0.98] disabled:opacity-60 disabled:shadow-none"
               >
                 {isSaving ? "Saving…" : editingBanner ? "Save changes" : "Create banner"}
               </button>

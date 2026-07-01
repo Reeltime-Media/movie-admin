@@ -227,7 +227,7 @@ export default function PaymentsPage() {
               </div>
             </AdminTableWrap>
             <AdminPagination
-              page={page}
+              page={currentPage}
               pages={pages}
               total={total}
               pageSize={PAGE_SIZE}

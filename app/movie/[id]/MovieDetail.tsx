@@ -1,16 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AdminCard } from "../../components/AdminCard";
 import { AdminSectionTabs } from "../../components/AdminSectionTabs";
 import { InlineLoading } from "../../components/InlineLoading";
-import { useMovieCatalog } from "../../components/MovieCatalogProvider";
 import { statusClasses } from "../../lib/adminData";
 import { AdminHlsPlayer } from "../../components/AdminHlsPlayer";
 import { MovieCommentsAdmin } from "../MovieCommentsAdmin";
 import { formatMovieDate, youtubeEmbedUrl } from "../movieDetailUi";
+import { useAdminMovie } from "../../hooks/adminQueries";
 
 type MovieTab = "overview" | "media" | "comments";
 
@@ -29,17 +28,13 @@ function InfoRow({ label, value }: { label: string; value?: string | number | nu
 }
 
 export function MovieDetail({ movieId }: { movieId: string }) {
-  const router = useRouter();
-  const { movies, isLoading, error, refreshMovies } = useMovieCatalog();
-  const entry = movies.find((item) => item.id === movieId);
-  const movie = entry?.type === "Movie" ? entry : undefined;
+  const { data: movie, isLoading, error: queryError, refetch } = useAdminMovie(movieId);
+  const error = queryError
+    ? queryError instanceof Error
+      ? queryError.message
+      : "Could not load movie detail"
+    : null;
   const [tab, setTab] = useState<MovieTab>("overview");
-
-  useEffect(() => {
-    if (!isLoading && entry?.type === "Series") {
-      router.replace(`/series/${entry.id}`);
-    }
-  }, [isLoading, entry, router]);
 
   const trailerEmbedUrl = useMemo(() => youtubeEmbedUrl(movie?.trailerUrl), [movie?.trailerUrl]);
 
@@ -55,7 +50,11 @@ export function MovieDetail({ movieId }: { movieId: string }) {
     return (
       <div className="rounded-md border border-warning/30 bg-warning/10 p-4 text-[13px] text-warning">
         <p>{error}</p>
-        <button type="button" onClick={refreshMovies} className="mt-3 font-bold hover:underline">
+        <button
+          type="button"
+          onClick={() => void refetch()}
+          className="mt-3 font-bold hover:underline"
+        >
           Retry
         </button>
       </div>

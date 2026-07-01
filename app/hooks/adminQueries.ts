@@ -6,22 +6,27 @@ import {
   createGenre,
   deleteGenre,
   getAdminDashboardSummary,
+  getAdminMovie,
   getAdminRevenueTimeline,
+  getAdminSeriesById,
   getAdminToken,
   listAdminPayments,
   listAdminSubscriptionPlans,
   listAdminTopTitles,
   listGenres,
+  listSeriesEpisodesApi,
   listTranscodeJobs,
   listUsers,
   retryTranscodeJob,
   type ApiGenre,
   type ApiPaymentIntent,
+  type ApiSeasonRead,
   type ApiSubscriptionPlan,
   type ApiTopTitleReport,
   type ApiUser,
   type TranscodeJob,
 } from "../lib/api";
+import { apiContentToCatalogEntry, apiSeriesToCatalogEntry } from "../lib/catalog";
 import { queryKeys } from "../lib/queryKeys";
 import type { RevenueDateRange } from "../components/RevenuePanel";
 
@@ -102,6 +107,40 @@ export function useUsers(page: number, pageSize: number) {
     enabled: isAuthReady && Boolean(getAdminToken()),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
+  });
+
+  return { ...query, isAuthReady };
+}
+
+/** Fetch a single movie (mapped to a CatalogEntry) — avoids loading the whole catalog. */
+export function useAdminMovie(id: string) {
+  const isAuthReady = useClientAuthReady();
+
+  const query = useQuery({
+    queryKey: queryKeys.movie(id),
+    queryFn: async () => apiContentToCatalogEntry(await getAdminMovie(id)),
+    enabled: isAuthReady && Boolean(getAdminToken()) && Boolean(id),
+    staleTime: 60_000,
+  });
+
+  return { ...query, isAuthReady };
+}
+
+/** Fetch a single series with its episodes (mapped to a CatalogEntry). */
+export function useAdminSeries(id: string) {
+  const isAuthReady = useClientAuthReady();
+
+  const query = useQuery({
+    queryKey: queryKeys.series(id),
+    queryFn: async () => {
+      const series = await getAdminSeriesById(id);
+      const seasons = await listSeriesEpisodesApi(series.slug).catch(
+        () => [] as ApiSeasonRead[],
+      );
+      return apiSeriesToCatalogEntry(series, seasons);
+    },
+    enabled: isAuthReady && Boolean(getAdminToken()) && Boolean(id),
+    staleTime: 60_000,
   });
 
   return { ...query, isAuthReady };

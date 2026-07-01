@@ -8,10 +8,10 @@ import { AdminHlsPlayer } from "../../components/AdminHlsPlayer";
 import { AdminSectionTabs } from "../../components/AdminSectionTabs";
 import { InlineLoading } from "../../components/InlineLoading";
 import { TrailerPreview } from "../../components/TrailerPreview";
-import { useMovieCatalog } from "../../components/MovieCatalogProvider";
 import type { Episode } from "../../lib/adminData";
 import { statusClasses } from "../../lib/adminData";
 import { seriesStructureSummary, totalEpisodesInEntry } from "../../lib/seriesHelpers";
+import { useAdminSeries } from "../../hooks/adminQueries";
 
 type SeriesTab = "overview" | "media" | "episodes";
 
@@ -41,8 +41,12 @@ function episodeLabel(seasonNumber: number, ep: Episode) {
 }
 
 export function SeriesDetail({ seriesId }: { seriesId: string }) {
-  const { movies, isLoading, error, refreshMovies } = useMovieCatalog();
-  const series = movies.find((item) => item.id === seriesId && item.type === "Series");
+  const { data: series, isLoading, error: queryError, refetch } = useAdminSeries(seriesId);
+  const error = queryError
+    ? queryError instanceof Error
+      ? queryError.message
+      : "Could not load series detail"
+    : null;
   const [tab, setTab] = useState<SeriesTab>("overview");
   const [expandedSeasons, setExpandedSeasons] = useState<Set<string>>(new Set());
   const [selectedEpisodeId, setSelectedEpisodeId] = useState<string | null>(null);
@@ -105,7 +109,11 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
     return (
       <div className="rounded-md border border-warning/30 bg-warning/10 p-4 text-[13px] text-warning">
         <p>{error}</p>
-        <button type="button" onClick={refreshMovies} className="mt-3 font-bold hover:underline">
+        <button
+          type="button"
+          onClick={() => void refetch()}
+          className="mt-3 font-bold hover:underline"
+        >
           Retry
         </button>
       </div>

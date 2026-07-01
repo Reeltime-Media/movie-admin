@@ -5,11 +5,9 @@ import { AdminStatCard, AdminStatGrid } from "./components/AdminStatCard";
 import { AdminErrorAlert } from "./components/AdminErrorAlert";
 import { DashboardRevenue } from "./components/DashboardRevenue";
 import { DashboardTopMovies } from "./components/DashboardTopMovies";
-import { useMovieCatalog } from "./hooks/useMovieCatalog";
 import { useDashboardSummary } from "./hooks/adminQueries";
 
 export default function Home() {
-  const { movies, isLoading: moviesLoading } = useMovieCatalog();
   const {
     data: summary,
     isLoading: summaryLoading,
@@ -22,11 +20,7 @@ export default function Home() {
       : "Could not load dashboard summary"
     : null;
 
-  const movieCount = movies.filter((m) => m.type === "Movie").length;
-  const seriesCount = movies.filter((m) => m.type === "Series").length;
-  const pendingTranscodes = movies.filter(
-    (m) => m.transcodeStatus === "pending" || m.transcodeStatus === "processing",
-  ).length;
+  const pendingTranscodes = summary?.transcodes.pending ?? 0;
 
   const stats = [
     {
@@ -37,26 +31,21 @@ export default function Home() {
     },
     {
       label: "Movies",
-      value: summaryLoading && moviesLoading ? "--" : String(summary?.content.movies ?? movieCount),
-      hint: `${summary?.content.published ?? movies.filter((m) => m.status === "Published").length} published`,
+      value: summaryLoading ? "--" : String(summary?.content.movies ?? 0),
+      hint: `${summary?.content.published ?? 0} published`,
       hintClassName: "text-text-muted",
     },
     {
       label: "Series",
-      value: summaryLoading && moviesLoading ? "--" : String(summary?.content.series ?? seriesCount),
+      value: summaryLoading ? "--" : String(summary?.content.series ?? 0),
       hint: "All series",
       hintClassName: "text-text-muted",
     },
     {
       label: "Pending transcodes",
-      value:
-        summaryLoading && moviesLoading
-          ? "--"
-          : String(summary?.transcodes.pending ?? pendingTranscodes),
-      hint:
-        (summary?.transcodes.processing ?? 0) > 0 ? "Processing now" : "Queue clear",
-      hintClassName:
-        (summary?.transcodes.pending ?? pendingTranscodes) > 0 ? "text-warning" : "text-success",
+      value: summaryLoading ? "--" : String(pendingTranscodes),
+      hint: (summary?.transcodes.processing ?? 0) > 0 ? "Processing now" : "Queue clear",
+      hintClassName: pendingTranscodes > 0 ? "text-warning" : "text-success",
     },
   ];
 

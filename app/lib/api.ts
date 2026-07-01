@@ -301,7 +301,10 @@ async function errorMessageFromResponse(res: Response) {
 
 async function parseApiResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
-    if (res.status === 401 || res.status === 403) {
+    // Only an authentication failure (401) should drop the session. A 403 means the
+    // token is valid but the action is not allowed (e.g. acting on your own account),
+    // so it must surface as an error instead of logging the admin out.
+    if (res.status === 401) {
       clearAdminToken();
     }
     throw new Error(await errorMessageFromResponse(res));
@@ -380,6 +383,10 @@ export async function listAdminMovies(query: PaginationQuery = {}) {
 
 export async function listAllAdminMovies() {
   return fetchAllPages((page, pageSize) => listAdminMovies({ page, pageSize }));
+}
+
+export async function getAdminMovie(id: string): Promise<ApiContent> {
+  return apiFetch<ApiContent>(`/admin/movies/${id}`);
 }
 
 export async function createAdminMovieDraft(input: {
@@ -823,6 +830,10 @@ export async function listAdminSeries(
 
 export async function listAllAdminSeries(): Promise<ApiSeries[]> {
   return fetchAllPages((page, pageSize) => listAdminSeries({ page, pageSize }));
+}
+
+export async function getAdminSeriesById(id: string): Promise<ApiSeries> {
+  return apiFetch<ApiSeries>(`/admin/series/${id}`);
 }
 
 export async function createSeries(input: {

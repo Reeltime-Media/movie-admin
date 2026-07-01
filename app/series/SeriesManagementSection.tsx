@@ -117,7 +117,7 @@ export function SeriesManagementSection() {
             footer={
               entries.length > 0 ? (
                 <AdminPagination
-                  page={page}
+                  page={currentPage}
                   pages={pages}
                   total={entries.length}
                   pageSize={TABLE_PAGE_SIZE}

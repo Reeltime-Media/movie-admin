@@ -3,8 +3,13 @@ import { NextResponse } from "next/server";
 const PIN_COOKIE = "reeltime_admin_pin";
 
 function getAdminPin() {
-  const raw =
-    process.env.ADMIN_PIN ?? process.env.NEXT_PUBLIC_ADMIN_PIN ?? "1234";
+  // Prefer the server-only ADMIN_PIN. NEXT_PUBLIC_ADMIN_PIN is kept only as a
+  // fallback for existing deploys, but note that any NEXT_PUBLIC_* var is inlined
+  // into the client bundle — set ADMIN_PIN (server-only) instead.
+  // The "1234" default is dev-only: in production a missing PIN fails closed
+  // rather than accepting a well-known default.
+  const configured = process.env.ADMIN_PIN ?? process.env.NEXT_PUBLIC_ADMIN_PIN;
+  const raw = configured ?? (process.env.NODE_ENV === "production" ? "" : "1234");
   return raw.trim();
 }
 
@@ -30,7 +35,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Invalid request" }, { status: 400 });
   }
 
-  if (pin !== getAdminPin()) {
+  const expectedPin = getAdminPin();
+  if (!expectedPin) {
+    // Fail closed: never grant access when no PIN is configured.
+    return NextResponse.json(
+      { ok: false, message: "Admin PIN is not configured" },
+      { status: 500 },
+    );
+  }
+
+  if (pin !== expectedPin) {
     return NextResponse.json({ ok: false, message: "Invalid PIN" }, { status: 401 });
   }
 
