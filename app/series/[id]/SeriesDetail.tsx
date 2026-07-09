@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, ChevronRight, Lock, PlayCircle } from "lucide-react";
+import { ChevronDown, ChevronRight, PlayCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AdminCard } from "../../components/AdminCard";
-import { AdminHlsPlayer } from "../../components/AdminHlsPlayer";
+import { AdminContentHlsPlayer } from "../../components/AdminContentHlsPlayer";
+import { AdminSourceVideoPlayer } from "../../components/AdminSourceVideoPlayer";
 import { AdminSectionTabs } from "../../components/AdminSectionTabs";
 import { InlineLoading } from "../../components/InlineLoading";
 import { TrailerPreview } from "../../components/TrailerPreview";
@@ -54,9 +55,7 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
   const playableEpisodes = useMemo(() => {
     if (!series) return [];
     return series.seasons.flatMap((season) =>
-      season.episodes
-        .filter((ep) => ep.hlsMasterUrl)
-        .map((ep) => ({ season, ep })),
+      season.episodes.map((ep) => ({ season, ep })),
     );
   }, [series]);
 
@@ -254,26 +253,43 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
             <div className="space-y-6 rounded-xl border border-border bg-surface p-6">
               <div>
                 <div className="mb-3 text-[14px] font-bold tracking-[-0.02em]">Episode preview</div>
-                {selected?.ep.hlsMasterUrl ? (
+                {selected ? (
                   <>
-                    <p className="mb-2 text-[12px] font-semibold text-text-muted">
+                    <p className="mb-3 text-[12px] font-semibold text-text-muted">
                       {episodeLabel(selected.season.number, selected.ep)}
                     </p>
-                    <AdminHlsPlayer
-                      key={selected.ep.id}
-                      src={selected.ep.hlsMasterUrl}
-                      title={selected.ep.title}
-                    />
+                    <div className="grid gap-6 lg:grid-cols-2">
+                      <div>
+                        <div className="mb-2 text-[12px] font-semibold text-text-muted">
+                          Original video (source.mp4)
+                        </div>
+                        <AdminSourceVideoPlayer
+                          key={`${selected.ep.id}-source`}
+                          contentId={selected.ep.id}
+                          title={selected.ep.title}
+                        />
+                      </div>
+                      <div>
+                        <div className="mb-2 text-[12px] font-semibold text-text-muted">
+                          Stream (HLS)
+                        </div>
+                        <AdminContentHlsPlayer
+                          key={`${selected.ep.id}-hls`}
+                          contentId={selected.ep.id}
+                          title={selected.ep.title}
+                          hasVideo={Boolean(selected.ep.hlsMasterKey)}
+                        />
+                      </div>
+                    </div>
                     <p className="mt-2 text-[12px] text-text-muted">
-                      Select an episode below to switch playback. Requires{" "}
-                      <code className="text-[11px]">NEXT_PUBLIC_R2_PUBLIC_URL</code> for stream URLs.
+                      Select an episode below to switch playback.
                     </p>
                   </>
                 ) : (
                   <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg px-4 text-center text-[13px] text-text-muted">
-                    {playableEpisodes.length === 0
-                      ? "No transcoded episode video yet. Upload and transcode episodes to preview them here."
-                      : "Select an episode with a ready video to preview."}
+                    {series.seasons.some((s) => s.episodes.length > 0)
+                      ? "Select an episode to preview original and HLS video."
+                      : "No episodes yet. Upload and transcode episodes to preview them here."}
                   </div>
                 )}
               </div>
@@ -310,18 +326,16 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
                         {isOpen ? (
                           <ul className="divide-y divide-border/50 border-t border-border">
                             {season.episodes.map((ep) => {
-                              const isReady = Boolean(ep.hlsMasterUrl);
+                              const hasHls = Boolean(ep.hlsMasterKey);
                               const isSelected = ep.id === selectedEpisodeId;
                               return (
                                 <li key={ep.id}>
                                   <button
                                     type="button"
-                                    disabled={!isReady}
-                                    onClick={() => isReady && setSelectedEpisodeId(ep.id)}
+                                    onClick={() => setSelectedEpisodeId(ep.id)}
                                     className={[
                                       "flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors",
                                       isSelected ? "bg-brand/10" : "hover:bg-surface-elevated",
-                                      !isReady ? "cursor-not-allowed opacity-70" : "",
                                     ].join(" ")}
                                   >
                                     <span className="w-5 shrink-0 text-center text-[13px] font-bold tabular-nums text-brand">
@@ -341,15 +355,14 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
                                       </span>
                                     ) : null}
                                     <span className="shrink-0">
-                                      {isReady ? (
+                                      {hasHls ? (
                                         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-success">
                                           <PlayCircle size={12} />
-                                          {isSelected ? "playing" : "ready"}
+                                          {isSelected ? "playing" : "HLS ready"}
                                         </span>
                                       ) : (
-                                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-text-disabled">
-                                          <Lock size={12} />
-                                          no video
+                                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-text-muted">
+                                          source only
                                         </span>
                                       )}
                                     </span>

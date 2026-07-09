@@ -6,7 +6,8 @@ import { AdminCard } from "../../components/AdminCard";
 import { AdminSectionTabs } from "../../components/AdminSectionTabs";
 import { InlineLoading } from "../../components/InlineLoading";
 import { statusClasses } from "../../lib/adminData";
-import { AdminHlsPlayer } from "../../components/AdminHlsPlayer";
+import { AdminContentHlsPlayer } from "../../components/AdminContentHlsPlayer";
+import { AdminSourceVideoPlayer } from "../../components/AdminSourceVideoPlayer";
 import { MovieCommentsAdmin } from "../MovieCommentsAdmin";
 import { formatMovieDate, youtubeEmbedUrl } from "../movieDetailUi";
 import { useAdminMovie } from "../../hooks/adminQueries";
@@ -180,14 +181,21 @@ export function MovieDetail({ movieId }: { movieId: string }) {
                 </div>
 
                 <div>
-                  <div className="mb-2 text-[12px] font-semibold text-text-muted">Video</div>
-                  {movie.hlsMasterUrl ? (
-                    <AdminHlsPlayer src={movie.hlsMasterUrl} title={movie.title} />
-                  ) : (
-                    <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-[12px] text-text-muted">
-                      No transcoded video yet.
-                    </div>
-                  )}
+                  <div className="mb-2 text-[12px] font-semibold text-text-muted">
+                    Original video (source.mp4)
+                  </div>
+                  <AdminSourceVideoPlayer contentId={movie.id} title={movie.title} />
+                </div>
+
+                <div>
+                  <div className="mb-2 text-[12px] font-semibold text-text-muted">
+                    Stream (HLS)
+                  </div>
+                  <AdminContentHlsPlayer
+                    contentId={movie.id}
+                    title={movie.title}
+                    hasVideo={Boolean(movie.hlsMasterKey)}
+                  />
                 </div>
 
                 <div>

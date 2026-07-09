@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
+import { AdminContentHlsPlayer } from "../components/AdminContentHlsPlayer";
 import { AdminSectionTabs } from "../components/AdminSectionTabs";
+import { AdminSourceVideoPlayer } from "../components/AdminSourceVideoPlayer";
 import { AdminSelect } from "../components/AdminSelect";
 import { GenreMultiSelect } from "../components/GenreMultiSelect";
 import { InlineLoading } from "../components/InlineLoading";
@@ -103,7 +105,6 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
   );
   const posterPreviewUrl = editPosterPreviewUrl ?? movie?.posterUrl ?? null;
   const bannerPreviewUrl = editBannerPreviewUrl ?? movie?.bannerUrl ?? null;
-  const videoPreviewUrl = editVideoPreviewUrl ?? movie?.hlsMasterUrl ?? null;
   const editTrailerEmbedUrl = useMemo(
     () => youtubeEmbedUrl(editDraft?.trailerUrl),
     [editDraft?.trailerUrl],
@@ -440,17 +441,17 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                 </div>
 
                 <div>
-                  <div className="mb-2 text-[12px] font-semibold text-text-muted">Video</div>
-                  {videoPreviewUrl ? (
+                  <div className="mb-2 text-[12px] font-semibold text-text-muted">
+                    Original video (source.mp4)
+                  </div>
+                  {editVideoFile ? (
                     <video
                       controls
                       className="aspect-video w-full rounded-lg border border-border bg-black"
-                      src={videoPreviewUrl}
+                      src={editVideoPreviewUrl ?? undefined}
                     />
                   ) : (
-                    <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-[12px] text-text-muted">
-                      No transcoded video yet.
-                    </div>
+                    <AdminSourceVideoPlayer contentId={movie.id} title={movie.title} />
                   )}
                   <input
                     type="file"
@@ -464,9 +465,20 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                     </p>
                   ) : (
                     <p className="mt-2 break-all text-[11px] text-text-disabled">
-                      {movie.hlsMasterKey || "Not transcoded yet"}
+                      {movie.slug ? `movies/${movie.slug}/source.mp4` : "No source uploaded"}
                     </p>
                   )}
+                </div>
+
+                <div>
+                  <div className="mb-2 text-[12px] font-semibold text-text-muted">
+                    Stream (HLS)
+                  </div>
+                  <AdminContentHlsPlayer
+                    contentId={movie.id}
+                    title={movie.title}
+                    hasVideo={Boolean(movie.hlsMasterKey)}
+                  />
                   {editUploadProgress !== null ? (
                     <div className="mt-3">
                       <div className="h-2 overflow-hidden rounded-full bg-surface-elevated">
@@ -479,7 +491,11 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                         Uploading video: {editUploadProgress}%
                       </p>
                     </div>
-                  ) : null}
+                  ) : (
+                    <p className="mt-2 break-all text-[11px] text-text-disabled">
+                      {movie.hlsMasterKey || "Not transcoded yet"}
+                    </p>
+                  )}
                 </div>
 
                 <div>

@@ -44,6 +44,7 @@ function formatWatchers(count: number) {
 export function apiContentToCatalogEntry(content: ApiContent): CatalogEntry {
   return {
     id: content.id,
+    slug: content.slug,
     title: content.title,
     type: "Movie",
     description: content.description,

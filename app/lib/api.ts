@@ -389,6 +389,20 @@ export async function getAdminMovie(id: string): Promise<ApiContent> {
   return apiFetch<ApiContent>(`/admin/movies/${id}`);
 }
 
+export async function getAdminPlaybackUrl(contentId: string): Promise<string> {
+  const auth = await apiFetch<{ master_url: string; expires_in: number }>(
+    `/admin/playback/${contentId}/authorize`,
+  );
+  return `${resolveApiUrl()}${auth.master_url}`;
+}
+
+export async function getAdminSourceVideoUrl(contentId: string): Promise<string> {
+  const result = await apiFetch<{ url: string; source_key: string; expires_in: number }>(
+    `/admin/content/${contentId}/source-url`,
+  );
+  return result.url;
+}
+
 export async function createAdminMovieDraft(input: {
   title: string;
   description?: string;
