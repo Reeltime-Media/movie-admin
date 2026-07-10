@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
-const apiProxyTarget = process.env.API_PROXY_TARGET?.replace(/\/$/, "");
+// Use 127.0.0.1 instead of localhost so Next.js rewrites hit Docker on IPv4 (avoids ::1 ECONNREFUSED on macOS).
+const apiProxyTarget = process.env.API_PROXY_TARGET?.replace(/\/$/, "")?.replace(
+  "://localhost",
+  "://127.0.0.1",
+);
 
 const nextConfig: NextConfig = {
   async rewrites() {

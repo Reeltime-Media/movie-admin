@@ -325,10 +325,20 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const res = await fetch(apiUrl(path), {
-    ...init,
-    headers,
-  });
+  let res: Response;
+  try {
+    res = await fetch(apiUrl(path), {
+      ...init,
+      headers,
+    });
+  } catch (err) {
+    const target = resolveApiUrl();
+    const message =
+      err instanceof Error ? err.message : "Network request failed";
+    throw new Error(
+      `Could not reach the API (${message}). Check that the API is running and ${target} is proxied correctly.`,
+    );
+  }
 
   return parseApiResponse<T>(res);
 }
@@ -952,7 +962,12 @@ export async function updateSeriesApi(
   });
 }
 
-export async function deleteAdminSeriesApi(slug: string): Promise<void> {
+export async function deleteAdminSeriesApi(seriesId: string): Promise<void> {
+  await apiFetch<void>(`/admin/series/${seriesId}`, { method: "DELETE" });
+}
+
+/** @deprecated Use deleteAdminSeriesApi(seriesId) */
+export async function deleteAdminSeriesBySlug(slug: string): Promise<void> {
   return apiFetch<void>(`/series/${slug}`, { method: "DELETE" });
 }
 

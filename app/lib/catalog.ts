@@ -234,8 +234,8 @@ export async function deleteCatalogEntry(movies: CatalogEntry[], id: string): Pr
   if (!existing) {
     return movies;
   }
-  if (existing.type === "Series" && existing.slug) {
-    await deleteAdminSeriesApi(existing.slug);
+  if (existing.type === "Series") {
+    await deleteAdminSeriesApi(existing.id);
   } else {
     await deleteAdminMovie(id);
   }
