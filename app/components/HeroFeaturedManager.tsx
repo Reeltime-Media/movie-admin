@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import { AdminCard } from "./AdminCard";
 import { AdminCatalogSearchBar } from "./AdminCatalogSearchBar";
 import { InlineLoading } from "./InlineLoading";
+import { HeroBannerField, HeroVideoField } from "./HeroSlideMediaFields";
 import {
   createAdminHeroFeatured,
   deleteAdminHeroFeatured,
@@ -36,22 +37,38 @@ type CatalogEntry = {
   isPublished: boolean;
 };
 
+type SlideMode = "catalog" | "custom";
+
 type ItemFormState = {
+  slideMode: SlideMode;
   contentType: ContentType;
   contentId: string;
   isActive: boolean;
   sortOrder: string;
   startsAt: string;
   endsAt: string;
+  title: string;
+  description: string;
+  bannerKey: string;
+  linkUrl: string;
+  videoKey: string;
+  youtubeUrl: string;
 };
 
 const emptyForm = (): ItemFormState => ({
+  slideMode: "catalog",
   contentType: "movie",
   contentId: "",
   isActive: true,
   sortOrder: "0",
   startsAt: "",
   endsAt: "",
+  title: "",
+  description: "",
+  bannerKey: "",
+  linkUrl: "",
+  videoKey: "",
+  youtubeUrl: "",
 });
 
 function toDatetimeLocalValue(iso: string | null): string {
@@ -184,16 +201,24 @@ export function HeroFeaturedManager() {
 
   const openEditForm = (item: ApiHeroFeaturedItem) => {
     setEditingItem(item);
+    const isCustom = item.content_type === "custom";
     setForm({
-      contentType: item.content_type,
-      contentId: item.content_id,
+      slideMode: isCustom ? "custom" : "catalog",
+      contentType: item.content_type === "series" ? "series" : "movie",
+      contentId: item.content_id ?? "",
       isActive: item.is_active,
       sortOrder: String(item.sort_order),
       startsAt: toDatetimeLocalValue(item.starts_at),
       endsAt: toDatetimeLocalValue(item.ends_at),
+      title: item.title ?? "",
+      description: item.description ?? "",
+      bannerKey: item.banner_key ?? "",
+      linkUrl: item.link_url ?? "",
+      videoKey: item.video_key ?? "",
+      youtubeUrl: item.youtube_url ?? "",
     });
     setCatalogSearch("");
-    setTypeFilter(item.content_type);
+    setTypeFilter(item.content_type === "custom" ? "all" : item.content_type);
     setShowForm(true);
   };
 
@@ -215,7 +240,12 @@ export function HeroFeaturedManager() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!form.contentId) {
+    const isCustom = form.slideMode === "custom";
+    if (isCustom && !form.title.trim()) {
+      toast.error("Custom slides need a title.");
+      return;
+    }
+    if (!isCustom && !form.contentId) {
       toast.error("Pick a movie or series from the catalog below.");
       return;
     }
@@ -223,13 +253,19 @@ export function HeroFeaturedManager() {
     setIsSaving(true);
     try {
       const payload = {
-        contentType: form.contentType,
-        contentId: form.contentId,
+        contentType: isCustom ? ("custom" as const) : form.contentType,
+        contentId: isCustom ? null : form.contentId,
         placement: "home",
         isActive: form.isActive,
         sortOrder: Number.parseInt(form.sortOrder, 10) || 0,
         startsAt: fromDatetimeLocalValue(form.startsAt),
         endsAt: fromDatetimeLocalValue(form.endsAt),
+        title: isCustom ? form.title.trim() : null,
+        description: isCustom ? form.description.trim() || null : null,
+        bannerKey: isCustom ? form.bannerKey || null : null,
+        linkUrl: isCustom ? form.linkUrl.trim() || null : null,
+        videoKey: form.videoKey || null,
+        youtubeUrl: form.videoKey ? null : form.youtubeUrl.trim() || null,
       };
 
       if (editingItem) {
@@ -250,7 +286,7 @@ export function HeroFeaturedManager() {
   };
 
   const handleDelete = async (item: ApiHeroFeaturedItem) => {
-    const label = item.content_title ?? item.content_id;
+    const label = item.content_title ?? item.title ?? item.content_id ?? "this slide";
     if (!window.confirm(`Remove "${label}" from the home hero?`)) return;
     setIsSaving(true);
     try {
@@ -276,7 +312,7 @@ export function HeroFeaturedManager() {
             className={`inline-flex shrink-0 items-center gap-1.5 ${adminPrimaryButtonClass}`}
           >
             <Plus size={14} strokeWidth={2.5} aria-hidden />
-            Add movie or series
+            Add slide
           </button>
         }
       >
@@ -317,15 +353,14 @@ export function HeroFeaturedManager() {
           <div className="rounded-md border border-dashed border-border py-8 text-center">
             <p className="text-[13px] text-text-muted">No hero slides yet.</p>
             <p className="mt-1 text-[12px] text-text-disabled">
-              Click &ldquo;Add movie or series&rdquo; and pick from your catalog. Until then, the
-              home page shows the newest movies and series automatically.
+              Click &ldquo;Add slide&rdquo; and pick from your catalog or create a custom slide.
             </p>
             <button
               type="button"
               onClick={openCreateForm}
               className={`mt-4 ${adminPrimaryButtonClass}`}
             >
-              Pick from catalog
+              Add slide
             </button>
           </div>
         ) : (
@@ -363,6 +398,11 @@ export function HeroFeaturedManager() {
                       >
                         {item.is_active ? "Active" : "Inactive"}
                       </span>
+                      {(item.video_key || item.youtube_url) ? (
+                        <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-600">
+                          Video
+                        </span>
+                      ) : null}
                     </div>
                     <p className="mt-1 text-[11px] text-text-muted">
                       Sort {item.sort_order}
@@ -406,7 +446,9 @@ export function HeroFeaturedManager() {
                     {editingItem ? "Edit hero slide" : "Add to home hero carousel"}
                   </h2>
                   <p className="mt-1 text-[12px] leading-relaxed text-text-muted">
-                    Pick a title from your catalog to feature in the big carousel at the top of the client home page.
+                    {form.slideMode === "catalog"
+                      ? "Pick a title from your catalog to feature in the big carousel at the top of the client home page."
+                      : "Create a custom slide with its own text, banner, video, and link."}
                   </p>
                 </div>
                 <button
@@ -426,6 +468,42 @@ export function HeroFeaturedManager() {
               className="flex min-h-0 flex-1 flex-col overflow-hidden"
             >
               <div className="min-h-0 flex-1 overflow-y-auto">
+                {/* ── Section: Slide type ── */}
+                <div className="border-b border-border px-6 py-4">
+                  <div className="flex gap-1.5">
+                    {(
+                      [
+                        ["catalog", "From catalog"],
+                        ["custom", "Custom slide"],
+                      ] as const
+                    ).map(([mode, label]) => {
+                      const isActive = form.slideMode === mode;
+                      return (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() => setForm((prev) => ({ ...prev, slideMode: mode }))}
+                          className={[
+                            "rounded-lg border px-4 py-2 text-[12px] font-semibold transition-all duration-150",
+                            isActive
+                              ? "border-brand bg-brand text-white shadow-[0_1px_4px_rgba(229,9,20,0.25)]"
+                              : "border-border bg-bg text-text-muted hover:border-border-hover hover:bg-surface-elevated hover:text-text",
+                          ].join(" ")}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-2 text-[11px] text-text-disabled">
+                    {form.slideMode === "catalog"
+                      ? "Feature a movie or series from your catalog."
+                      : "Create a standalone slide with its own text, banner, and link."}
+                  </p>
+                </div>
+
+                {form.slideMode === "catalog" ? (
+                <>
                 {/* ── Section: Select Content ── */}
                 <div className="px-6 py-5">
                   <div className="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
@@ -574,6 +652,72 @@ export function HeroFeaturedManager() {
                     )}
                   </div>
                 </div>
+                </>
+                ) : (
+                <div className="px-6 py-5 space-y-4">
+                  <div className="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                    Custom slide
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                      Title <span className="text-brand">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={form.title}
+                      onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+                      placeholder="e.g. Khmer New Year Marathon"
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                      Description
+                    </label>
+                    <textarea
+                      value={form.description}
+                      rows={3}
+                      onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                      className="w-full resize-none rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                    />
+                  </div>
+                  <HeroBannerField
+                    bannerKey={form.bannerKey}
+                    onChange={(key) => setForm((prev) => ({ ...prev, bannerKey: key }))}
+                    disabled={isSaving}
+                  />
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                      Link URL
+                    </label>
+                    <input
+                      type="text"
+                      value={form.linkUrl}
+                      onChange={(e) => setForm((prev) => ({ ...prev, linkUrl: e.target.value }))}
+                      placeholder="/pricing or https://example.com"
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                    />
+                    <p className="mt-1 text-[11px] text-text-disabled">
+                      Leave empty to show no button. Use a path like /pricing or a full https:// URL.
+                    </p>
+                  </div>
+                </div>
+                )}
+
+                {/* ── Section: Hero video ── */}
+                <div className="border-t border-border px-6 py-5">
+                  <div className="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 3.5A1.5 1.5 0 014 2h6a1.5 1.5 0 011.5 1.5v7A1.5 1.5 0 0110 12H4a1.5 1.5 0 01-1.5-1.5v-7z" stroke="currentColor" strokeWidth="1.3"/><path d="M6 5.5l2.5 1.5L6 8.5v-3z" fill="currentColor"/></svg>
+                    Hero Video
+                  </div>
+                  <HeroVideoField
+                    videoKey={form.videoKey}
+                    youtubeUrl={form.youtubeUrl}
+                    onVideoKeyChange={(key) => setForm((prev) => ({ ...prev, videoKey: key }))}
+                    onYoutubeUrlChange={(url) => setForm((prev) => ({ ...prev, youtubeUrl: url }))}
+                    disabled={isSaving}
+                  />
+                </div>
 
                 {/* ── Section: Display Settings ── */}
                 <div className="border-t border-border px-6 py-5 space-y-4">
@@ -670,7 +814,9 @@ export function HeroFeaturedManager() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSaving || !form.contentId}
+                  disabled={
+                    isSaving || (form.slideMode === "catalog" ? !form.contentId : !form.title.trim())
+                  }
                   className="rounded-lg bg-brand px-5 py-2.5 text-[12px] font-bold text-white shadow-[0_1px_3px_rgba(229,9,20,0.3)] transition-all hover:bg-brand-hover hover:shadow-[0_2px_8px_rgba(229,9,20,0.4)] active:scale-[0.98] disabled:opacity-60 disabled:shadow-none"
                 >
                   {isSaving ? "Saving…" : editingItem ? "Save changes" : "Add to hero"}
