@@ -115,6 +115,7 @@ export function HeroFeaturedManager() {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [mediaUploading, setMediaUploading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<ApiHeroFeaturedItem | null>(null);
   const [form, setForm] = useState<ItemFormState>(emptyForm);
@@ -180,7 +181,7 @@ export function HeroFeaturedManager() {
   useEffect(() => {
     if (!showForm) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !isSaving) closeForm();
+      if (event.key === "Escape" && !isSaving && !mediaUploading) closeForm();
     };
     document.addEventListener("keydown", handleKeyDown);
     const prevOverflow = document.body.style.overflow;
@@ -189,7 +190,7 @@ export function HeroFeaturedManager() {
       document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = prevOverflow;
     };
-  }, [showForm, isSaving]);
+  }, [showForm, isSaving, mediaUploading]);
 
   const openCreateForm = () => {
     setEditingItem(null);
@@ -228,6 +229,7 @@ export function HeroFeaturedManager() {
     setForm(emptyForm());
     setCatalogSearch("");
     setTypeFilter("all");
+    setMediaUploading(false);
   }
 
   const selectEntry = (entry: CatalogEntry) => {
@@ -454,7 +456,7 @@ export function HeroFeaturedManager() {
                 <button
                   type="button"
                   onClick={closeForm}
-                  disabled={isSaving}
+                  disabled={isSaving || mediaUploading}
                   aria-label="Close"
                   className="shrink-0 flex items-center justify-center size-8 rounded-lg border border-border bg-bg text-text-muted transition-all hover:border-border-hover hover:bg-surface-elevated hover:text-text"
                 >
@@ -685,6 +687,7 @@ export function HeroFeaturedManager() {
                     bannerKey={form.bannerKey}
                     onChange={(key) => setForm((prev) => ({ ...prev, bannerKey: key }))}
                     disabled={isSaving}
+                    onUploadingChange={setMediaUploading}
                   />
                   <div>
                     <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
@@ -716,6 +719,7 @@ export function HeroFeaturedManager() {
                     onVideoKeyChange={(key) => setForm((prev) => ({ ...prev, videoKey: key }))}
                     onYoutubeUrlChange={(url) => setForm((prev) => ({ ...prev, youtubeUrl: url }))}
                     disabled={isSaving}
+                    onUploadingChange={setMediaUploading}
                   />
                 </div>
 
@@ -807,7 +811,7 @@ export function HeroFeaturedManager() {
                 <button
                   type="button"
                   onClick={closeForm}
-                  disabled={isSaving}
+                  disabled={isSaving || mediaUploading}
                   className="rounded-lg border border-border bg-surface px-4 py-2.5 text-[12px] font-semibold text-text-muted transition-all hover:border-border-hover hover:bg-surface-elevated hover:text-text disabled:opacity-40"
                 >
                   Cancel
@@ -815,7 +819,9 @@ export function HeroFeaturedManager() {
                 <button
                   type="submit"
                   disabled={
-                    isSaving || (form.slideMode === "catalog" ? !form.contentId : !form.title.trim())
+                    isSaving ||
+                    mediaUploading ||
+                    (form.slideMode === "catalog" ? !form.contentId : !form.title.trim())
                   }
                   className="rounded-lg bg-brand px-5 py-2.5 text-[12px] font-bold text-white shadow-[0_1px_3px_rgba(229,9,20,0.3)] transition-all hover:bg-brand-hover hover:shadow-[0_2px_8px_rgba(229,9,20,0.4)] active:scale-[0.98] disabled:opacity-60 disabled:shadow-none"
                 >

@@ -13,9 +13,15 @@ type HeroBannerFieldProps = {
   bannerKey: string;
   onChange: (key: string) => void;
   disabled?: boolean;
+  onUploadingChange?: (uploading: boolean) => void;
 };
 
-export function HeroBannerField({ bannerKey, onChange, disabled }: HeroBannerFieldProps) {
+export function HeroBannerField({
+  bannerKey,
+  onChange,
+  disabled,
+  onUploadingChange,
+}: HeroBannerFieldProps) {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const preview = mediaUrl(bannerKey || null);
@@ -23,6 +29,7 @@ export function HeroBannerField({ bannerKey, onChange, disabled }: HeroBannerFie
   const handleFile = async (file: File | null) => {
     if (!file) return;
     setUploading(true);
+    onUploadingChange?.(true);
     try {
       const key = await uploadAdminHeroMedia("banner", file);
       onChange(key);
@@ -31,6 +38,7 @@ export function HeroBannerField({ bannerKey, onChange, disabled }: HeroBannerFie
       toast.error(err instanceof Error ? err.message : "Banner upload failed.");
     } finally {
       setUploading(false);
+      onUploadingChange?.(false);
       if (fileRef.current) fileRef.current.value = "";
     }
   };
@@ -87,6 +95,7 @@ type HeroVideoFieldProps = {
   onVideoKeyChange: (key: string) => void;
   onYoutubeUrlChange: (url: string) => void;
   disabled?: boolean;
+  onUploadingChange?: (uploading: boolean) => void;
 };
 
 export function HeroVideoField({
@@ -95,6 +104,7 @@ export function HeroVideoField({
   onVideoKeyChange,
   onYoutubeUrlChange,
   disabled,
+  onUploadingChange,
 }: HeroVideoFieldProps) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -103,6 +113,7 @@ export function HeroVideoField({
   const handleFile = async (file: File | null) => {
     if (!file) return;
     setUploading(true);
+    onUploadingChange?.(true);
     setProgress(0);
     try {
       const key = await uploadAdminHeroMedia("video", file, setProgress);
@@ -113,6 +124,7 @@ export function HeroVideoField({
       toast.error(err instanceof Error ? err.message : "Video upload failed.");
     } finally {
       setUploading(false);
+      onUploadingChange?.(false);
       if (fileRef.current) fileRef.current.value = "";
     }
   };
@@ -167,7 +179,7 @@ export function HeroVideoField({
           type="url"
           value={youtubeUrl}
           placeholder="https://www.youtube.com/watch?v=…"
-          disabled={disabled || Boolean(videoKey)}
+          disabled={disabled || uploading || Boolean(videoKey)}
           onChange={(e) => onYoutubeUrlChange(e.target.value)}
           className={`${inputClass} disabled:opacity-40`}
         />
