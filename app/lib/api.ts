@@ -194,8 +194,8 @@ export type PromotionBannerImageUploadStart = {
 
 export type ApiHeroFeaturedItem = {
   id: string;
-  content_type: "movie" | "series";
-  content_id: string;
+  content_type: "movie" | "series" | "custom";
+  content_id: string | null;
   placement: string;
   is_active: boolean;
   sort_order: number;
@@ -203,6 +203,12 @@ export type ApiHeroFeaturedItem = {
   ends_at: string | null;
   created_at: string;
   updated_at: string;
+  title: string | null;
+  description: string | null;
+  banner_key: string | null;
+  link_url: string | null;
+  video_key: string | null;
+  youtube_url: string | null;
   content_title: string | null;
   content_slug: string | null;
   poster_key: string | null;
@@ -1390,15 +1396,25 @@ export async function listAdminHeroFeatured(): Promise<ApiHeroFeaturedItem[]> {
   return apiFetch<ApiHeroFeaturedItem[]>("/admin/hero-featured");
 }
 
-export async function createAdminHeroFeatured(input: {
-  contentType: "movie" | "series";
-  contentId: string;
+export type AdminHeroFeaturedInput = {
+  contentType: "movie" | "series" | "custom";
+  contentId: string | null;
   placement?: string;
   isActive?: boolean;
   sortOrder?: number;
   startsAt?: string | null;
   endsAt?: string | null;
-}): Promise<ApiHeroFeaturedItem> {
+  title?: string | null;
+  description?: string | null;
+  bannerKey?: string | null;
+  linkUrl?: string | null;
+  videoKey?: string | null;
+  youtubeUrl?: string | null;
+};
+
+export async function createAdminHeroFeatured(
+  input: AdminHeroFeaturedInput,
+): Promise<ApiHeroFeaturedItem> {
   return apiFetch<ApiHeroFeaturedItem>("/admin/hero-featured", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -1410,21 +1426,19 @@ export async function createAdminHeroFeatured(input: {
       sort_order: input.sortOrder ?? 0,
       starts_at: input.startsAt ?? null,
       ends_at: input.endsAt ?? null,
+      title: input.title ?? null,
+      description: input.description ?? null,
+      banner_key: input.bannerKey ?? null,
+      link_url: input.linkUrl ?? null,
+      video_key: input.videoKey ?? null,
+      youtube_url: input.youtubeUrl ?? null,
     }),
   });
 }
 
 export async function updateAdminHeroFeatured(
   id: string,
-  input: Partial<{
-    contentType: "movie" | "series";
-    contentId: string;
-    placement: string;
-    isActive: boolean;
-    sortOrder: number;
-    startsAt: string | null;
-    endsAt: string | null;
-  }>,
+  input: Partial<AdminHeroFeaturedInput>,
 ): Promise<ApiHeroFeaturedItem> {
   return apiFetch<ApiHeroFeaturedItem>(`/admin/hero-featured/${id}`, {
     method: "PATCH",
@@ -1437,12 +1451,47 @@ export async function updateAdminHeroFeatured(
       ...(input.sortOrder !== undefined ? { sort_order: input.sortOrder } : {}),
       ...(input.startsAt !== undefined ? { starts_at: input.startsAt } : {}),
       ...(input.endsAt !== undefined ? { ends_at: input.endsAt } : {}),
+      ...(input.title !== undefined ? { title: input.title } : {}),
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.bannerKey !== undefined ? { banner_key: input.bannerKey } : {}),
+      ...(input.linkUrl !== undefined ? { link_url: input.linkUrl } : {}),
+      ...(input.videoKey !== undefined ? { video_key: input.videoKey } : {}),
+      ...(input.youtubeUrl !== undefined ? { youtube_url: input.youtubeUrl } : {}),
     }),
   });
 }
 
 export async function deleteAdminHeroFeatured(id: string): Promise<void> {
   await apiFetch<void>(`/admin/hero-featured/${id}`, { method: "DELETE" });
+}
+
+export type HeroUploadStartResponse = {
+  key: string;
+  upload_url: string;
+};
+
+export async function startAdminHeroUpload(input: {
+  kind: "banner" | "video";
+  contentType: string;
+}): Promise<HeroUploadStartResponse> {
+  return apiFetch<HeroUploadStartResponse>("/admin/hero-featured/uploads/start", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ kind: input.kind, content_type: input.contentType }),
+  });
+}
+
+/** Uploads a hero banner image or promo video to R2 and returns its object key. */
+export async function uploadAdminHeroMedia(
+  kind: "banner" | "video",
+  file: File,
+  onProgress?: (percent: number) => void,
+): Promise<string> {
+  const contentType =
+    kind === "banner" ? imageContentType(file) : videoContentType(file);
+  const start = await startAdminHeroUpload({ kind, contentType });
+  await uploadFileToPresignedUrl(start.upload_url, file, onProgress, contentType);
+  return start.key;
 }
 
 export type ApiGenre = {
