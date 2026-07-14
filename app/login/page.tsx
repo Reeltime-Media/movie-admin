@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { loginAdmin } from "../lib/api";
+import { Button } from "../components/ui/Button";
+import { Field, Input } from "../components/ui/Field";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,56 +36,48 @@ export default function LoginPage() {
       <section className="flex flex-1 items-center justify-center px-6 py-12">
         <div className="w-full max-w-[410px]">
           <Link href="/" className="mb-8 inline-flex items-center gap-2.5">
-            <div className="grid h-8 w-8 place-items-center rounded-md bg-brand text-[15px] font-black text-white">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-[15px] font-black text-white">
               R
             </div>
-            <span className="text-[13px] font-black tracking-[0.08em] text-text">REELTIME</span>
+            <span className="text-sm font-black tracking-[0.08em] text-text">REELTIME</span>
           </Link>
 
-          <div className="rounded-xl border border-border bg-surface p-6">
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
             <div>
-              <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-muted">
+              <div className="text-2xs font-bold uppercase tracking-[0.16em] text-text-muted">
                 Admin sign in
               </div>
-              <h2 className="mt-2 text-[26px] font-extrabold tracking-[-0.03em]">
-                Welcome back
-              </h2>
-              <p className="mt-2 text-[13px] leading-relaxed text-text-muted">
+              <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.03em]">Welcome back</h2>
+              <p className="mt-2 text-sm leading-relaxed text-text-muted">
                 Use your Reeltime staff account to access movies and payment tools.
               </p>
             </div>
 
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-              <label className="block">
-                <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">
-                  Work email
-                </span>
-                <input
+              <Field label="Work email" htmlFor="login-email">
+                <Input
+                  id="login-email"
                   name="email"
                   type="email"
                   required
                   autoComplete="email"
                   placeholder="admin@reeltime.com"
-                  className="w-full rounded-md border border-border bg-bg px-3 py-2.5 text-[13px] text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated"
                 />
-              </label>
+              </Field>
 
-              <label className="block">
-                <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">
-                  Password
-                </span>
-                <input
+              <Field label="Password" htmlFor="login-password">
+                <Input
+                  id="login-password"
                   name="password"
                   type="password"
                   required
                   autoComplete="current-password"
                   placeholder="Enter your password"
-                  className="w-full rounded-md border border-border bg-bg px-3 py-2.5 text-[13px] text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated"
                 />
-              </label>
+              </Field>
 
               <div className="flex items-center justify-between gap-3">
-                <label className="flex items-center gap-2 text-[12px] font-medium text-text-muted">
+                <label className="flex items-center gap-2 text-xs font-medium text-text-muted">
                   <input
                     type="checkbox"
                     name="remember"
@@ -93,23 +87,19 @@ export default function LoginPage() {
                 </label>
                 <Link
                   href="/forgot-password"
-                  className="text-[12px] font-semibold text-text-muted transition-colors hover:text-text"
+                  className="text-xs font-semibold text-text-muted transition-colors hover:text-text"
                 >
                   Forgot password?
                 </Link>
               </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full rounded-md bg-brand py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-brand-hover"
-              >
+              <Button type="submit" loading={isSubmitting} className="w-full">
                 {isSubmitting ? "Signing in..." : "Sign in"}
-              </button>
+              </Button>
             </form>
 
             {error ? (
-              <div className="mt-5 rounded-md border border-warning/30 bg-warning/10 p-3 text-[12px] leading-relaxed text-warning">
+              <div className="mt-5 rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs leading-relaxed text-warning">
                 {error}
               </div>
             ) : null}

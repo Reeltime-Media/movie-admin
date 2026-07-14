@@ -37,7 +37,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={[
-              "flex items-center justify-between rounded-md border border-transparent px-3 py-2.5 text-[13px] font-semibold transition-colors",
+              "flex items-center justify-between rounded-lg border border-transparent px-3 py-2.5 text-sm font-semibold transition-colors",
               active
                 ? "border-brand/40 bg-brand text-white"
                 : "text-text-muted hover:border-border hover:bg-surface-elevated hover:text-text",
@@ -105,12 +105,12 @@ export function AdminShell({
     <div className="min-h-screen bg-bg text-text">
       <aside className="fixed left-0 top-0 z-30 hidden h-screen w-64 flex-col overflow-y-auto border-r border-border bg-surface/95 px-5 py-5 backdrop-blur-md lg:flex">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="grid h-8 w-8 place-items-center rounded-md bg-brand text-[15px] font-black text-white">
+          <div className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-[15px] font-black text-white">
             R
           </div>
           <div>
-            <div className="text-[14px] font-extrabold tracking-[0.06em]">REELTIME</div>
-            <div className="text-[11px] font-semibold text-text-muted">Admin console</div>
+            <div className="text-base font-extrabold tracking-[0.06em]">REELTIME</div>
+            <div className="text-2xs font-semibold text-text-muted">Admin console</div>
           </div>
         </Link>
 
@@ -121,7 +121,7 @@ export function AdminShell({
         <button
           type="button"
           onClick={handleSignOut}
-          className="mt-auto flex items-center gap-2 rounded-md border border-border px-3 py-2.5 text-[13px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:bg-surface-elevated hover:text-text"
+          className="mt-auto flex items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-semibold text-text-muted transition-colors hover:border-border-hover hover:bg-surface-elevated hover:text-text"
         >
           <LogOut size={16} aria-hidden />
           Sign out
@@ -144,19 +144,19 @@ export function AdminShell({
                 onClick={() => setMobileNavOpen(false)}
                 className="flex items-center gap-2.5"
               >
-                <div className="grid h-8 w-8 place-items-center rounded-md bg-brand text-[15px] font-black text-white">
+                <div className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-[15px] font-black text-white">
                   R
                 </div>
                 <div>
-                  <div className="text-[14px] font-extrabold tracking-[0.06em]">REELTIME</div>
-                  <div className="text-[11px] font-semibold text-text-muted">Admin console</div>
+                  <div className="text-base font-extrabold tracking-[0.06em]">REELTIME</div>
+                  <div className="text-2xs font-semibold text-text-muted">Admin console</div>
                 </div>
               </Link>
               <button
                 type="button"
                 aria-label="Close menu"
                 onClick={() => setMobileNavOpen(false)}
-                className="grid h-8 w-8 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:border-border-hover hover:text-text"
+                className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-surface text-text-muted transition-colors hover:border-border-hover hover:text-text"
               >
                 <X size={16} aria-hidden />
               </button>
@@ -169,7 +169,7 @@ export function AdminShell({
             <button
               type="button"
               onClick={handleSignOut}
-              className="mt-auto flex items-center gap-2 rounded-md border border-border px-3 py-2.5 text-[13px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:bg-surface-elevated hover:text-text"
+              className="mt-auto flex items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-semibold text-text-muted transition-colors hover:border-border-hover hover:bg-surface-elevated hover:text-text"
             >
               <LogOut size={16} aria-hidden />
               Sign out
@@ -187,12 +187,12 @@ export function AdminShell({
                   aria-label="Open menu"
                   aria-expanded={mobileNavOpen}
                   onClick={() => setMobileNavOpen(true)}
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:border-border-hover hover:text-text lg:hidden"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border bg-surface text-text-muted transition-colors hover:border-border-hover hover:text-text lg:hidden"
                 >
                   <Menu size={18} aria-hidden />
                 </button>
                 <div className="min-w-0">
-                  <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-text-muted">
+                  <div className="text-2xs font-bold uppercase tracking-[0.16em] text-text-muted">
                     Reeltime operations
                   </div>
                   <h1 className={["mt-1 truncate", pageTitleClassName].join(" ")}>
@@ -208,7 +208,7 @@ export function AdminShell({
                     <button
                       type="button"
                       onClick={() => setUploadsOpen((o) => !o)}
-                    className="flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:bg-surface-elevated hover:text-text"
+                    className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold text-text-muted transition-colors hover:border-border-hover hover:bg-surface-elevated hover:text-text"
                     >
                       {activeJobs.length > 0 ? (
                         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand" />
@@ -231,9 +231,9 @@ export function AdminShell({
                     </button>
 
                     {uploadsOpen ? (
-                      <div className="absolute right-0 top-full z-50 mt-1.5 w-80 rounded-lg border border-border bg-surface">
+                      <div className="absolute right-0 top-full z-50 mt-1.5 w-80 rounded-xl border border-border bg-surface shadow-md">
                         <div className="border-b border-border px-4 py-2.5">
-                          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-disabled">
+                          <span className="text-2xs font-bold uppercase tracking-[0.12em] text-text-disabled">
                             Upload jobs
                           </span>
                         </div>
@@ -241,33 +241,33 @@ export function AdminShell({
                           {jobs.map((job) => (
                             <div
                               key={job.id}
-                              className="rounded-md px-3 py-3 transition-colors hover:bg-surface-elevated"
+                              className="rounded-lg px-3 py-3 transition-colors hover:bg-surface-elevated"
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
-                                  <p className="truncate text-[13px] font-semibold text-text" title={job.title}>
+                                  <p className="truncate text-sm font-semibold text-text" title={job.title}>
                                     {job.title}
                                   </p>
-                                  <p className="truncate text-[11px] text-text-muted">{job.label}</p>
+                                  <p className="truncate text-2xs text-text-muted">{job.label}</p>
                                 </div>
                                 <div className="flex shrink-0 items-center gap-2">
                                   {job.status === "uploading" && (
-                                    <span className="tabular-nums text-[12px] font-bold text-text-muted">
+                                    <span className="tabular-nums text-xs font-bold text-text-muted">
                                       {job.percent}%
                                     </span>
                                   )}
                                   {job.status === "done" && (
-                                    <span className="text-[12px] font-bold text-success">Done</span>
+                                    <span className="text-xs font-bold text-success">Done</span>
                                   )}
                                   {job.status === "error" && (
-                                    <span className="text-[12px] font-bold text-danger">Error</span>
+                                    <span className="text-xs font-bold text-danger">Error</span>
                                   )}
                                   {job.status !== "uploading" ? (
                                     <button
                                       type="button"
                                       onClick={() => dismissJob(job.id)}
                                       aria-label="Dismiss"
-                                      className="text-[16px] leading-none text-text-disabled hover:text-text"
+                                      className="text-lg leading-none text-text-disabled hover:text-text"
                                     >
                                       ×
                                     </button>
@@ -288,7 +288,7 @@ export function AdminShell({
                                 />
                               </div>
                               {job.status === "error" && job.errorMsg ? (
-                                <p className="mt-1 text-[11px] text-danger">{job.errorMsg}</p>
+                                <p className="mt-1 text-2xs text-danger">{job.errorMsg}</p>
                               ) : null}
                             </div>
                           ))}
@@ -298,7 +298,7 @@ export function AdminShell({
                             <button
                               type="button"
                               onClick={() => jobs.filter((j) => j.status !== "uploading").forEach((j) => dismissJob(j.id))}
-                              className="text-[12px] text-text-disabled hover:text-text-muted"
+                              className="text-xs text-text-disabled hover:text-text-muted"
                             >
                               Dismiss completed
                             </button>
