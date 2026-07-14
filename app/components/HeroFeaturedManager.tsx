@@ -192,11 +192,17 @@ export function HeroFeaturedManager() {
     };
   }, [showForm, isSaving, mediaUploading]);
 
+  // Progressive disclosure: hide the video override and schedule until needed.
+  const [showVideoOverride, setShowVideoOverride] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
+
   const openCreateForm = () => {
     setEditingItem(null);
     setForm({ ...emptyForm(), sortOrder: String(items.length) });
     setCatalogSearch("");
     setTypeFilter("all");
+    setShowVideoOverride(false);
+    setShowSchedule(false);
     setShowForm(true);
   };
 
@@ -220,6 +226,8 @@ export function HeroFeaturedManager() {
     });
     setCatalogSearch("");
     setTypeFilter(item.content_type === "custom" ? "all" : item.content_type);
+    setShowVideoOverride(Boolean(item.video_key || item.youtube_url));
+    setShowSchedule(Boolean(item.starts_at || item.ends_at));
     setShowForm(true);
   };
 
@@ -322,10 +330,10 @@ export function HeroFeaturedManager() {
         }
       >
         <p className="mb-4 text-[13px] leading-relaxed text-text-muted">
-          Pick titles from your <strong className="font-semibold text-text">Movies</strong> and{" "}
-          <strong className="font-semibold text-text">Series</strong> catalog for the big carousel
-          at the top of the client home page. Lower sort order shows first. Only{" "}
-          <strong className="font-semibold text-text">published</strong> titles appear to visitors.
+          The big carousel at the top of the client home page. Feature a{" "}
+          <strong className="font-semibold text-text">movie or series</strong> — its trailer plays
+          automatically — or add a <strong className="font-semibold text-text">video-only</strong>{" "}
+          slide. Lower order shows first; only published titles appear to visitors.
         </p>
 
         {catalogLoading ? (
@@ -358,7 +366,7 @@ export function HeroFeaturedManager() {
           <div className="rounded-md border border-dashed border-border py-8 text-center">
             <p className="text-[13px] text-text-muted">No hero slides yet.</p>
             <p className="mt-1 text-[12px] text-text-disabled">
-              Click &ldquo;Add slide&rdquo; and pick from your catalog or create a custom slide.
+              Click &ldquo;Add slide&rdquo; — feature a movie or series, or add a video-only slide.
             </p>
             <button
               type="button"
@@ -393,7 +401,7 @@ export function HeroFeaturedManager() {
                           (item.content_type === "custom" ? "Custom video" : "Unknown title")}
                       </h3>
                       <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">
-                        {item.content_type}
+                        {item.content_type === "custom" ? "video only" : item.content_type}
                       </span>
                       <span
                         className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
@@ -411,7 +419,7 @@ export function HeroFeaturedManager() {
                       ) : null}
                     </div>
                     <p className="mt-1 text-[11px] text-text-muted">
-                      Sort {item.sort_order}
+                      Order {item.sort_order}
                       {item.content_slug ? ` · ${item.content_slug}` : ""}
                     </p>
                   </div>
@@ -449,12 +457,10 @@ export function HeroFeaturedManager() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-[17px] font-bold tracking-[-0.02em]">
-                    {editingItem ? "Edit hero slide" : "Add to home hero carousel"}
+                    {editingItem ? "Edit hero slide" : "Add hero slide"}
                   </h2>
                   <p className="mt-1 text-[12px] leading-relaxed text-text-muted">
-                    {form.slideMode === "catalog"
-                      ? "Pick a title from your catalog to feature in the big carousel at the top of the client home page."
-                      : "Add a video that plays in the big carousel at the top of the client home page."}
+                    What plays in the big carousel at the top of the client home page.
                   </p>
                 </div>
                 <button
@@ -476,13 +482,21 @@ export function HeroFeaturedManager() {
               <div className="min-h-0 flex-1 overflow-y-auto">
                 {/* ── Section: Slide type ── */}
                 <div className="border-b border-border px-6 py-4">
-                  <div className="flex gap-1.5">
+                  <div className="grid gap-2 sm:grid-cols-2">
                     {(
                       [
-                        ["catalog", "From catalog"],
-                        ["custom", "Custom slide"],
+                        [
+                          "catalog",
+                          "Movie or series",
+                          "Feature a title from your catalog. Its trailer plays automatically.",
+                        ],
+                        [
+                          "custom",
+                          "Video only",
+                          "Just a video — upload a file or paste a YouTube link.",
+                        ],
                       ] as const
-                    ).map(([mode, label]) => {
+                    ).map(([mode, label, hint]) => {
                       const isActive = form.slideMode === mode;
                       return (
                         <button
@@ -490,22 +504,36 @@ export function HeroFeaturedManager() {
                           type="button"
                           onClick={() => setForm((prev) => ({ ...prev, slideMode: mode }))}
                           className={[
-                            "rounded-lg border px-4 py-2 text-[12px] font-semibold transition-all duration-150",
+                            "rounded-xl border p-3.5 text-left transition-all duration-150 cursor-pointer",
                             isActive
-                              ? "border-brand bg-brand text-white shadow-[0_1px_4px_rgba(229,9,20,0.25)]"
-                              : "border-border bg-bg text-text-muted hover:border-border-hover hover:bg-surface-elevated hover:text-text",
+                              ? "border-brand bg-brand/5 ring-1 ring-brand/40"
+                              : "border-border bg-bg hover:border-border-hover hover:bg-surface-elevated",
                           ].join(" ")}
                         >
-                          {label}
+                          <span className="flex items-center gap-2">
+                            <span
+                              className={[
+                                "flex size-4 shrink-0 items-center justify-center rounded-full border-2",
+                                isActive ? "border-brand" : "border-border",
+                              ].join(" ")}
+                            >
+                              {isActive ? (
+                                <span className="size-2 rounded-full bg-brand" />
+                              ) : null}
+                            </span>
+                            <span
+                              className={`text-[13px] font-bold ${isActive ? "text-text" : "text-text-muted"}`}
+                            >
+                              {label}
+                            </span>
+                          </span>
+                          <span className="mt-1.5 block pl-6 text-[11px] leading-relaxed text-text-muted">
+                            {hint}
+                          </span>
                         </button>
                       );
                     })}
                   </div>
-                  <p className="mt-2 text-[11px] text-text-disabled">
-                    {form.slideMode === "catalog"
-                      ? "Feature a movie or series from your catalog."
-                      : "Create a standalone slide with its own text, banner, and link."}
-                  </p>
                 </div>
 
                 {form.slideMode === "catalog" ? (
@@ -514,7 +542,7 @@ export function HeroFeaturedManager() {
                 <div className="px-6 py-5">
                   <div className="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7.5l2.5 2.5L11 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    Select Content
+                    Pick the title
                   </div>
 
                   {/* Selected entry preview */}
@@ -658,64 +686,97 @@ export function HeroFeaturedManager() {
                     )}
                   </div>
                 </div>
+
+                {/* ── Section: Video (catalog) ── */}
+                <div className="border-t border-border px-6 py-5">
+                  <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 3.5A1.5 1.5 0 014 2h6a1.5 1.5 0 011.5 1.5v7A1.5 1.5 0 0110 12H4a1.5 1.5 0 01-1.5-1.5v-7z" stroke="currentColor" strokeWidth="1.3"/><path d="M6 5.5l2.5 1.5L6 8.5v-3z" fill="currentColor"/></svg>
+                    Video
+                  </div>
+                  {showVideoOverride ? (
+                    <div className="space-y-3">
+                      <HeroVideoField
+                        videoKey={form.videoKey}
+                        youtubeUrl={form.youtubeUrl}
+                        onVideoKeyChange={(key) => setForm((prev) => ({ ...prev, videoKey: key }))}
+                        onYoutubeUrlChange={(url) => setForm((prev) => ({ ...prev, youtubeUrl: url }))}
+                        disabled={isSaving}
+                        onUploadingChange={setMediaUploading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowVideoOverride(false);
+                          setForm((prev) => ({ ...prev, videoKey: "", youtubeUrl: "" }));
+                        }}
+                        disabled={isSaving || mediaUploading}
+                        className="cursor-pointer text-[11px] font-semibold text-text-muted transition-colors hover:text-text"
+                      >
+                        Never mind — just use the trailer
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-[12px] text-text-muted">
+                        Nothing to do — the title&apos;s trailer plays automatically.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setShowVideoOverride(true)}
+                        className="cursor-pointer text-[12px] font-semibold text-brand transition-colors hover:text-brand-hover"
+                      >
+                        Use a different video
+                      </button>
+                    </div>
+                  )}
+                </div>
                 </>
                 ) : (
-                <div className="px-6 py-5 space-y-4">
-                  <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
-                    Custom slide
+                <div className="px-6 py-5 space-y-5">
+                  <div>
+                    <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 3.5A1.5 1.5 0 014 2h6a1.5 1.5 0 011.5 1.5v7A1.5 1.5 0 0110 12H4a1.5 1.5 0 01-1.5-1.5v-7z" stroke="currentColor" strokeWidth="1.3"/><path d="M6 5.5l2.5 1.5L6 8.5v-3z" fill="currentColor"/></svg>
+                      The video
+                    </div>
+                    <HeroVideoField
+                      videoKey={form.videoKey}
+                      youtubeUrl={form.youtubeUrl}
+                      onVideoKeyChange={(key) => setForm((prev) => ({ ...prev, videoKey: key }))}
+                      onYoutubeUrlChange={(url) => setForm((prev) => ({ ...prev, youtubeUrl: url }))}
+                      disabled={isSaving}
+                      onUploadingChange={setMediaUploading}
+                      required
+                    />
                   </div>
-                  <p className="text-[12px] leading-relaxed text-text-muted">
-                    A video with an optional movie title. Upload a file or paste a
-                    YouTube link in the Hero Video section below.
-                  </p>
                   <div>
                     <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
-                      Movie title
+                      Title (optional)
                     </label>
                     <input
                       type="text"
                       value={form.title}
                       onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-                      placeholder="Shown over the video on the home page"
+                      placeholder="Shown in big text over the video"
                       className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
                     />
+                    <p className="mt-1 text-[11px] text-text-disabled">
+                      Leave empty to show just the video.
+                    </p>
                   </div>
                 </div>
                 )}
-
-                {/* ── Section: Hero video ── */}
-                <div className="border-t border-border px-6 py-5">
-                  <div className="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 3.5A1.5 1.5 0 014 2h6a1.5 1.5 0 011.5 1.5v7A1.5 1.5 0 0110 12H4a1.5 1.5 0 01-1.5-1.5v-7z" stroke="currentColor" strokeWidth="1.3"/><path d="M6 5.5l2.5 1.5L6 8.5v-3z" fill="currentColor"/></svg>
-                    Hero Video
-                  </div>
-                  {form.slideMode === "catalog" ? (
-                    <p className="mb-4 -mt-2 text-[11px] text-text-disabled">
-                      Leave empty to automatically play the title&apos;s own trailer when it has one.
-                    </p>
-                  ) : null}
-                  <HeroVideoField
-                    videoKey={form.videoKey}
-                    youtubeUrl={form.youtubeUrl}
-                    onVideoKeyChange={(key) => setForm((prev) => ({ ...prev, videoKey: key }))}
-                    onYoutubeUrlChange={(url) => setForm((prev) => ({ ...prev, youtubeUrl: url }))}
-                    disabled={isSaving}
-                    onUploadingChange={setMediaUploading}
-                    required={form.slideMode === "custom"}
-                  />
-                </div>
 
                 {/* ── Section: Display Settings ── */}
                 <div className="border-t border-border px-6 py-5 space-y-4">
                   <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4"/><path d="M7 4.5v3l2 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    Display Settings
+                    Display
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     <div>
                       <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
-                        Sort order
+                        Order
                       </label>
                       <input
                         type="number"
@@ -723,6 +784,7 @@ export function HeroFeaturedManager() {
                         onChange={(e) => setForm((prev) => ({ ...prev, sortOrder: e.target.value }))}
                         className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
                       />
+                      <p className="mt-1 text-[11px] text-text-disabled">Lower shows first.</p>
                     </div>
                     <div className="flex items-end pb-1">
                       <button
@@ -752,39 +814,63 @@ export function HeroFeaturedManager() {
                     </div>
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
-                        <span className="flex items-center gap-1.5">
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v2M6 9v2M1 6h2M9 6h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                          Starts at
-                        </span>
-                      </label>
-                      <input
-                        type="datetime-local"
-                        value={form.startsAt}
-                        onChange={(e) => setForm((prev) => ({ ...prev, startsAt: e.target.value }))}
-                        className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
-                        <span className="flex items-center gap-1.5">
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v2M6 9v2M1 6h2M9 6h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                          Ends at
-                        </span>
-                      </label>
-                      <input
-                        type="datetime-local"
-                        value={form.endsAt}
-                        onChange={(e) => setForm((prev) => ({ ...prev, endsAt: e.target.value }))}
-                        className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
-                      />
-                    </div>
-                  </div>
-                  <p className="text-[11px] text-text-disabled">
-                    Leave schedule empty to show anytime while active.
-                  </p>
+                  {showSchedule ? (
+                    <>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                            <span className="flex items-center gap-1.5">
+                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v2M6 9v2M1 6h2M9 6h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                              Starts at
+                            </span>
+                          </label>
+                          <input
+                            type="datetime-local"
+                            value={form.startsAt}
+                            onChange={(e) => setForm((prev) => ({ ...prev, startsAt: e.target.value }))}
+                            className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                            <span className="flex items-center gap-1.5">
+                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v2M6 9v2M1 6h2M9 6h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                              Ends at
+                            </span>
+                          </label>
+                          <input
+                            type="datetime-local"
+                            value={form.endsAt}
+                            onChange={(e) => setForm((prev) => ({ ...prev, endsAt: e.target.value }))}
+                            className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-[11px] text-text-disabled">
+                          Leave empty to show anytime while active.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowSchedule(false);
+                            setForm((prev) => ({ ...prev, startsAt: "", endsAt: "" }));
+                          }}
+                          className="cursor-pointer text-[11px] font-semibold text-text-muted transition-colors hover:text-text"
+                        >
+                          Remove schedule
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowSchedule(true)}
+                      className="cursor-pointer text-[12px] font-semibold text-text-muted transition-colors hover:text-text"
+                    >
+                      + Schedule start and end dates (optional)
+                    </button>
+                  )}
                 </div>
               </div>
 
