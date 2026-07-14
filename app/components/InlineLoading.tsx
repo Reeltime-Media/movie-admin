@@ -31,7 +31,7 @@ export function InlineLoading({
         className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-brand"
         aria-hidden
       />
-      {label ? <p className="mt-3 text-[12px] font-medium text-text-muted">{label}</p> : null}
+      {label ? <p className="mt-3 text-xs font-medium text-text-muted">{label}</p> : null}
     </div>
   );
 }

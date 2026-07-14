@@ -51,7 +51,7 @@ export function AdminSectionTabs({
             {tab.badge != null && tab.badge !== "" ? (
               <span
                 className={[
-                  "ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums",
+                  "ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-2xs font-bold tabular-nums",
                   isActive ? "bg-brand/15 text-brand" : "bg-surface-elevated text-text-muted",
                 ].join(" ")}
               >

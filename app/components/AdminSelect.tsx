@@ -87,7 +87,7 @@ export function AdminSelect({
       {open ? (
         <ul
           role="listbox"
-          className="absolute left-0 right-0 z-40 mt-1 max-h-60 overflow-y-auto rounded-md border border-border bg-surface py-1 shadow-sm"
+          className="absolute left-0 right-0 z-40 mt-1 max-h-60 overflow-y-auto rounded-xl border border-border bg-surface py-1 shadow-md"
         >
           {options.map((opt) => {
             const isSelected = opt.value === value;
@@ -97,7 +97,7 @@ export function AdminSelect({
                   type="button"
                   onClick={() => choose(opt.value)}
                   className={[
-                    "flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[13px] transition-colors hover:bg-surface-elevated",
+                    "flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-surface-elevated",
                     isSelected ? "font-semibold text-brand" : "text-text",
                   ].join(" ")}
                 >

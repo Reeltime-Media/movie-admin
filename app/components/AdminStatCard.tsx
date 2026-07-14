@@ -10,11 +10,11 @@ export function AdminStatCard({
   hintClassName?: string;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-surface p-5">
-      <div className="text-[12px] font-semibold text-text-muted">{label}</div>
-      <div className="mt-2 text-[26px] font-extrabold tracking-[-0.03em] text-text">{value}</div>
+    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+      <div className="text-xs font-semibold text-text-muted">{label}</div>
+      <div className="mt-2 text-stat font-extrabold tracking-[-0.03em] text-text">{value}</div>
       {hint ? (
-        <div className={`mt-1 text-[12px] font-medium ${hintClassName}`}>{hint}</div>
+        <div className={`mt-1 text-xs font-medium ${hintClassName}`}>{hint}</div>
       ) : null}
     </div>
   );

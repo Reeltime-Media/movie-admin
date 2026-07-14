@@ -48,7 +48,7 @@ export function AdminPagination({
         .filter(Boolean)
         .join(" ")}
     >
-      <p className="text-[12px] text-text-muted">
+      <p className="text-xs text-text-muted">
         Showing <span className="font-semibold text-text">{start}–{end}</span> of{" "}
         <span className="font-semibold text-text">{total}</span>
       </p>
