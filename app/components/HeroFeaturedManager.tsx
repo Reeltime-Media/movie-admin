@@ -53,6 +53,7 @@ type ItemFormState = {
   linkUrl: string;
   videoKey: string;
   youtubeUrl: string;
+  videoEnabled: boolean;
 };
 
 const emptyForm = (): ItemFormState => ({
@@ -69,6 +70,7 @@ const emptyForm = (): ItemFormState => ({
   linkUrl: "",
   videoKey: "",
   youtubeUrl: "",
+  videoEnabled: true,
 });
 
 function toDatetimeLocalValue(iso: string | null): string {
@@ -223,6 +225,7 @@ export function HeroFeaturedManager() {
       linkUrl: item.link_url ?? "",
       videoKey: item.video_key ?? "",
       youtubeUrl: item.youtube_url ?? "",
+      videoEnabled: item.video_enabled ?? true,
     });
     setCatalogSearch("");
     setTypeFilter(item.content_type === "custom" ? "all" : item.content_type);
@@ -276,6 +279,7 @@ export function HeroFeaturedManager() {
         linkUrl: null,
         videoKey: form.videoKey || null,
         youtubeUrl: form.videoKey ? null : form.youtubeUrl.trim() || null,
+        videoEnabled: isCustom ? true : form.videoEnabled,
       };
 
       if (editingItem) {
@@ -415,6 +419,11 @@ export function HeroFeaturedManager() {
                       {(item.video_key || item.youtube_url) ? (
                         <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-600">
                           Video
+                        </span>
+                      ) : null}
+                      {item.content_type !== "custom" && item.video_enabled === false ? (
+                        <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                          Banner only
                         </span>
                       ) : null}
                     </div>
@@ -693,42 +702,69 @@ export function HeroFeaturedManager() {
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 3.5A1.5 1.5 0 014 2h6a1.5 1.5 0 011.5 1.5v7A1.5 1.5 0 0110 12H4a1.5 1.5 0 01-1.5-1.5v-7z" stroke="currentColor" strokeWidth="1.3"/><path d="M6 5.5l2.5 1.5L6 8.5v-3z" fill="currentColor"/></svg>
                     Video
                   </div>
-                  {showVideoOverride ? (
-                    <div className="space-y-3">
-                      <HeroVideoField
-                        videoKey={form.videoKey}
-                        youtubeUrl={form.youtubeUrl}
-                        onVideoKeyChange={(key) => setForm((prev) => ({ ...prev, videoKey: key }))}
-                        onYoutubeUrlChange={(url) => setForm((prev) => ({ ...prev, youtubeUrl: url }))}
-                        disabled={isSaving}
-                        onUploadingChange={setMediaUploading}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowVideoOverride(false);
-                          setForm((prev) => ({ ...prev, videoKey: "", youtubeUrl: "" }));
-                        }}
-                        disabled={isSaving || mediaUploading}
-                        className="cursor-pointer text-[11px] font-semibold text-text-muted transition-colors hover:text-text"
-                      >
-                        Never mind — just use the trailer
-                      </button>
+                  <label className="flex cursor-pointer items-start gap-2.5">
+                    <input
+                      type="checkbox"
+                      checked={form.videoEnabled}
+                      onChange={(e) => {
+                        const enabled = e.target.checked;
+                        setForm((prev) => ({
+                          ...prev,
+                          videoEnabled: enabled,
+                          ...(enabled ? {} : { videoKey: "", youtubeUrl: "" }),
+                        }));
+                        if (!enabled) setShowVideoOverride(false);
+                      }}
+                      disabled={isSaving || mediaUploading}
+                      className="mt-0.5 size-4 shrink-0 cursor-pointer accent-brand"
+                    />
+                    <span>
+                      <span className="block text-[13px] font-semibold text-text">
+                        Play a video on this slide
+                      </span>
+                      <span className="mt-0.5 block text-[11px] text-text-muted">
+                        {form.videoEnabled
+                          ? "The title's trailer plays automatically."
+                          : "Just the banner image — no video."}
+                      </span>
+                    </span>
+                  </label>
+
+                  {form.videoEnabled ? (
+                    <div className="mt-3 pl-6.5">
+                      {showVideoOverride ? (
+                        <div className="space-y-3">
+                          <HeroVideoField
+                            videoKey={form.videoKey}
+                            youtubeUrl={form.youtubeUrl}
+                            onVideoKeyChange={(key) => setForm((prev) => ({ ...prev, videoKey: key }))}
+                            onYoutubeUrlChange={(url) => setForm((prev) => ({ ...prev, youtubeUrl: url }))}
+                            disabled={isSaving}
+                            onUploadingChange={setMediaUploading}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowVideoOverride(false);
+                              setForm((prev) => ({ ...prev, videoKey: "", youtubeUrl: "" }));
+                            }}
+                            disabled={isSaving || mediaUploading}
+                            className="cursor-pointer text-[11px] font-semibold text-text-muted transition-colors hover:text-text"
+                          >
+                            Never mind — just use the trailer
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setShowVideoOverride(true)}
+                          className="cursor-pointer text-[12px] font-semibold text-brand transition-colors hover:text-brand-hover"
+                        >
+                          Use a different video
+                        </button>
+                      )}
                     </div>
-                  ) : (
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-[12px] text-text-muted">
-                        Nothing to do — the title&apos;s trailer plays automatically.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setShowVideoOverride(true)}
-                        className="cursor-pointer text-[12px] font-semibold text-brand transition-colors hover:text-brand-hover"
-                      >
-                        Use a different video
-                      </button>
-                    </div>
-                  )}
+                  ) : null}
                 </div>
                 </>
                 ) : (

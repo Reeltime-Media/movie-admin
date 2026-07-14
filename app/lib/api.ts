@@ -209,6 +209,7 @@ export type ApiHeroFeaturedItem = {
   link_url: string | null;
   video_key: string | null;
   youtube_url: string | null;
+  video_enabled: boolean;
   content_title: string | null;
   content_slug: string | null;
   poster_key: string | null;
@@ -1410,6 +1411,7 @@ export type AdminHeroFeaturedInput = {
   linkUrl?: string | null;
   videoKey?: string | null;
   youtubeUrl?: string | null;
+  videoEnabled?: boolean;
 };
 
 export async function createAdminHeroFeatured(
@@ -1432,6 +1434,7 @@ export async function createAdminHeroFeatured(
       link_url: input.linkUrl ?? null,
       video_key: input.videoKey ?? null,
       youtube_url: input.youtubeUrl ?? null,
+      video_enabled: input.videoEnabled ?? true,
     }),
   });
 }
@@ -1457,6 +1460,7 @@ export async function updateAdminHeroFeatured(
       ...(input.linkUrl !== undefined ? { link_url: input.linkUrl } : {}),
       ...(input.videoKey !== undefined ? { video_key: input.videoKey } : {}),
       ...(input.youtubeUrl !== undefined ? { youtube_url: input.youtubeUrl } : {}),
+      ...(input.videoEnabled !== undefined ? { video_enabled: input.videoEnabled } : {}),
     }),
   });
 }
