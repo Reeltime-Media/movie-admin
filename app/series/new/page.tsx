@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../../components/AdminCard";
 import { AdminShell } from "../../components/AdminShell";
+import { Button } from "../../components/ui/Button";
 import { AdminSelect } from "../../components/AdminSelect";
 import { EpisodeAssetsUploader } from "../../components/EpisodeAssetsUploader";
 import { GenreMultiSelect } from "../../components/GenreMultiSelect";
@@ -28,13 +28,13 @@ import {
 } from "../../lib/seriesHelpers";
 
 const textInputClass =
-  "w-full rounded-md border border-border bg-bg px-3 py-2.5 text-[13px] text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated";
+  "w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated";
 
 const selectClass =
-  "w-full rounded-md border border-border bg-bg px-3 py-2.5 text-[13px] text-text outline-none transition-colors focus:border-border-hover focus:bg-surface-elevated";
+  "w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-text outline-none transition-colors focus:border-border-hover focus:bg-surface-elevated";
 
 const fileInputClass =
-  "w-full rounded-md border border-dashed border-border bg-bg px-3 py-4 text-[12px] text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-brand file:px-3 file:py-2 file:text-[12px] file:font-bold file:text-white hover:border-border-hover";
+  "w-full rounded-lg border border-dashed border-border bg-bg px-3 py-4 text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:border-border-hover";
 
 const stepLabels = ["Details", "Seasons", "Episode media"] as const;
 
@@ -65,9 +65,9 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">{label}</span>
+      <span className="mb-1.5 block text-xs font-semibold text-text-muted">{label}</span>
       {children}
-      {hint ? <span className="mt-1.5 block text-[11px] text-text-disabled">{hint}</span> : null}
+      {hint ? <span className="mt-1.5 block text-2xs text-text-disabled">{hint}</span> : null}
     </label>
   );
 }
@@ -241,16 +241,13 @@ export default function NewSeriesPage() {
   return (
     <AdminShell title="Upload new series">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <p className="max-w-[72ch] text-[13px] leading-relaxed text-text-muted">
+        <p className="max-w-[72ch] text-sm leading-relaxed text-text-muted">
           Enter show details, build seasons and episodes, then attach poster and per-episode video
           files.
         </p>
-        <Link
-          href="/series"
-          className="shrink-0 rounded-md border border-border bg-surface px-3 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-        >
+        <Button href="/series" variant="secondary" size="sm" className="shrink-0">
           Back to series
-        </Link>
+        </Button>
       </div>
 
       <div className="mb-8 flex flex-wrap items-center gap-2">
@@ -260,11 +257,11 @@ export default function NewSeriesPage() {
           return (
             <div key={label} className="flex items-center gap-2">
               {i > 0 ? (
-                <span className="text-[12px] font-bold text-text-disabled" aria-hidden>/</span>
+                <span className="text-xs font-bold text-text-disabled" aria-hidden>/</span>
               ) : null}
               <span
                 className={[
-                  "rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-widest",
+                  "rounded-full px-3 py-1 text-2xs font-bold uppercase tracking-widest",
                   active ? "bg-brand text-white" : done ? "bg-success/15 text-success" : "bg-surface text-text-muted",
                 ].join(" ")}
               >
@@ -285,11 +282,11 @@ export default function NewSeriesPage() {
 
               <div>
                 <div className="mb-1.5 flex items-center justify-between gap-2">
-                  <span className="text-[12px] font-semibold text-text-muted">Genres</span>
+                  <span className="text-xs font-semibold text-text-muted">Genres</span>
                   <button
                     type="button"
                     onClick={() => { setShowNewGenre((v) => !v); setNewGenreName(""); }}
-                    className="flex items-center gap-1 rounded-md border border-border bg-surface-elevated px-2 py-1 text-[11px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
+                    className="flex items-center gap-1 rounded-lg border border-border bg-surface-elevated px-2 py-1 text-2xs font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
                   >
                     <svg className="h-3 w-3" viewBox="0 0 12 12" fill="currentColor" aria-hidden><path d="M6.5 1.5a.5.5 0 0 0-1 0V5.5H1.5a.5.5 0 0 0 0 1H5.5v4a.5.5 0 0 0 1 0V6.5h4a.5.5 0 0 0 0-1H6.5V1.5Z"/></svg>
                     New genre
@@ -306,14 +303,15 @@ export default function NewSeriesPage() {
                       className={textInputClass}
                       autoFocus
                     />
-                    <button
+                    <Button
                       type="button"
+                      size="sm"
+                      className="shrink-0"
                       onClick={() => void handleAddGenre()}
                       disabled={createGenreMutation.isPending || !newGenreName.trim()}
-                      className="shrink-0 rounded-md bg-brand px-3 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover disabled:opacity-40"
                     >
                       {createGenreMutation.isPending ? "Adding…" : "Add"}
-                    </button>
+                    </Button>
                   </div>
                 ) : null}
                 <GenreMultiSelect selected={genres} onChange={setGenres} options={genreOptions} onDeleteGenre={handleDeleteGenre} />
@@ -367,59 +365,44 @@ export default function NewSeriesPage() {
             </div>
 
             {detailsError ? (
-              <p className="mt-4 text-[12px] font-semibold text-warning">{detailsError}</p>
+              <p className="mt-4 text-xs font-semibold text-warning">{detailsError}</p>
             ) : null}
 
             <div className="mt-6 flex flex-wrap justify-end gap-2">
-              <Link
-                href="/series"
-                className="rounded-md border border-border bg-bg px-4 py-2.5 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-              >
+              <Button href="/series" variant="secondary">
                 Cancel
-              </Link>
-              <button
-                type="button"
-                onClick={continueFromDetails}
-                className="rounded-md bg-brand px-4 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
-              >
+              </Button>
+              <Button type="button" onClick={continueFromDetails}>
                 Continue
-              </button>
+              </Button>
             </div>
           </AdminCard>
         </div>
 
         <div className={step === 1 ? "block" : "hidden"} aria-hidden={step !== 1}>
           <AdminCard title="Seasons and episodes">
-            <p className="mb-5 text-[13px] text-text-muted">
+            <p className="mb-5 text-sm text-text-muted">
               Create every season and episode. You will attach video and poster files for each
               episode in the final step.
             </p>
             <SeasonsEpisodesEditor seasons={seasons} onChange={setSeasons} />
             {seasonsError ? (
-              <p className="mt-4 text-[12px] font-semibold text-warning">{seasonsError}</p>
+              <p className="mt-4 text-xs font-semibold text-warning">{seasonsError}</p>
             ) : null}
             <div className="mt-6 flex flex-wrap justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setStep(0)}
-                className="rounded-md border border-border bg-bg px-4 py-2.5 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-              >
+              <Button type="button" variant="secondary" onClick={() => setStep(0)}>
                 Back
-              </button>
-              <button
-                type="button"
-                onClick={continueFromSeasons}
-                className="rounded-md bg-brand px-4 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
-              >
+              </Button>
+              <Button type="button" onClick={continueFromSeasons}>
                 Continue
-              </button>
+              </Button>
             </div>
           </AdminCard>
         </div>
 
         <div className={step === 2 ? "block" : "hidden"} aria-hidden={step !== 2}>
           <AdminCard title="Episode media">
-            <p className="mb-5 text-[13px] text-text-muted">
+            <p className="mb-5 text-sm text-text-muted">
               Upload series poster and banner (optional), then attach each episode&apos;s video
               (required for Upload) and episode poster (optional).
             </p>
@@ -434,7 +417,7 @@ export default function NewSeriesPage() {
                     onChange={(e) => setSeriesPosterFile(e.target.files?.[0] ?? null)}
                   />
                   {seriesPosterFile ? (
-                    <p className="mt-2 text-[11px] text-text-muted">{seriesPosterFile.name}</p>
+                    <p className="mt-2 text-2xs text-text-muted">{seriesPosterFile.name}</p>
                   ) : null}
                 </Field>
               </div>
@@ -447,7 +430,7 @@ export default function NewSeriesPage() {
                     onChange={(e) => setSeriesBannerFile(e.target.files?.[0] ?? null)}
                   />
                   {seriesBannerFile ? (
-                    <p className="mt-2 text-[11px] text-text-muted">{seriesBannerFile.name}</p>
+                    <p className="mt-2 text-2xs text-text-muted">{seriesBannerFile.name}</p>
                   ) : null}
                 </Field>
               </div>
@@ -456,11 +439,11 @@ export default function NewSeriesPage() {
             <EpisodeAssetsUploader seasons={seasons} onChange={setSeasons} />
 
             {submitError ? (
-              <p className="mt-4 text-[12px] font-semibold text-warning">{submitError}</p>
+              <p className="mt-4 text-xs font-semibold text-warning">{submitError}</p>
             ) : null}
             {currentJob && currentJob.status !== "done" ? (
-              <div className="mt-4 rounded-md border border-border bg-bg p-3">
-                <div className="mb-2 flex items-center justify-between text-[12px] font-semibold text-text-muted">
+              <div className="mt-4 rounded-lg border border-border bg-bg p-3">
+                <div className="mb-2 flex items-center justify-between text-xs font-semibold text-text-muted">
                   <span>{currentJob.label}</span>
                   <span className="tabular-nums">{currentJob.percent}%</span>
                 </div>
@@ -471,37 +454,33 @@ export default function NewSeriesPage() {
                   />
                 </div>
                 {currentJob.status === "error" && currentJob.errorMsg ? (
-                  <p className="mt-1 text-[11px] text-danger">{currentJob.errorMsg}</p>
+                  <p className="mt-1 text-2xs text-danger">{currentJob.errorMsg}</p>
                 ) : null}
               </div>
             ) : null}
 
             <div className="mt-6 flex flex-wrap justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="rounded-md border border-border bg-bg px-4 py-2.5 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-              >
+              <Button type="button" variant="secondary" onClick={() => setStep(1)}>
                 Back
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 name="intent"
                 value="draft"
+                variant="secondary"
                 disabled={isSubmitting}
-                className="rounded-md border border-border bg-surface-elevated px-4 py-2.5 text-[12px] font-bold text-text transition-colors hover:border-border-hover disabled:opacity-40"
               >
                 Save draft
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 name="intent"
                 value="upload"
+                loading={isSubmitting}
                 disabled={isSubmitting}
-                className="rounded-md bg-brand px-4 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover disabled:opacity-40"
               >
                 {isSubmitting ? "Uploading…" : "Upload"}
-              </button>
+              </Button>
             </div>
           </AdminCard>
         </div>

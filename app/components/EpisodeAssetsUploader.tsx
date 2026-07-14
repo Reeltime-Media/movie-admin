@@ -3,7 +3,7 @@
 import type { Season } from "../lib/adminData";
 
 const fileInputClass =
-  "mt-2 w-full rounded-md border border-dashed border-border bg-bg px-3 py-3 text-[12px] text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-brand file:px-3 file:py-2 file:text-[12px] file:font-bold file:text-white hover:border-border-hover";
+  "mt-2 w-full rounded-lg border border-dashed border-border bg-bg px-3 py-3 text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:border-border-hover";
 
 type EpisodeAssetsUploaderProps = {
   seasons: Season[];
@@ -40,19 +40,19 @@ export function EpisodeAssetsUploader({ seasons, onChange }: EpisodeAssetsUpload
     <div className="space-y-8">
       {seasons.map((se) => (
         <div key={se.id} className="rounded-lg border border-border bg-bg p-4">
-          <div className="border-b border-border pb-2 text-[13px] font-bold">{se.title}</div>
+          <div className="border-b border-border pb-2 text-sm font-bold">{se.title}</div>
           <div className="mt-4 space-y-6">
             {se.episodes.map((ep) => (
               <div
                 key={ep.id}
-                className="rounded-md border border-dashed border-border/90 bg-surface/40 p-4"
+                className="rounded-lg border border-dashed border-border/90 bg-surface/40 p-4"
               >
-                <div className="text-[12px] font-bold text-text">
+                <div className="text-xs font-bold text-text">
                   E{ep.number} &middot; {ep.title}
                 </div>
                 <div className="mt-3 grid gap-4 sm:grid-cols-2">
                   <div>
-                    <span className="block text-[12px] font-semibold text-text-muted">Episode video</span>
+                    <span className="block text-xs font-semibold text-text-muted">Episode video</span>
                     <input
                       type="file"
                       accept="video/mp4,video/quicktime,application/x-mpegURL,video/*"
@@ -60,11 +60,11 @@ export function EpisodeAssetsUploader({ seasons, onChange }: EpisodeAssetsUpload
                       onChange={(e) => setEpisodeAsset(se.id, ep.id, "video", e.target.files)}
                     />
                     {ep.videoFileName ? (
-                      <p className="mt-1 text-[11px] text-text-muted">{ep.videoFileName}</p>
+                      <p className="mt-1 text-2xs text-text-muted">{ep.videoFileName}</p>
                     ) : null}
                   </div>
                   <div>
-                    <span className="block text-[12px] font-semibold text-text-muted">
+                    <span className="block text-xs font-semibold text-text-muted">
                       Episode poster
                     </span>
                     <input
@@ -74,7 +74,7 @@ export function EpisodeAssetsUploader({ seasons, onChange }: EpisodeAssetsUpload
                       onChange={(e) => setEpisodeAsset(se.id, ep.id, "poster", e.target.files)}
                     />
                     {ep.posterFileName ? (
-                      <p className="mt-1 text-[11px] text-text-muted">{ep.posterFileName}</p>
+                      <p className="mt-1 text-2xs text-text-muted">{ep.posterFileName}</p>
                     ) : null}
                   </div>
                 </div>

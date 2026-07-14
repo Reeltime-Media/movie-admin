@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { AdminCard } from "../components/AdminCard";
 import { AdminCatalogSearchBar } from "../components/AdminCatalogSearchBar";
@@ -8,7 +7,7 @@ import { AdminPagination } from "../components/AdminPagination";
 import { InlineLoading } from "../components/InlineLoading";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
 import { matchesCatalogSearch } from "../lib/catalogSearch";
-import { adminPrimaryButtonClass } from "../lib/adminUi";
+import { Button } from "../components/ui/Button";
 import { SeriesManagementTable } from "./SeriesManagementTable";
 import type { SeriesListFilter } from "./seriesListTypes";
 
@@ -72,7 +71,7 @@ export function SeriesManagementSection() {
     <>
       <div className="space-y-4">
         {error ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-warning/30 bg-warning/10 p-3 text-[12px] text-warning">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs text-warning">
             <span>{error}</span>
             <button type="button" onClick={refreshMovies} className="font-bold hover:underline">
               Retry
@@ -96,12 +95,9 @@ export function SeriesManagementSection() {
             onFilterChange={(next) => setListFilter(next as SeriesListFilter)}
             filterLabel="Filter series"
           />
-          <Link
-            href="/series/new"
-            className={`shrink-0 ${adminPrimaryButtonClass}`}
-          >
+          <Button href="/series/new" className="shrink-0">
             Add series
-          </Link>
+          </Button>
         </div>
       </div>
 

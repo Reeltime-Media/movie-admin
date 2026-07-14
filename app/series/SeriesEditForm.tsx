@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
 import { AdminSectionTabs } from "../components/AdminSectionTabs";
 import { AdminSelect } from "../components/AdminSelect";
+import { Button } from "../components/ui/Button";
 import { GenreMultiSelect } from "../components/GenreMultiSelect";
 import { InlineLoading } from "../components/InlineLoading";
 import { SeasonsEpisodesEditor } from "../components/SeasonsEpisodesEditor";
@@ -64,8 +64,8 @@ function ArtworkField({
 
   return (
     <div className="rounded-lg border border-border bg-bg p-4">
-      <div className="mb-1 text-[14px] font-bold tracking-[-0.02em]">{label}</div>
-      <p className="mb-3 text-[12px] text-text-muted">{hint}</p>
+      <div className="mb-1 text-base font-bold tracking-[-0.02em]">{label}</div>
+      <p className="mb-3 text-xs text-text-muted">{hint}</p>
       {previewUrl ? (
         <img
           src={previewUrl}
@@ -74,7 +74,7 @@ function ArtworkField({
         />
       ) : (
         <div
-          className={`grid ${placeholderClass} place-items-center rounded-lg border border-dashed border-border bg-surface text-center text-[13px] text-text-muted`}
+          className={`grid ${placeholderClass} place-items-center rounded-lg border border-dashed border-border bg-surface text-center text-sm text-text-muted`}
         >
           No {label.toLowerCase()} uploaded
         </div>
@@ -86,9 +86,9 @@ function ArtworkField({
         onChange={(e) => onFileChange(pickFileFromInput(e.target.files))}
       />
       {newFile ? (
-        <p className="mt-2 break-all text-[11px] text-text-muted">New file: {newFile.name}</p>
+        <p className="mt-2 break-all text-2xs text-text-muted">New file: {newFile.name}</p>
       ) : (
-        <p className="mt-2 break-all text-[11px] text-text-disabled">
+        <p className="mt-2 break-all text-2xs text-text-disabled">
           {currentKey || `No ${label.toLowerCase()} uploaded`}
         </p>
       )}
@@ -220,11 +220,11 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
   if (error) {
     return (
       <AdminCard title="Edit series">
-        <p className="text-[13px] text-warning">{error}</p>
+        <p className="text-sm text-warning">{error}</p>
         <button
           type="button"
           onClick={() => void refreshMovies()}
-          className="mt-3 text-[12px] font-bold text-brand hover:underline"
+          className="mt-3 text-xs font-bold text-brand hover:underline"
         >
           Retry
         </button>
@@ -235,13 +235,10 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
   if (!series || !editDraft) {
     return (
       <AdminCard title="Series not found">
-        <p className="text-[13px] text-text-muted">This series is not in the admin catalog.</p>
-        <Link
-          href="/series"
-          className="mt-4 inline-flex rounded-md border border-border bg-bg px-4 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-        >
+        <p className="text-sm text-text-muted">This series is not in the admin catalog.</p>
+        <Button href="/series" variant="secondary" className="mt-4">
           Back to series
-        </Link>
+        </Button>
       </AdminCard>
     );
   }
@@ -263,19 +260,12 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
           bare
         />
         <div className="flex shrink-0 flex-wrap items-center gap-2 pb-2">
-          <Link
-            href={`/series/${series.id}`}
-            className="rounded-md border border-border bg-bg px-4 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-          >
+          <Button href={`/series/${series.id}`} variant="secondary" size="sm">
             Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="rounded-md bg-brand px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
-          >
+          </Button>
+          <Button type="submit" size="sm" loading={isSaving}>
             {isSaving ? "Saving…" : "Save changes"}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -283,7 +273,7 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
       <div>
           <div className={tab === "overview" ? "block" : "hidden"}>
             <div className="min-h-[calc(100vh-13rem)] rounded-xl border border-border bg-surface">
-              <table className="w-full text-left text-[13px]">
+              <table className="w-full text-left text-sm">
                 <tbody className="divide-y divide-border">
                   <EditRow label="Title">
                     <input
@@ -311,7 +301,7 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
                       }
                       placeholder="6.99"
                     />
-                    <p className="mt-1 text-[11px] text-text-disabled">{ADMIN_PRICE_HINT}</p>
+                    <p className="mt-1 text-2xs text-text-disabled">{ADMIN_PRICE_HINT}</p>
                   </EditRow>
                   <EditRow label="Rating">
                     <input
@@ -381,8 +371,8 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
                   onFileChange={setEditBannerFile}
                 />
                 <div className="rounded-lg border border-border bg-bg p-4">
-                  <div className="mb-1 text-[14px] font-bold tracking-[-0.02em]">Trailer</div>
-                  <p className="mb-3 text-[12px] text-text-muted">Paste a YouTube URL.</p>
+                  <div className="mb-1 text-base font-bold tracking-[-0.02em]">Trailer</div>
+                  <p className="mb-3 text-xs text-text-muted">Paste a YouTube URL.</p>
                   <input
                     className={movieEditInputClass}
                     type="url"
@@ -398,8 +388,8 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
 
           <div className={tab === "episodes" ? "block" : "hidden"}>
             <div className="rounded-xl border border-border bg-surface p-6">
-              <h3 className="mb-1 text-[14px] font-bold tracking-[-0.02em]">Seasons and episodes</h3>
-              <p className="mb-5 text-[13px] text-text-muted">
+              <h3 className="mb-1 text-base font-bold tracking-[-0.02em]">Seasons and episodes</h3>
+              <p className="mb-5 text-sm text-text-muted">
                 Edit season and episode metadata. Episode video uploads are managed when creating a
                 series or from the series detail page.
               </p>
@@ -412,7 +402,7 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
       </div>
 
       {editSaveError ? (
-        <p className="text-[12px] font-semibold text-warning">{editSaveError}</p>
+        <p className="text-xs font-semibold text-warning">{editSaveError}</p>
       ) : null}
     </form>
   );

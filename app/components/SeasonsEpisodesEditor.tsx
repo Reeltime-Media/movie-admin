@@ -1,14 +1,11 @@
 "use client";
 
 import type { Episode, Season } from "../lib/adminData";
-import { adminDeleteButtonClass } from "../lib/adminUi";
+import { Button } from "./ui/Button";
 import { newEpisodeId, newSeasonId, renumberSeasons } from "../lib/seriesHelpers";
 
 const inputClass =
-  "w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated";
-
-const btnGhost =
-  "rounded-md border border-border bg-bg px-2.5 py-1.5 text-[11px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text";
+  "w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated";
 
 type SeasonsEpisodesEditorProps = {
   seasons: Season[];
@@ -99,7 +96,7 @@ export function SeasonsEpisodesEditor({ seasons, onChange }: SeasonsEpisodesEdit
           <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-3">
             <div className="grid min-w-[200px] flex-1 gap-2 sm:max-w-xs">
               <label className="block">
-                <span className="mb-1 block text-[11px] font-semibold text-text-disabled">
+                <span className="mb-1 block text-2xs font-semibold text-text-disabled">
                   Season label
                 </span>
                 <input
@@ -111,22 +108,23 @@ export function SeasonsEpisodesEditor({ seasons, onChange }: SeasonsEpisodesEdit
               </label>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button type="button" className={btnGhost} onClick={() => addEpisode(season.id)}>
+              <Button type="button" variant="secondary" size="sm" onClick={() => addEpisode(season.id)}>
                 Add episode
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className={adminDeleteButtonClass}
+                variant="danger-soft"
+                size="sm"
                 onClick={() => removeSeason(season.id)}
                 disabled={seasons.length <= 1}
               >
                 Remove season
-              </button>
+              </Button>
             </div>
           </div>
 
           <div className="mt-3 space-y-2">
-            <div className="hidden text-[11px] font-bold uppercase tracking-widest text-text-disabled sm:grid sm:grid-cols-[52px_minmax(0,1fr)_100px_72px_80px] sm:gap-2 sm:px-1">
+            <div className="hidden text-2xs font-bold uppercase tracking-widest text-text-disabled sm:grid sm:grid-cols-[52px_minmax(0,1fr)_100px_72px_80px] sm:gap-2 sm:px-1">
               <span>Ep</span>
               <span>Title</span>
               <span>Runtime</span>
@@ -136,9 +134,9 @@ export function SeasonsEpisodesEditor({ seasons, onChange }: SeasonsEpisodesEdit
             {season.episodes.map((ep) => (
               <div
                 key={ep.id}
-                className="flex flex-col gap-2 rounded-md border border-dashed border-border/80 bg-surface/50 p-3 sm:grid sm:grid-cols-[52px_minmax(0,1fr)_100px_72px_80px] sm:items-center sm:gap-2 sm:border-0 sm:bg-transparent sm:p-1"
+                className="flex flex-col gap-2 rounded-lg border border-dashed border-border/80 bg-surface/50 p-3 sm:grid sm:grid-cols-[52px_minmax(0,1fr)_100px_72px_80px] sm:items-center sm:gap-2 sm:border-0 sm:bg-transparent sm:p-1"
               >
-                <div className="text-[12px] font-bold text-text-muted">E{ep.number}</div>
+                <div className="text-xs font-bold text-text-muted">E{ep.number}</div>
                 <input
                   className={inputClass}
                   value={ep.title}
@@ -151,7 +149,7 @@ export function SeasonsEpisodesEditor({ seasons, onChange }: SeasonsEpisodesEdit
                   onChange={(e) => updateEpisode(season.id, ep.id, { runtime: e.target.value })}
                   placeholder="45m"
                 />
-                <label className="flex items-center justify-center gap-2 text-[12px] font-semibold text-text-muted sm:justify-start">
+                <label className="flex items-center justify-center gap-2 text-xs font-semibold text-text-muted sm:justify-start">
                   <input
                     type="checkbox"
                     checked={Boolean(ep.isFree)}
@@ -163,14 +161,15 @@ export function SeasonsEpisodesEditor({ seasons, onChange }: SeasonsEpisodesEdit
                   Free
                 </label>
                 <div className="flex justify-end sm:block">
-                  <button
+                  <Button
                     type="button"
-                    className={adminDeleteButtonClass}
+                    variant="danger-soft"
+                    size="sm"
                     onClick={() => removeEpisode(season.id, ep.id)}
                     disabled={season.episodes.length <= 1}
                   >
                     Remove
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -179,9 +178,9 @@ export function SeasonsEpisodesEditor({ seasons, onChange }: SeasonsEpisodesEdit
       ))}
 
       <div className="flex justify-end">
-        <button type="button" className={btnGhost} onClick={addSeason}>
+        <Button type="button" variant="secondary" size="sm" onClick={addSeason}>
           Add season
-        </button>
+        </Button>
       </div>
     </div>
   );
