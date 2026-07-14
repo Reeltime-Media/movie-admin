@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import { AdminCard } from "./AdminCard";
 import { AdminCatalogSearchBar } from "./AdminCatalogSearchBar";
 import { InlineLoading } from "./InlineLoading";
-import { HeroBannerField, HeroVideoField } from "./HeroSlideMediaFields";
+import { HeroVideoField } from "./HeroSlideMediaFields";
 import {
   createAdminHeroFeatured,
   deleteAdminHeroFeatured,
@@ -243,8 +243,8 @@ export function HeroFeaturedManager() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const isCustom = form.slideMode === "custom";
-    if (isCustom && !form.title.trim()) {
-      toast.error("Custom slides need a title.");
+    if (isCustom && !form.videoKey && !form.youtubeUrl.trim()) {
+      toast.error("Upload a video file or paste a YouTube URL.");
       return;
     }
     if (!isCustom && !form.contentId) {
@@ -262,10 +262,10 @@ export function HeroFeaturedManager() {
         sortOrder: Number.parseInt(form.sortOrder, 10) || 0,
         startsAt: fromDatetimeLocalValue(form.startsAt),
         endsAt: fromDatetimeLocalValue(form.endsAt),
-        title: isCustom ? form.title.trim() : null,
-        description: isCustom ? form.description.trim() || null : null,
-        bannerKey: isCustom ? form.bannerKey || null : null,
-        linkUrl: isCustom ? form.linkUrl.trim() || null : null,
+        title: null,
+        description: null,
+        bannerKey: null,
+        linkUrl: null,
         videoKey: form.videoKey || null,
         youtubeUrl: form.videoKey ? null : form.youtubeUrl.trim() || null,
       };
@@ -288,7 +288,10 @@ export function HeroFeaturedManager() {
   };
 
   const handleDelete = async (item: ApiHeroFeaturedItem) => {
-    const label = item.content_title ?? item.title ?? item.content_id ?? "this slide";
+    const label =
+      item.content_title ??
+      item.title ??
+      (item.content_type === "custom" ? "Custom video" : item.content_id ?? "this slide");
     if (!window.confirm(`Remove "${label}" from the home hero?`)) return;
     setIsSaving(true);
     try {
@@ -386,7 +389,8 @@ export function HeroFeaturedManager() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-[13px] font-bold">
-                        {item.content_title ?? "Unknown title"}
+                        {item.content_title ??
+                          (item.content_type === "custom" ? "Custom video" : "Unknown title")}
                       </h3>
                       <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">
                         {item.content_type}
@@ -450,7 +454,7 @@ export function HeroFeaturedManager() {
                   <p className="mt-1 text-[12px] leading-relaxed text-text-muted">
                     {form.slideMode === "catalog"
                       ? "Pick a title from your catalog to feature in the big carousel at the top of the client home page."
-                      : "Create a custom slide with its own text, banner, video, and link."}
+                      : "Add a video that plays in the big carousel at the top of the client home page."}
                   </p>
                 </div>
                 <button
@@ -656,54 +660,14 @@ export function HeroFeaturedManager() {
                 </div>
                 </>
                 ) : (
-                <div className="px-6 py-5 space-y-4">
-                  <div className="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                <div className="px-6 py-5">
+                  <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
                     Custom slide
                   </div>
-                  <div>
-                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
-                      Title <span className="text-brand">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={form.title}
-                      onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-                      placeholder="e.g. Khmer New Year Marathon"
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
-                      Description
-                    </label>
-                    <textarea
-                      value={form.description}
-                      rows={3}
-                      onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-                      className="w-full resize-none rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
-                    />
-                  </div>
-                  <HeroBannerField
-                    bannerKey={form.bannerKey}
-                    onChange={(key) => setForm((prev) => ({ ...prev, bannerKey: key }))}
-                    disabled={isSaving}
-                    onUploadingChange={setMediaUploading}
-                  />
-                  <div>
-                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
-                      Link URL
-                    </label>
-                    <input
-                      type="text"
-                      value={form.linkUrl}
-                      onChange={(e) => setForm((prev) => ({ ...prev, linkUrl: e.target.value }))}
-                      placeholder="/pricing or https://example.com"
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
-                    />
-                    <p className="mt-1 text-[11px] text-text-disabled">
-                      Leave empty to show no button. Use a path like /pricing or a full https:// URL.
-                    </p>
-                  </div>
+                  <p className="text-[12px] leading-relaxed text-text-muted">
+                    A custom slide is just a video. Upload a file or paste a YouTube
+                    link in the Hero Video section below — nothing else needed.
+                  </p>
                 </div>
                 )}
 
@@ -720,6 +684,7 @@ export function HeroFeaturedManager() {
                     onYoutubeUrlChange={(url) => setForm((prev) => ({ ...prev, youtubeUrl: url }))}
                     disabled={isSaving}
                     onUploadingChange={setMediaUploading}
+                    required={form.slideMode === "custom"}
                   />
                 </div>
 
@@ -821,7 +786,9 @@ export function HeroFeaturedManager() {
                   disabled={
                     isSaving ||
                     mediaUploading ||
-                    (form.slideMode === "catalog" ? !form.contentId : !form.title.trim())
+                    (form.slideMode === "catalog"
+                      ? !form.contentId
+                      : !form.videoKey && !form.youtubeUrl.trim())
                   }
                   className="rounded-lg bg-brand px-5 py-2.5 text-[12px] font-bold text-white shadow-[0_1px_3px_rgba(229,9,20,0.3)] transition-all hover:bg-brand-hover hover:shadow-[0_2px_8px_rgba(229,9,20,0.4)] active:scale-[0.98] disabled:opacity-60 disabled:shadow-none"
                 >
