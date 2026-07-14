@@ -262,7 +262,7 @@ export function HeroFeaturedManager() {
         sortOrder: Number.parseInt(form.sortOrder, 10) || 0,
         startsAt: fromDatetimeLocalValue(form.startsAt),
         endsAt: fromDatetimeLocalValue(form.endsAt),
-        title: null,
+        title: isCustom ? form.title.trim() || null : null,
         description: null,
         bannerKey: null,
         linkUrl: null,
@@ -660,14 +660,26 @@ export function HeroFeaturedManager() {
                 </div>
                 </>
                 ) : (
-                <div className="px-6 py-5">
-                  <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                <div className="px-6 py-5 space-y-4">
+                  <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
                     Custom slide
                   </div>
                   <p className="text-[12px] leading-relaxed text-text-muted">
-                    A custom slide is just a video. Upload a file or paste a YouTube
-                    link in the Hero Video section below — nothing else needed.
+                    A video with an optional movie title. Upload a file or paste a
+                    YouTube link in the Hero Video section below.
                   </p>
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                      Movie title
+                    </label>
+                    <input
+                      type="text"
+                      value={form.title}
+                      onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+                      placeholder="Shown over the video on the home page"
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                    />
+                  </div>
                 </div>
                 )}
 
