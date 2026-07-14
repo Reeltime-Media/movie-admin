@@ -689,6 +689,11 @@ export function HeroFeaturedManager() {
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 3.5A1.5 1.5 0 014 2h6a1.5 1.5 0 011.5 1.5v7A1.5 1.5 0 0110 12H4a1.5 1.5 0 01-1.5-1.5v-7z" stroke="currentColor" strokeWidth="1.3"/><path d="M6 5.5l2.5 1.5L6 8.5v-3z" fill="currentColor"/></svg>
                     Hero Video
                   </div>
+                  {form.slideMode === "catalog" ? (
+                    <p className="mb-4 -mt-2 text-[11px] text-text-disabled">
+                      Leave empty to automatically play the title&apos;s own trailer when it has one.
+                    </p>
+                  ) : null}
                   <HeroVideoField
                     videoKey={form.videoKey}
                     youtubeUrl={form.youtubeUrl}
