@@ -279,7 +279,7 @@ export function HeroFeaturedManager() {
         linkUrl: null,
         videoKey: form.videoKey || null,
         youtubeUrl: form.videoKey ? null : form.youtubeUrl.trim() || null,
-        videoEnabled: isCustom ? true : form.videoEnabled,
+        videoEnabled: isCustom ? true : (form.videoEnabled ?? true),
       };
 
       if (editingItem) {
@@ -705,7 +705,7 @@ export function HeroFeaturedManager() {
                   <label className="flex cursor-pointer items-start gap-2.5">
                     <input
                       type="checkbox"
-                      checked={form.videoEnabled}
+                      checked={form.videoEnabled ?? true}
                       onChange={(e) => {
                         const enabled = e.target.checked;
                         setForm((prev) => ({
