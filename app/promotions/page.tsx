@@ -4,13 +4,14 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AdminShell } from "../components/AdminShell";
 import { AdminSectionTabs, type AdminSectionTab } from "../components/AdminSectionTabs";
+import { FreeTodayManager } from "../components/FreeTodayManager";
 import { HeroFeaturedManager } from "../components/HeroFeaturedManager";
 import { PromotionBannerManager } from "../components/PromotionBannerManager";
 import { adminPageStackClass } from "../lib/adminUi";
-import { listAdminHeroFeatured, listAdminPromotionBanners } from "../lib/api";
+import { listAdminFreeToday, listAdminHeroFeatured, listAdminPromotionBanners } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
 
-type TabKey = "carousel" | "banners";
+type TabKey = "carousel" | "banners" | "freeToday";
 
 export default function PromotionsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("carousel");
@@ -25,6 +26,11 @@ export default function PromotionsPage() {
     queryFn: listAdminPromotionBanners,
   });
 
+  const freeTodayQuery = useQuery({
+    queryKey: queryKeys.freeToday,
+    queryFn: listAdminFreeToday,
+  });
+
   const tabs: AdminSectionTab[] = useMemo(
     () => [
       {
@@ -37,8 +43,13 @@ export default function PromotionsPage() {
         label: "Banners",
         badge: bannersQuery.data?.length ?? 0,
       },
+      {
+        key: "freeToday",
+        label: "Free today",
+        badge: freeTodayQuery.data?.length ?? 0,
+      },
     ],
-    [heroQuery.data, bannersQuery.data],
+    [heroQuery.data, bannersQuery.data, freeTodayQuery.data],
   );
 
   return (
@@ -53,8 +64,10 @@ export default function PromotionsPage() {
 
         {activeTab === "carousel" ? (
           <HeroFeaturedManager />
-        ) : (
+        ) : activeTab === "banners" ? (
           <PromotionBannerManager />
+        ) : (
+          <FreeTodayManager />
         )}
       </div>
     </AdminShell>

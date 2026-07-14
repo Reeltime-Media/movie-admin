@@ -1469,6 +1469,50 @@ export async function deleteAdminHeroFeatured(id: string): Promise<void> {
   await apiFetch<void>(`/admin/hero-featured/${id}`, { method: "DELETE" });
 }
 
+export type ApiFreeTodayItem = {
+  id: string;
+  content_id: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  content_title: string | null;
+  content_slug: string | null;
+  poster_key: string | null;
+};
+
+export async function listAdminFreeToday(): Promise<ApiFreeTodayItem[]> {
+  return apiFetch<ApiFreeTodayItem[]>("/admin/free-today");
+}
+
+export async function createAdminFreeToday(input: {
+  contentId: string;
+  sortOrder?: number;
+}): Promise<ApiFreeTodayItem> {
+  return apiFetch<ApiFreeTodayItem>("/admin/free-today", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      content_id: input.contentId,
+      sort_order: input.sortOrder ?? 0,
+    }),
+  });
+}
+
+export async function updateAdminFreeToday(
+  id: string,
+  input: { sortOrder: number },
+): Promise<ApiFreeTodayItem> {
+  return apiFetch<ApiFreeTodayItem>(`/admin/free-today/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sort_order: input.sortOrder }),
+  });
+}
+
+export async function deleteAdminFreeToday(id: string): Promise<void> {
+  await apiFetch<void>(`/admin/free-today/${id}`, { method: "DELETE" });
+}
+
 export type HeroUploadStartResponse = {
   key: string;
   upload_url: string;
