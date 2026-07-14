@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
@@ -9,6 +8,7 @@ import { AdminContentHlsPlayer } from "../components/AdminContentHlsPlayer";
 import { AdminSectionTabs } from "../components/AdminSectionTabs";
 import { AdminSourceVideoPlayer } from "../components/AdminSourceVideoPlayer";
 import { AdminSelect } from "../components/AdminSelect";
+import { Button } from "../components/ui/Button";
 import { GenreMultiSelect } from "../components/GenreMultiSelect";
 import { InlineLoading } from "../components/InlineLoading";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
@@ -209,11 +209,11 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
   if (error) {
     return (
       <AdminCard title="Edit movie">
-        <p className="text-[13px] text-warning">{error}</p>
+        <p className="text-sm text-warning">{error}</p>
         <button
           type="button"
           onClick={() => void refreshMovies()}
-          className="mt-3 text-[12px] font-bold text-brand hover:underline"
+          className="mt-3 text-xs font-bold text-brand hover:underline"
         >
           Retry
         </button>
@@ -224,13 +224,10 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
   if (!movie || !editDraft) {
     return (
       <AdminCard title="Movie not found">
-        <p className="text-[13px] text-text-muted">This movie is not in the admin catalog.</p>
-        <Link
-          href="/movie"
-          className="mt-4 inline-flex rounded-md border border-border bg-bg px-4 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-        >
+        <p className="text-sm text-text-muted">This movie is not in the admin catalog.</p>
+        <Button href="/movie" variant="secondary" className="mt-4">
           Back to movies
-        </Link>
+        </Button>
       </AdminCard>
     );
   }
@@ -251,19 +248,12 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
           bare
         />
         <div className="flex shrink-0 flex-wrap items-center gap-2 pb-2">
-          <Link
-            href={`/movie/${movie.id}`}
-            className="rounded-md border border-border bg-bg px-4 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-          >
+          <Button href={`/movie/${movie.id}`} variant="secondary" size="sm">
             Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="rounded-md bg-brand px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover disabled:opacity-60"
-          >
+          </Button>
+          <Button type="submit" size="sm" loading={isSaving}>
             {isSaving ? "Saving…" : "Save changes"}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -271,7 +261,7 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
       <div>
           <div className={tab === "overview" ? "block" : "hidden"}>
             <div className="min-h-[calc(100vh-13rem)] rounded-xl border border-border bg-surface">
-              <table className="w-full text-left text-[13px]">
+              <table className="w-full text-left text-sm">
                 <tbody className="divide-y divide-border">
                   <EditRow label="Title">
                     <input
@@ -308,7 +298,7 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                       onChange={(e) => patchDraft({ price: e.target.value })}
                       placeholder="0, Free, or 2.99"
                     />
-                    <p className="mt-1.5 text-[11px] text-text-disabled">{ADMIN_PRICE_HINT}</p>
+                    <p className="mt-1.5 text-2xs text-text-disabled">{ADMIN_PRICE_HINT}</p>
                   </EditRow>
                   <EditRow label="Rating">
                     <input
@@ -381,7 +371,7 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
             <div className="rounded-xl border border-border bg-surface p-6">
               <div className="grid gap-6 lg:grid-cols-2">
                 <div>
-                  <div className="mb-2 text-[12px] font-semibold text-text-muted">Poster</div>
+                  <div className="mb-2 text-xs font-semibold text-text-muted">Poster</div>
                   {posterPreviewUrl ? (
                     <img
                       src={posterPreviewUrl}
@@ -389,7 +379,7 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                       className="aspect-2/3 w-40 rounded-lg border border-border object-cover"
                     />
                   ) : (
-                    <div className="grid aspect-2/3 w-40 place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-[12px] text-text-muted">
+                    <div className="grid aspect-2/3 w-40 place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-xs text-text-muted">
                       No poster
                     </div>
                   )}
@@ -400,18 +390,18 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                     onChange={(e) => setEditPosterFile(pickFileFromInput(e.target.files))}
                   />
                   {editPosterFile ? (
-                    <p className="mt-2 break-all text-[11px] text-text-muted">
+                    <p className="mt-2 break-all text-2xs text-text-muted">
                       New file: {editPosterFile.name}
                     </p>
                   ) : (
-                    <p className="mt-2 break-all text-[11px] text-text-disabled">
+                    <p className="mt-2 break-all text-2xs text-text-disabled">
                       {movie.posterKey || "No poster uploaded"}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <div className="mb-2 text-[12px] font-semibold text-text-muted">Banner</div>
+                  <div className="mb-2 text-xs font-semibold text-text-muted">Banner</div>
                   {bannerPreviewUrl ? (
                     <img
                       src={bannerPreviewUrl}
@@ -419,7 +409,7 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                       className="w-full rounded-lg border border-border"
                     />
                   ) : (
-                    <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-[12px] text-text-muted">
+                    <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-xs text-text-muted">
                       No banner
                     </div>
                   )}
@@ -430,18 +420,18 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                     onChange={(e) => setEditBannerFile(pickFileFromInput(e.target.files))}
                   />
                   {editBannerFile ? (
-                    <p className="mt-2 break-all text-[11px] text-text-muted">
+                    <p className="mt-2 break-all text-2xs text-text-muted">
                       New file: {editBannerFile.name}
                     </p>
                   ) : (
-                    <p className="mt-2 break-all text-[11px] text-text-disabled">
+                    <p className="mt-2 break-all text-2xs text-text-disabled">
                       {movie.bannerKey || "No banner uploaded"}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <div className="mb-2 text-[12px] font-semibold text-text-muted">
+                  <div className="mb-2 text-xs font-semibold text-text-muted">
                     Original video (source.mp4)
                   </div>
                   {editVideoFile ? (
@@ -460,18 +450,18 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                     onChange={(e) => setEditVideoFile(pickFileFromInput(e.target.files))}
                   />
                   {editVideoFile ? (
-                    <p className="mt-2 break-all text-[11px] text-text-muted">
+                    <p className="mt-2 break-all text-2xs text-text-muted">
                       New file: {editVideoFile.name} — saving will queue a fresh transcode.
                     </p>
                   ) : (
-                    <p className="mt-2 break-all text-[11px] text-text-disabled">
+                    <p className="mt-2 break-all text-2xs text-text-disabled">
                       {movie.slug ? `movies/${movie.slug}/source.mp4` : "No source uploaded"}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <div className="mb-2 text-[12px] font-semibold text-text-muted">
+                  <div className="mb-2 text-xs font-semibold text-text-muted">
                     Stream (HLS)
                   </div>
                   <AdminContentHlsPlayer
@@ -487,19 +477,19 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                           style={{ width: `${editUploadProgress}%` }}
                         />
                       </div>
-                      <p className="mt-1 text-[11px] text-text-muted">
+                      <p className="mt-1 text-2xs text-text-muted">
                         Uploading video: {editUploadProgress}%
                       </p>
                     </div>
                   ) : (
-                    <p className="mt-2 break-all text-[11px] text-text-disabled">
+                    <p className="mt-2 break-all text-2xs text-text-disabled">
                       {movie.hlsMasterKey || "Not transcoded yet"}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <div className="mb-2 text-[12px] font-semibold text-text-muted">Trailer</div>
+                  <div className="mb-2 text-xs font-semibold text-text-muted">Trailer</div>
                   <input
                     className={`${movieEditInputClass} mb-3 font-normal`}
                     type="url"
@@ -517,17 +507,17 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                     />
                   ) : editDraft.trailerUrl ? (
                     <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center">
-                      <a
-                        href={editDraft.trailerUrl}
+                      <Button
+                        href={editDraft.trailerUrl ?? "#"}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex rounded-md bg-brand px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
+                        size="sm"
                       >
                         Open trailer
-                      </a>
+                      </Button>
                     </div>
                   ) : (
-                    <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-[12px] text-text-muted">
+                    <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-xs text-text-muted">
                       No trailer URL added.
                     </div>
                   )}
@@ -538,7 +528,7 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
       </div>
 
       {editSaveError ? (
-        <p className="text-[12px] font-semibold text-warning">{editSaveError}</p>
+        <p className="text-xs font-semibold text-warning">{editSaveError}</p>
       ) : null}
     </form>
   );

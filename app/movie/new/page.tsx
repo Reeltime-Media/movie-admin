@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../../components/AdminCard";
 import { AdminShell } from "../../components/AdminShell";
+import { Button } from "../../components/ui/Button";
 import { AdminSelect } from "../../components/AdminSelect";
 import { GenreMultiSelect } from "../../components/GenreMultiSelect";
 import { useMovieCatalog } from "../../components/MovieCatalogProvider";
@@ -26,18 +26,15 @@ import { validateMoviePublishReady } from "../../lib/moviePublish";
 import { parseRuntimeMinutesInput } from "../../lib/runtime";
 
 const textInputClass =
-  "w-full rounded-md border border-border bg-bg px-3 py-2.5 text-[13px] text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated";
+  "w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated";
 
 const selectClass =
-  "w-full rounded-md border border-border bg-bg px-3 py-2.5 text-[13px] text-text outline-none transition-colors focus:border-border-hover focus:bg-surface-elevated";
+  "w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-text outline-none transition-colors focus:border-border-hover focus:bg-surface-elevated";
 
 const fileInputClass =
-  "w-full rounded-md border border-dashed border-border bg-bg px-3 py-4 text-[12px] text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-brand file:px-3 file:py-2 file:text-[12px] file:font-bold file:text-white hover:border-border-hover";
+  "w-full rounded-lg border border-dashed border-border bg-bg px-3 py-4 text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:border-border-hover";
 
 const stepLabels = ["Details", "Assets"] as const;
-
-const draftButtonClass =
-  "rounded-md border border-border bg-surface-elevated px-4 py-2.5 text-[12px] font-bold text-text transition-colors hover:border-border-hover disabled:opacity-40";
 
 function parseStatus(s: string): Status {
   if (s === "Published" || s === "Draft" || s === "Scheduled" || s === "Review") return s;
@@ -66,9 +63,9 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[12px] font-semibold text-text-muted">{label}</span>
+      <span className="mb-1.5 block text-xs font-semibold text-text-muted">{label}</span>
       {children}
-      {hint ? <span className="mt-1.5 block text-[11px] text-text-disabled">{hint}</span> : null}
+      {hint ? <span className="mt-1.5 block text-2xs text-text-disabled">{hint}</span> : null}
     </label>
   );
 }
@@ -385,16 +382,13 @@ export default function NewMoviePage() {
   return (
     <AdminShell title="Upload new movie">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <p className="max-w-[72ch] text-[13px] leading-relaxed text-text-muted">
+        <p className="max-w-[72ch] text-sm leading-relaxed text-text-muted">
           Enter movie details and publishing settings, then upload the video directly to storage
           before transcoding starts. You can save a draft at any step and finish the video later.
         </p>
-        <Link
-          href="/movie"
-          className="shrink-0 rounded-md border border-border bg-surface px-3 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-        >
+        <Button href="/movie" variant="secondary" size="sm" className="shrink-0">
           Back to movies
-        </Link>
+        </Button>
       </div>
 
       <div className="mb-8 flex flex-wrap items-center gap-2">
@@ -404,11 +398,11 @@ export default function NewMoviePage() {
           return (
             <div key={label} className="flex items-center gap-2">
               {i > 0 ? (
-                <span className="text-[12px] font-bold text-text-disabled" aria-hidden>/</span>
+                <span className="text-xs font-bold text-text-disabled" aria-hidden>/</span>
               ) : null}
               <span
                 className={[
-                  "rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-widest",
+                  "rounded-full px-3 py-1 text-2xs font-bold uppercase tracking-widest",
                   active ? "bg-brand text-white" : done ? "bg-success/15 text-success" : "bg-surface text-text-muted",
                 ].join(" ")}
               >
@@ -429,11 +423,11 @@ export default function NewMoviePage() {
 
               <div>
                 <div className="mb-1.5 flex items-center justify-between gap-2">
-                  <span className="text-[12px] font-semibold text-text-muted">Genres</span>
+                  <span className="text-xs font-semibold text-text-muted">Genres</span>
                   <button
                     type="button"
                     onClick={() => { setShowNewGenre((v) => !v); setNewGenreName(""); }}
-                    className="flex items-center gap-1 rounded-md border border-border bg-surface-elevated px-2 py-1 text-[11px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
+                    className="flex items-center gap-1 rounded-lg border border-border bg-surface-elevated px-2 py-1 text-2xs font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
                   >
                     <svg className="h-3 w-3" viewBox="0 0 12 12" fill="currentColor" aria-hidden><path d="M6.5 1.5a.5.5 0 0 0-1 0V5.5H1.5a.5.5 0 0 0 0 1H5.5v4a.5.5 0 0 0 1 0V6.5h4a.5.5 0 0 0 0-1H6.5V1.5Z"/></svg>
                     New genre
@@ -450,18 +444,19 @@ export default function NewMoviePage() {
                       className={textInputClass}
                       autoFocus
                     />
-                    <button
+                    <Button
                       type="button"
+                      size="sm"
+                      className="shrink-0"
                       onClick={() => void handleAddGenre()}
                       disabled={createGenreMutation.isPending || !newGenreName.trim()}
-                      className="shrink-0 rounded-md bg-brand px-3 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover disabled:opacity-40"
                     >
                       {createGenreMutation.isPending ? "Adding…" : "Add"}
-                    </button>
+                    </Button>
                   </div>
                 ) : null}
                 <GenreMultiSelect selected={genres} onChange={setGenres} options={genreOptions} onDeleteGenre={handleDeleteGenre} />
-                <p className="mt-1.5 text-[11px] text-text-disabled">
+                <p className="mt-1.5 text-2xs text-text-disabled">
                   Required for upload. Optional when saving a draft.
                 </p>
               </div>
@@ -530,38 +525,31 @@ export default function NewMoviePage() {
             </div>
 
             {detailsError ? (
-              <p className="mt-4 text-[12px] font-semibold text-warning">{detailsError}</p>
+              <p className="mt-4 text-xs font-semibold text-warning">{detailsError}</p>
             ) : null}
 
             <div className="mt-6 flex flex-wrap justify-end gap-2">
-              <Link
-                href="/movie"
-                className="rounded-md border border-border bg-bg px-4 py-2.5 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-              >
+              <Button href="/movie" variant="secondary">
                 Cancel
-              </Link>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={handleSaveDraftClick}
                 disabled={isSubmitting}
-                className={draftButtonClass}
               >
                 {isSubmitting ? "Saving…" : "Save draft"}
-              </button>
-              <button
-                type="button"
-                onClick={continueFromDetails}
-                className="rounded-md bg-brand px-4 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
-              >
+              </Button>
+              <Button type="button" onClick={continueFromDetails}>
                 Continue
-              </button>
+              </Button>
             </div>
           </AdminCard>
         </div>
 
         <div className={step === 1 ? "block" : "hidden"} aria-hidden={step !== 1}>
           <AdminCard title="Upload assets">
-            <p className="mb-5 text-[13px] text-text-muted">
+            <p className="mb-5 text-sm text-text-muted">
               Attach poster, banner, and main video. The video is sent directly to R2, then the API
               queues transcoding. Save draft without a video to finish uploading later from the movie
               list.
@@ -588,11 +576,11 @@ export default function NewMoviePage() {
             </div>
 
             {submitError ? (
-              <p className="mt-4 text-[12px] font-semibold text-warning">{submitError}</p>
+              <p className="mt-4 text-xs font-semibold text-warning">{submitError}</p>
             ) : null}
             {currentJob && currentJob.status !== "done" ? (
-              <div className="mt-4 rounded-md border border-border bg-bg p-3">
-                <div className="mb-2 flex items-center justify-between text-[12px] font-semibold text-text-muted">
+              <div className="mt-4 rounded-lg border border-border bg-bg p-3">
+                <div className="mb-2 flex items-center justify-between text-xs font-semibold text-text-muted">
                   <span>{currentJob.label}</span>
                   <span className="tabular-nums">{currentJob.percent}%</span>
                 </div>
@@ -603,34 +591,26 @@ export default function NewMoviePage() {
                   />
                 </div>
                 {currentJob.status === "error" && currentJob.errorMsg ? (
-                  <p className="mt-1 text-[11px] text-danger">{currentJob.errorMsg}</p>
+                  <p className="mt-1 text-2xs text-danger">{currentJob.errorMsg}</p>
                 ) : null}
               </div>
             ) : null}
 
             <div className="mt-6 flex flex-wrap justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setStep(0)}
-                className="rounded-md border border-border bg-bg px-4 py-2.5 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-              >
+              <Button type="button" variant="secondary" onClick={() => setStep(0)}>
                 Back
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={handleSaveDraftClick}
                 disabled={isSubmitting}
-                className={draftButtonClass}
               >
                 {isSubmitting ? "Saving…" : "Save draft"}
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting || step !== 1}
-                className="rounded-md bg-brand px-4 py-2.5 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover disabled:opacity-40"
-              >
+              </Button>
+              <Button type="submit" loading={isSubmitting} disabled={isSubmitting || step !== 1}>
                 {isSubmitting ? "Uploading…" : "Upload"}
-              </button>
+              </Button>
             </div>
           </AdminCard>
         </div>

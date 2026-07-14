@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { AdminCard } from "../../components/AdminCard";
+import { Button } from "../../components/ui/Button";
 import { AdminSectionTabs } from "../../components/AdminSectionTabs";
 import { InlineLoading } from "../../components/InlineLoading";
 import { statusClasses } from "../../lib/adminData";
@@ -49,7 +49,7 @@ export function MovieDetail({ movieId }: { movieId: string }) {
 
   if (error) {
     return (
-      <div className="rounded-md border border-warning/30 bg-warning/10 p-4 text-[13px] text-warning">
+      <div className="rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm text-warning">
         <p>{error}</p>
         <button
           type="button"
@@ -65,15 +65,12 @@ export function MovieDetail({ movieId }: { movieId: string }) {
   if (!movie) {
     return (
       <AdminCard title="Movie not found">
-        <p className="text-[13px] text-text-muted">
+        <p className="text-sm text-text-muted">
           This movie is not in the current admin catalog.
         </p>
-        <Link
-          href="/movie"
-          className="mt-4 inline-flex rounded-md border border-border bg-bg px-4 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-        >
+        <Button href="/movie" variant="secondary" className="mt-4">
           Back to movie management
-        </Link>
+        </Button>
       </AdminCard>
     );
   }
@@ -95,12 +92,9 @@ export function MovieDetail({ movieId }: { movieId: string }) {
           bare
         />
         <div className="flex shrink-0 flex-wrap items-center gap-2 pb-2">
-          <Link
-            href={`/movie/${movie.id}/edit`}
-            className="rounded-md bg-brand px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
-          >
+          <Button href={`/movie/${movie.id}/edit`} size="sm">
             Edit movie
-          </Link>
+          </Button>
         </div>
       </div>
 
@@ -108,7 +102,7 @@ export function MovieDetail({ movieId }: { movieId: string }) {
       <div>
           {tab === "overview" ? (
             <div className="min-h-[calc(100vh-13rem)] overflow-hidden rounded-xl border border-border bg-surface">
-              <table className="w-full text-left text-[13px]">
+              <table className="w-full text-left text-sm">
                 <tbody className="divide-y divide-border">
                   <InfoRow label="Title" value={movie.title} />
                   <tr>
@@ -151,7 +145,7 @@ export function MovieDetail({ movieId }: { movieId: string }) {
             <div className="rounded-xl border border-border bg-surface p-6">
               <div className="grid gap-6 lg:grid-cols-2">
                 <div>
-                  <div className="mb-2 text-[12px] font-semibold text-text-muted">Poster</div>
+                  <div className="mb-2 text-xs font-semibold text-text-muted">Poster</div>
                   {movie.posterUrl ? (
                     <img
                       src={movie.posterUrl}
@@ -159,14 +153,14 @@ export function MovieDetail({ movieId }: { movieId: string }) {
                       className="aspect-2/3 w-40 rounded-lg border border-border object-cover"
                     />
                   ) : (
-                    <div className="grid aspect-2/3 w-40 place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-[12px] text-text-muted">
+                    <div className="grid aspect-2/3 w-40 place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-xs text-text-muted">
                       No poster
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <div className="mb-2 text-[12px] font-semibold text-text-muted">Banner</div>
+                  <div className="mb-2 text-xs font-semibold text-text-muted">Banner</div>
                   {movie.bannerUrl ? (
                     <img
                       src={movie.bannerUrl}
@@ -174,21 +168,21 @@ export function MovieDetail({ movieId }: { movieId: string }) {
                       className="w-full rounded-lg border border-border"
                     />
                   ) : (
-                    <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-[12px] text-text-muted">
+                    <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-xs text-text-muted">
                       No banner
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <div className="mb-2 text-[12px] font-semibold text-text-muted">
+                  <div className="mb-2 text-xs font-semibold text-text-muted">
                     Original video (source.mp4)
                   </div>
                   <AdminSourceVideoPlayer contentId={movie.id} title={movie.title} />
                 </div>
 
                 <div>
-                  <div className="mb-2 text-[12px] font-semibold text-text-muted">
+                  <div className="mb-2 text-xs font-semibold text-text-muted">
                     Stream (HLS)
                   </div>
                   <AdminContentHlsPlayer
@@ -199,7 +193,7 @@ export function MovieDetail({ movieId }: { movieId: string }) {
                 </div>
 
                 <div>
-                  <div className="mb-2 text-[12px] font-semibold text-text-muted">Trailer</div>
+                  <div className="mb-2 text-xs font-semibold text-text-muted">Trailer</div>
                   {trailerEmbedUrl ? (
                     <iframe
                       className="aspect-video w-full rounded-lg border border-border bg-black"
@@ -210,17 +204,17 @@ export function MovieDetail({ movieId }: { movieId: string }) {
                     />
                   ) : movie.trailerUrl ? (
                     <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center">
-                      <a
-                        href={movie.trailerUrl}
+                      <Button
+                        href={movie.trailerUrl ?? "#"}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex rounded-md bg-brand px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover"
+                        size="sm"
                       >
                         Open trailer
-                      </a>
+                      </Button>
                     </div>
                   ) : (
-                    <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-[12px] text-text-muted">
+                    <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-xs text-text-muted">
                       No trailer URL added.
                     </div>
                   )}
