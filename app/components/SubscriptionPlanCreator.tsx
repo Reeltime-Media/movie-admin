@@ -175,6 +175,7 @@ export function SubscriptionPlanCreator() {
     <AdminCard
       title="Subscription plans"
       action="Add plan"
+      actionIcon="plus"
       actionOnClick={openCreateForm}
     >
       <p className="mb-4 text-sm leading-relaxed text-text-muted">

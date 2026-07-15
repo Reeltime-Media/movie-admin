@@ -59,12 +59,13 @@ export type CatalogEntry = {
 };
 
 export function statusClasses(status: Status) {
-  const base = "rounded-full px-2 py-1 text-2xs font-bold uppercase tracking-[0.08em]";
+  const base =
+    "inline-flex items-center rounded-md px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-[0.1em] ring-1 ring-inset";
   const tones = {
-    Published: "bg-success/15 text-success",
-    Draft: "bg-text-disabled/25 text-text-muted",
-    Scheduled: "bg-brand/15 text-brand",
-    Review: "bg-warning/15 text-warning",
+    Published: "bg-success/10 text-success ring-success/25",
+    Draft: "bg-text-disabled/10 text-text-muted ring-text-disabled/25",
+    Scheduled: "bg-brand/10 text-brand ring-brand/30",
+    Review: "bg-warning/10 text-warning ring-warning/25",
   };
 
   return `${base} ${tones[status]}`;

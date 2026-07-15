@@ -10,12 +10,17 @@ export function AdminStatCard({
   hintClassName?: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-      <div className="text-xs font-semibold text-text-muted">{label}</div>
-      <div className="mt-2 text-stat font-extrabold tracking-[-0.03em] text-text">{value}</div>
-      {hint ? (
-        <div className={`mt-1 text-xs font-medium ${hintClassName}`}>{hint}</div>
-      ) : null}
+    <div className="group relative overflow-hidden rounded-xl border border-border bg-surface p-5 transition-colors hover:border-border-hover">
+      {/* Hairline of brand light along the top edge, revealed on hover. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-brand/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="text-2xs font-semibold uppercase tracking-[0.16em] text-text-disabled">
+        {label}
+      </div>
+      {/* Sans, not mono: at display size a monospace comma gets its own cell ("18 , 432"). */}
+      <div className="mt-3 text-stat font-semibold tracking-[-0.02em] text-text tabular-nums">
+        {value}
+      </div>
+      {hint ? <div className={`mt-1.5 text-xs font-medium ${hintClassName}`}>{hint}</div> : null}
     </div>
   );
 }

@@ -2,13 +2,13 @@ export const adminPageStackClass = "space-y-6";
 
 export const adminStatGridClass = "grid gap-4 sm:grid-cols-2 xl:grid-cols-4";
 
-export const adminStatCardClass = "rounded-xl border border-border bg-surface p-5 shadow-sm";
+export const adminStatCardClass = "rounded-xl border border-border bg-surface p-5";
 
 export const adminLabelClass =
-  "mb-1.5 block text-2xs font-bold uppercase tracking-[0.12em] text-text-disabled";
+  "mb-1.5 block text-2xs font-semibold uppercase tracking-[0.16em] text-text-disabled";
 
 export const adminInputClass =
-  "w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated";
+  "w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-text outline-none transition-colors placeholder:text-text-disabled hover:border-border-hover focus:border-brand/60 focus:bg-surface";
 
 export const adminFilterBarClass =
   "mb-5 flex flex-col gap-3 border-b border-border pb-5";
@@ -18,30 +18,29 @@ export const adminTableWrapClass = "overflow-x-auto";
 export const adminTableClass = "w-full min-w-[720px] text-left text-sm";
 
 export const adminTableHeadRowClass =
-  "border-b border-border text-2xs uppercase tracking-[0.12em] text-text-disabled";
+  "border-b border-border text-2xs font-semibold uppercase tracking-[0.16em] text-text-disabled";
 
-export const adminThClass = "px-5 pb-3 font-bold";
+export const adminThClass = "px-5 pb-2.5 pt-1 font-semibold";
 
-export const adminTdClass = "px-5 py-3.5";
+export const adminTdClass = "px-5 py-3";
 
 /** Table body row: subtle divider + hover for scannability. */
-export const adminTrClass =
-  "border-b border-border/70 transition-colors hover:bg-surface-elevated/60";
+export const adminTrClass = "border-b border-border/60 transition-colors hover:bg-surface-elevated";
 
-/** Numeric/amount table cell: right-aligned, tabular figures. */
-export const adminTdNumClass = "px-5 py-3.5 text-right tabular-nums";
+/** Numeric/amount table cell: right-aligned, mono figures line up. */
+export const adminTdNumClass = "px-5 py-3 text-right font-mono tabular-nums";
 
 export const adminBadgeBase =
-  "inline-flex rounded-full px-2 py-1 text-2xs font-bold uppercase tracking-[0.08em]";
+  "inline-flex items-center rounded-md px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-[0.1em]";
 
 export type AdminBadgeTone = "success" | "warning" | "danger" | "brand" | "muted";
 
 const badgeToneClass: Record<AdminBadgeTone, string> = {
-  success: "bg-success/15 text-success",
-  warning: "bg-warning/15 text-warning",
-  danger: "bg-danger/15 text-danger",
-  brand: "bg-brand/15 text-brand",
-  muted: "bg-text-disabled/20 text-text-muted",
+  success: "bg-success/10 text-success ring-1 ring-inset ring-success/25",
+  warning: "bg-warning/10 text-warning ring-1 ring-inset ring-warning/25",
+  danger: "bg-danger/10 text-danger ring-1 ring-inset ring-danger/25",
+  brand: "bg-brand/10 text-brand ring-1 ring-inset ring-brand/30",
+  muted: "bg-text-disabled/10 text-text-muted ring-1 ring-inset ring-text-disabled/25",
 };
 
 export function adminBadgeClass(tone: AdminBadgeTone) {

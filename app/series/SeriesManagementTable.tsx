@@ -102,7 +102,7 @@ export function SeriesManagementTable({
                       <div className="flex flex-wrap justify-end gap-2">
                         <Button
                           href={`/series/${item.id}/edit`}
-                          variant="secondary"
+                          variant="ghost"
                           size="sm"
                           onClick={(e) => e.stopPropagation()}
                         >

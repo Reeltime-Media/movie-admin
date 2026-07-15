@@ -1,6 +1,43 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────────
+   Reeltime Admin — dark OLED console
+   Deep near-black canvas, layered elevation, brand red as the
+   single accent. Light theme retained as an opt-in override.
+   ───────────────────────────────────────────────────────────── */
+
 :root {
+  color-scheme: dark;
+
+  /* Canvas → elevated surfaces. Each step is a real elevation level. */
+  --rt-bg: #08080c;
+  --rt-surface: #0e0e14;
+  --rt-surface-elevated: #16161f;
+  --rt-surface-soft: #0b0b11;
+
+  /* Hairlines. Low-contrast by design; hover lifts them. */
+  --rt-border: #22222e;
+  --rt-border-hover: #33334a;
+
+  --rt-text: #f4f4f7;
+  --rt-text-muted: #9a9aae;
+  --rt-text-disabled: #5c5c73;
+
+  --rt-brand: #e50914;
+  --rt-brand-hover: #ff1f2d;
+  --rt-brand-soft: rgba(229, 9, 20, 0.14);
+
+  --rt-success: #2ee06a;
+  --rt-warning: #f5a524;
+  --rt-danger: #ff4d4f;
+
+  --background: var(--rt-bg);
+  --foreground: var(--rt-text);
+
+  --toastify-toast-shadow: none;
+}
+
+:root[data-theme="light"] {
   color-scheme: light;
 
   --rt-bg: #f3f6fb;
@@ -12,17 +49,9 @@
   --rt-text: #0f172a;
   --rt-text-muted: #475569;
   --rt-text-disabled: #94a3b8;
-  --rt-brand: #e50914;
-  --rt-brand-hover: #f40612;
-  --rt-brand-soft: rgba(229, 9, 20, 0.12);
-  --rt-success: #22c55e;
-  --rt-warning: #f59e0b;
-  --rt-danger: #ef4444;
-
-  --background: var(--rt-bg);
-  --foreground: var(--rt-text);
-
-  --toastify-toast-shadow: none;
+  --rt-success: #16a34a;
+  --rt-warning: #d97706;
+  --rt-danger: #dc2626;
 }
 
 @keyframes slide {
@@ -49,9 +78,11 @@
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-fira-sans);
+  --font-mono: var(--font-fira-code);
 }
 
+/* Dense console type scale. */
 @theme {
   --text-2xs: 11px;
   --text-2xs--line-height: 1.45;
@@ -74,11 +105,18 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  min-height: 100vh;
+  /* Two faint pools of light so the OLED canvas reads as a surface, not a void. */
+  background-image:
+    radial-gradient(900px 480px at 12% -8%, rgba(229, 9, 20, 0.07), transparent 60%),
+    radial-gradient(760px 420px at 92% -12%, rgba(99, 102, 241, 0.06), transparent 62%);
+  background-attachment: fixed;
+}
+
+:root[data-theme="light"] body {
   background-image:
     radial-gradient(1200px 600px at 15% -10%, rgba(59, 130, 246, 0.12), transparent 55%),
-    radial-gradient(900px 500px at 90% -15%, rgba(229, 9, 20, 0.1), transparent 58%),
-    linear-gradient(180deg, #f9fbff 0%, #f3f6fb 45%, #eef3f9 100%);
-  min-height: 100vh;
+    radial-gradient(900px 500px at 90% -15%, rgba(229, 9, 20, 0.1), transparent 58%);
 }
 
 * {
@@ -104,6 +142,17 @@ textarea:focus-visible {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--rt-brand) 35%, transparent);
+  background: color-mix(in srgb, var(--rt-brand) 40%, transparent);
   color: #ffffff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

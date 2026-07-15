@@ -36,7 +36,7 @@ function periodDescription(
     if (hasCustomRange) {
       return formatRangeLabel(timeline.date_from, timeline.date_to);
     }
-    return `${formatRangeLabel(timeline.date_from, timeline.date_to)} (${timeline.days} days)`;
+    return `${formatRangeLabel(timeline.date_from, timeline.date_to)} (${timeline.days ?? days} days)`;
   }
   return `Last ${timeline?.days ?? days} days`;
 }

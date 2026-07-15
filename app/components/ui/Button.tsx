@@ -8,22 +8,22 @@ type Variant = "primary" | "secondary" | "ghost" | "danger" | "danger-soft";
 type Size = "sm" | "md";
 
 const base =
-  "inline-flex items-center justify-center gap-1.5 rounded-lg font-bold transition-all duration-200 ease-out disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg font-medium transition-all duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-45";
 
 const sizeClass: Record<Size, string> = {
-  sm: "px-3 py-1.5 text-xs",
-  md: "px-4 py-2.5 text-sm",
+  sm: "h-7 px-2.5 text-xs",
+  md: "h-9 px-3.5 text-sm",
 };
 
 const variantClass: Record<Variant, string> = {
   primary:
-    "bg-brand text-white shadow-[0_1px_3px_rgba(229,9,20,0.25),0_0_0_1px_rgba(229,9,20,0.08)] hover:bg-brand-hover hover:shadow-[0_2px_8px_rgba(229,9,20,0.35),0_0_0_1px_rgba(229,9,20,0.12)] active:scale-[0.98] active:shadow-none disabled:shadow-none",
+    "bg-brand font-semibold text-white shadow-[0_0_0_1px_rgba(229,9,20,0.5),0_1px_12px_-2px_rgba(229,9,20,0.5)] hover:bg-brand-hover hover:shadow-[0_0_0_1px_rgba(255,31,45,0.6),0_2px_18px_-2px_rgba(229,9,20,0.7)] active:translate-y-px disabled:shadow-none",
   secondary:
-    "border border-border bg-surface text-text-muted hover:border-border-hover hover:bg-surface-elevated hover:text-text",
+    "border border-border bg-surface-elevated text-text hover:border-border-hover hover:bg-border/60",
   ghost: "text-text-muted hover:bg-surface-elevated hover:text-text",
-  danger: "bg-danger text-white hover:bg-danger/90 active:scale-[0.98]",
-  "danger-soft":
-    "border border-danger/40 bg-danger/10 text-danger hover:border-danger/55 hover:bg-danger/15",
+  danger: "bg-danger font-semibold text-white hover:brightness-110 active:translate-y-px",
+  // Quiet until intent: a destructive row action shouldn't out-shout the data.
+  "danger-soft": "text-text-muted hover:bg-danger/10 hover:text-danger",
 };
 
 function content(loading: boolean, icon: ReactNode | undefined, children: ReactNode) {
