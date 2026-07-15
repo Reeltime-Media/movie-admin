@@ -31,7 +31,7 @@ export const adminTrClass = "border-b border-border/60 transition-colors hover:b
 export const adminTdNumClass = "px-5 py-3 text-right font-mono tabular-nums";
 
 export const adminBadgeBase =
-  "inline-flex items-center rounded-md px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-[0.1em]";
+  "inline-flex items-center rounded-lg px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-[0.1em]";
 
 export type AdminBadgeTone = "success" | "warning" | "danger" | "brand" | "muted";
 

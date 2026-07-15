@@ -62,7 +62,7 @@ function Wordmark({ onNavigate }: { onNavigate?: () => void }) {
         R
       </div>
       <div className="leading-none">
-        <div className="text-[13px] font-bold tracking-[0.14em] text-text">REELTIME</div>
+        <div className="text-sm font-bold tracking-[0.14em] text-text">REELTIME</div>
         <div className="mt-1 text-2xs font-medium tracking-wide text-text-disabled">
           Admin console
         </div>

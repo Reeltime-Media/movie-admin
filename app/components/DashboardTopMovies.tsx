@@ -77,8 +77,8 @@ export function DashboardTopMovies() {
                   >
                     <td className="px-5 py-2.5 font-bold tabular-nums text-brand">{rank}</td>
                     <td className="px-5 py-2.5 font-semibold text-text">{movie.title}</td>
-                    <td className="px-5 py-2.5 text-right tabular-nums text-text-muted">
-                      {movie.purchase_count}
+                    <td className="px-5 py-2.5 text-right font-mono tabular-nums text-text-muted">
+                      {movie.purchase_count.toLocaleString()}
                     </td>
                   </tr>
                 );

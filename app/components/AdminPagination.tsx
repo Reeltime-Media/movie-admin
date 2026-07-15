@@ -49,8 +49,11 @@ export function AdminPagination({
         .join(" ")}
     >
       <p className="text-xs text-text-muted">
-        Showing <span className="font-semibold text-text">{start}–{end}</span> of{" "}
-        <span className="font-semibold text-text">{total}</span>
+        Showing{" "}
+        <span className="font-semibold tabular-nums text-text">
+          {start.toLocaleString()}–{end.toLocaleString()}
+        </span>{" "}
+        of <span className="font-semibold tabular-nums text-text">{total.toLocaleString()}</span>
       </p>
       <div className="flex items-center gap-2">
         <button

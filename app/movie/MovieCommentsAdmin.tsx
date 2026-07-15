@@ -176,7 +176,7 @@ export function MovieCommentsAdmin({ contentId, embedded = false }: MovieComment
                   {!isEditing && (
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="ghost"
                       size="sm"
                       disabled={isBusy}
                       onClick={() => startEdit(comment)}

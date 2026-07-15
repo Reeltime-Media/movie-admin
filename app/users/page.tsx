@@ -79,12 +79,12 @@ export default function UsersPage() {
   const stats = [
     {
       label: "Total users",
-      value: (summary?.users.total ?? total).toString(),
+      value: (summary?.users.total ?? total).toLocaleString(),
       hint: "All accounts in the platform.",
     },
     {
       label: "Active users",
-      value: summary?.users.active != null ? String(summary.users.active) : "--",
+      value: summary?.users.active != null ? summary.users.active.toLocaleString() : "--",
       hint: "Users currently marked active.",
     },
   ];
@@ -147,7 +147,7 @@ export default function UsersPage() {
                           <div className="flex flex-wrap justify-end gap-2">
                             <Button
                               type="button"
-                              variant="secondary"
+                              variant="ghost"
                               size="sm"
                               disabled={busyId === user.id}
                               onClick={() => void handleToggleActive(user)}

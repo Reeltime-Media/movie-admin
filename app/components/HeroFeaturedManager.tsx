@@ -21,6 +21,7 @@ import {
   type ApiSeries,
 } from "../lib/api";
 import { Button } from "./ui/Button";
+import { adminBadgeClass } from "../lib/adminUi";
 import { mediaUrl } from "../lib/media";
 import { queryKeys } from "../lib/queryKeys";
 
@@ -413,9 +414,7 @@ export function HeroFeaturedManager() {
                         {item.is_active ? "Active" : "Inactive"}
                       </span>
                       {(item.video_key || item.youtube_url) ? (
-                        <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-blue-600">
-                          Video
-                        </span>
+                        <span className={adminBadgeClass("brand")}>Video</span>
                       ) : null}
                       {item.content_type !== "custom" && item.video_enabled === false ? (
                         <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-text-muted">
@@ -431,7 +430,7 @@ export function HeroFeaturedManager() {
                   <div className="flex shrink-0 gap-2">
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="ghost"
                       size="sm"
                       onClick={() => openEditForm(item)}
                       disabled={isSaving}
@@ -662,14 +661,8 @@ export function HeroFeaturedManager() {
                                 : "hover:bg-surface-elevated",
                             ].join(" ")}
                           >
-                            <span
-                              className={[
-                                "shrink-0 rounded-lg px-2 py-0.5 text-2xs font-bold uppercase tracking-wider",
-                                entry.contentType === "movie"
-                                  ? "bg-blue-500/10 text-blue-600"
-                                  : "bg-violet-500/10 text-violet-600",
-                              ].join(" ")}
-                            >
+                            {/* Type is a neutral chip; colour is reserved for status + brand. */}
+                            <span className={`shrink-0 ${adminBadgeClass("muted")}`}>
                               {entry.contentType === "movie" ? "Movie" : "Series"}
                             </span>
                             <span className="min-w-0 flex-1 truncate text-sm font-medium text-text">

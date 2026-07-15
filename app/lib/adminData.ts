@@ -60,7 +60,7 @@ export type CatalogEntry = {
 
 export function statusClasses(status: Status) {
   const base =
-    "inline-flex items-center rounded-md px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-[0.1em] ring-1 ring-inset";
+    "inline-flex items-center rounded-lg px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-[0.1em] ring-1 ring-inset";
   const tones = {
     Published: "bg-success/10 text-success ring-success/25",
     Draft: "bg-text-disabled/10 text-text-muted ring-text-disabled/25",

@@ -237,7 +237,7 @@ export function SubscriptionPlanCreator() {
                   <div className="flex shrink-0 gap-2">
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="ghost"
                       size="sm"
                       onClick={() => openEditForm(plan)}
                       disabled={isSaving}

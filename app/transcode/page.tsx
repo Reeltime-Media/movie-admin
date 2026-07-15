@@ -379,7 +379,7 @@ export default function TranscodePage() {
                       {job.status === "failed" && (
                         <Button
                           type="button"
-                          variant="secondary"
+                          variant="ghost"
                           size="sm"
                           disabled={retryingIds.has(job.id)}
                           onClick={() => handleRetry(job)}
