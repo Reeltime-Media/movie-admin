@@ -54,6 +54,7 @@ export function apiContentToCatalogEntry(content: ApiContent): CatalogEntry {
         : "Free",
     views: formatWatchers(content.watch_count ?? 0),
     watchCount: content.watch_count ?? 0,
+    purchaseCount: content.purchase_count,
     rating: content.rating ?? "-",
     status: toStatus(content.status),
     genre: formatGenres(content.genres),

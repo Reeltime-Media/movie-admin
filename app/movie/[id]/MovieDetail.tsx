@@ -121,6 +121,12 @@ export function MovieDetail({ movieId }: { movieId: string }) {
                   <InfoRow label="Price" value={movie.price} />
                   <InfoRow label="Rating" value={movie.rating} />
                   <InfoRow label="Watchers" value={(movie.watchCount ?? 0).toLocaleString()} />
+                  <InfoRow
+                    label="Purchases"
+                    value={
+                      movie.purchaseCount != null ? movie.purchaseCount.toLocaleString() : "—"
+                    }
+                  />
                   <InfoRow label="Runtime" value={movie.runtime} />
                   <InfoRow label="Release year" value={movie.releaseYear} />
                   <InfoRow label="Transcode" value={movie.transcodeStatus} />

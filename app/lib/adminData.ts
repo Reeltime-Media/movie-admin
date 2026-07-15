@@ -52,6 +52,8 @@ export type CatalogEntry = {
   trailerUrl?: string | null;
   transcodeStatus?: string;
   watchCount?: number;
+  /** Undefined when the API predates purchase_count — render as "—", not 0. */
+  purchaseCount?: number;
   createdAt?: string;
   updatedAt?: string;
   seasons: Season[];

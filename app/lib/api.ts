@@ -115,6 +115,8 @@ export type ApiContent = {
   is_published: boolean;
   transcode_status: string;
   watch_count: number;
+  /** Optional: only present once movie-api ships purchase_count on AdminContentRead. */
+  purchase_count?: number;
   created_at: string;
   updated_at: string;
 };
