@@ -11,6 +11,7 @@ import { AdminPagination } from "../components/AdminPagination";
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from "../components/AdminTable";
 import { InlineLoading } from "../components/InlineLoading";
 import { AdminShell } from "../components/AdminShell";
+import { Button } from "../components/ui/Button";
 import { adminBadgeClass, adminTdClass, adminUnderlineTabClass } from "../lib/adminUi";
 import { useTranscodeJobs } from "../hooks/adminQueries";
 import {
@@ -115,7 +116,7 @@ function ProgressBar({ pct, status }: { pct: number; status: string }) {
           />
         )}
       </div>
-      <span className="w-7 shrink-0 text-right text-[10px] tabular-nums font-semibold text-brand">
+      <span className="w-7 shrink-0 text-right text-2xs tabular-nums font-semibold text-brand">
         {indeterminate ? "…" : `${pct}%`}
       </span>
     </div>
@@ -230,7 +231,7 @@ export default function TranscodePage() {
                   : "border-border bg-surface hover:border-border-hover",
               ].join(" ")}
             >
-              <div className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+              <div className="text-2xs font-bold uppercase tracking-widest text-text-muted">
                 {key === "running" ? "Processing" : key}
               </div>
               <div
@@ -323,19 +324,19 @@ export default function TranscodePage() {
                         </span>
                       )}
                       {job.content_slug ? (
-                        <span className="mt-0.5 block font-mono text-[10px] text-text-muted">
+                        <span className="mt-0.5 block font-mono text-2xs text-text-muted">
                           {job.content_slug}
                         </span>
                       ) : (
                         <span
-                          className="mt-0.5 block font-mono text-[10px] text-text-muted"
+                          className="mt-0.5 block font-mono text-2xs text-text-muted"
                           title={job.content_id}
                         >
                           {shortId(job.content_id)}
                         </span>
                       )}
                     </td>
-                    <td className={`${adminTdClass} font-mono text-[11px] text-text-muted`} title={job.id}>
+                    <td className={`${adminTdClass} font-mono text-2xs text-text-muted`} title={job.id}>
                       {shortId(job.id)}
                     </td>
                     <td className={adminTdClass}>
@@ -348,15 +349,15 @@ export default function TranscodePage() {
                       />
                     </td>
                     <td className={`${adminTdClass} tabular-nums text-text-muted`}>{job.attempts}</td>
-                    <td className={`${adminTdClass} text-[12px] text-text-muted whitespace-nowrap`}>
+                    <td className={`${adminTdClass} text-xs text-text-muted whitespace-nowrap`}>
                       {formatDate(job.started_at)}
                     </td>
-                    <td className={`${adminTdClass} text-[12px] text-text-muted whitespace-nowrap`}>
+                    <td className={`${adminTdClass} text-xs text-text-muted whitespace-nowrap`}>
                       {formatDate(job.finished_at)}
                     </td>
                     <td className={`${adminTdClass} max-w-xs`}>
                       {job.error ? (
-                        <span className="text-[11px] text-danger line-clamp-2" title={job.error}>
+                        <span className="text-2xs text-danger line-clamp-2" title={job.error}>
                           {job.error}
                         </span>
                       ) : (
@@ -365,24 +366,26 @@ export default function TranscodePage() {
                     </td>
                     <td className={`${adminTdClass} text-right`}>
                       {job.status === "running" && (
-                        <button
+                        <Button
                           type="button"
+                          variant="danger-soft"
+                          size="sm"
                           disabled={stoppingIds.has(job.id)}
                           onClick={() => handleStop(job)}
-                          className="rounded border border-danger/40 bg-danger/10 px-2.5 py-1 text-[11px] font-semibold text-danger transition-colors hover:border-danger/70 hover:bg-danger/20 disabled:opacity-50"
                         >
                           {stoppingIds.has(job.id) ? "Stopping…" : "Stop"}
-                        </button>
+                        </Button>
                       )}
                       {job.status === "failed" && (
-                        <button
+                        <Button
                           type="button"
+                          variant="secondary"
+                          size="sm"
                           disabled={retryingIds.has(job.id)}
                           onClick={() => handleRetry(job)}
-                          className="rounded border border-border px-2.5 py-1 text-[11px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text disabled:opacity-50"
                         >
                           {retryingIds.has(job.id) ? "Retrying…" : "Retry"}
-                        </button>
+                        </Button>
                       )}
                     </td>
                   </tr>

@@ -59,7 +59,7 @@ export type CatalogEntry = {
 };
 
 export function statusClasses(status: Status) {
-  const base = "rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em]";
+  const base = "rounded-full px-2 py-1 text-2xs font-bold uppercase tracking-[0.08em]";
   const tones = {
     Published: "bg-success/15 text-success",
     Draft: "bg-text-disabled/25 text-text-muted",

@@ -139,10 +139,10 @@ export default function RevenuePage() {
                       <td className={`${adminTdClass} font-semibold text-text`}>
                         {formatTableDate(row.date)}
                       </td>
-                      <td className={`${adminTdClass} text-right text-text-muted`}>
+                      <td className={`${adminTdClass} text-right tabular-nums text-text-muted`}>
                         {row.payment_count}
                       </td>
-                      <td className={`${adminTdClass} text-right font-semibold text-text`}>
+                      <td className={`${adminTdClass} text-right tabular-nums font-semibold text-text`}>
                         ${formatUsdDisplay(row.revenue_usd)}
                       </td>
                     </tr>
@@ -154,7 +154,7 @@ export default function RevenuePage() {
         )}
       </AdminCard>
 
-      <p className="text-[12px] text-text-muted">
+      <p className="text-xs text-text-muted">
         Revenue is calculated from succeeded payment intents.{" "}
         <Link href="/payments" className="font-semibold text-brand hover:text-brand-hover">
           Open payments

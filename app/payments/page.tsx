@@ -45,7 +45,7 @@ function userLabel(payment: ApiPaymentIntent) {
     return (
       <>
         <span className="font-semibold text-text">{payment.user_full_name}</span>
-        <span className="mt-0.5 block text-[12px] text-text-muted">{payment.user_email}</span>
+        <span className="mt-0.5 block text-xs text-text-muted">{payment.user_email}</span>
       </>
     );
   }
@@ -152,13 +152,13 @@ export default function PaymentsPage() {
           </div>
           {hasFilters ? (
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-[12px] text-text-muted">
+              <p className="text-xs text-text-muted">
                 {isFetching ? "Filtering…" : `${total} transaction${total === 1 ? "" : "s"} matched`}
               </p>
               <button
                 type="button"
                 onClick={clearFilters}
-                className="text-[12px] font-semibold text-text-muted transition-colors hover:text-text"
+                className="text-xs font-semibold text-text-muted transition-colors hover:text-text"
               >
                 Clear filters
               </button>
@@ -183,7 +183,7 @@ export default function PaymentsPage() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="text-[12px] font-bold text-brand hover:underline"
+                  className="text-xs font-bold text-brand hover:underline"
                 >
                   Clear filters
                 </button>
@@ -199,7 +199,7 @@ export default function PaymentsPage() {
                     <AdminTh>User</AdminTh>
                     <AdminTh>Order</AdminTh>
                     <AdminTh>Type</AdminTh>
-                    <AdminTh>Amount</AdminTh>
+                    <AdminTh className="text-right">Amount</AdminTh>
                     <AdminTh>Status</AdminTh>
                     <AdminTh>Date</AdminTh>
                   </AdminTableHead>
@@ -211,7 +211,9 @@ export default function PaymentsPage() {
                         <td className={`${adminTdClass} text-text-muted`}>
                           {paymentTypeLabel(p.kind)}
                         </td>
-                        <td className={`${adminTdClass} text-text-muted`}>${p.amount_usd}</td>
+                        <td className={`${adminTdClass} text-right tabular-nums text-text-muted`}>
+                          ${p.amount_usd}
+                        </td>
                         <td className={adminTdClass}>
                           <span className={adminBadgeClass(paymentStatusTone(p.status))}>
                             {p.status}

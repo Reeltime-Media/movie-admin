@@ -59,13 +59,13 @@ export function ReportsTopTitles() {
                 : Math.max(12, 90 - index * 10);
             return (
               <div key={item.id}>
-                <div className="flex items-center justify-between text-[12px]">
+                <div className="flex items-center justify-between text-xs">
                   <span className="font-bold">
                     {rank}. {item.title}
                   </span>
                   <span className="text-text-muted">${item.revenue_usd}</span>
                 </div>
-                <div className="mt-1 text-[11px] text-text-muted">
+                <div className="mt-1 text-2xs text-text-muted">
                   {titleTypeLabel(item.type)} · {item.purchase_count} purchases · {item.watch_count}{" "}
                   watches · {item.completion_count} completions
                 </div>

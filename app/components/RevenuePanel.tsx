@@ -204,7 +204,7 @@ export function RevenuePanel({
           <button
             type="button"
             onClick={onClearDateRange}
-            className="self-start text-[12px] font-semibold text-text-muted transition-colors hover:text-text"
+            className="self-start text-xs font-semibold text-text-muted transition-colors hover:text-text"
           >
             Clear date range
           </button>
@@ -213,7 +213,7 @@ export function RevenuePanel({
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[12px] font-semibold uppercase tracking-wide text-text-muted">
+          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
             Total revenue
           </p>
           <p
@@ -224,7 +224,7 @@ export function RevenuePanel({
           >
             ${formatUsdDisplay(timeline?.period_revenue_usd ?? "0")}
           </p>
-          <p className="mt-1 text-[12px] text-text-muted">
+          <p className="mt-1 text-xs text-text-muted">
             {periodDescription(timeline, days, hasCustomRange)}
             {timeline && timeline.succeeded_payments > 0
               ? ` · ${timeline.succeeded_payments} payment${timeline.succeeded_payments === 1 ? "" : "s"}`
@@ -236,12 +236,12 @@ export function RevenuePanel({
         </div>
       </div>
 
-      <div className="rounded-md border border-border bg-bg p-3 sm:p-4">
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+      <div className="rounded-lg border border-border bg-bg p-3 sm:p-4">
+        <p className="mb-3 text-2xs font-semibold uppercase tracking-wide text-text-muted">
           Daily revenue ({periodDescription(timeline, days, hasCustomRange)})
         </p>
         {(timeline?.points.length ?? 0) === 0 ? (
-          <p className="py-12 text-center text-[13px] text-text-muted">No payments yet.</p>
+          <p className="py-12 text-center text-sm text-text-muted">No payments yet.</p>
         ) : (
           <svg
             viewBox={`0 0 ${CHART_WIDTH} ${chartHeight}`}
@@ -263,7 +263,7 @@ export function RevenuePanel({
                   x={PAD_LEFT - 8}
                   y={tick.y + 4}
                   textAnchor="end"
-                  className="fill-text-muted text-[10px]"
+                  className="fill-text-muted text-2xs"
                 >
                   ${formatUsdDisplay(tick.amount)}
                 </text>
@@ -308,7 +308,7 @@ export function RevenuePanel({
                   x={coord.x}
                   y={chartHeight - 10}
                   textAnchor="middle"
-                  className="fill-text-muted text-[10px]"
+                  className="fill-text-muted text-2xs"
                 >
                   {shortDateLabel(item.date)}
                 </text>

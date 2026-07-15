@@ -27,31 +27,31 @@ export function DashboardTopMovies() {
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-brand" />
         </div>
       ) : error ? (
-        <div className="rounded-md border border-dashed border-border bg-bg px-4 py-8 text-center">
-          <p className="text-[13px] font-semibold text-text">Could not load rankings</p>
-          <p className="mt-1 text-[12px] text-text-muted">
+        <div className="rounded-lg border border-dashed border-border bg-bg px-4 py-8 text-center">
+          <p className="text-sm font-semibold text-text">Could not load rankings</p>
+          <p className="mt-1 text-xs text-text-muted">
             {error instanceof Error ? error.message : "Could not load rankings"}
           </p>
           <button
             type="button"
             onClick={() => void refetch()}
-            className="mt-3 text-[12px] font-bold text-brand hover:underline"
+            className="mt-3 text-xs font-bold text-brand hover:underline"
           >
             Retry
           </button>
         </div>
       ) : movies.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border bg-bg px-4 py-8 text-center">
-          <p className="text-[13px] font-semibold text-text">No purchase data yet</p>
-          <p className="mt-1 text-[12px] text-text-muted">
+        <div className="rounded-lg border border-dashed border-border bg-bg px-4 py-8 text-center">
+          <p className="text-sm font-semibold text-text">No purchase data yet</p>
+          <p className="mt-1 text-xs text-text-muted">
             Rankings appear once customers buy or watch movies.
           </p>
         </div>
       ) : (
         <div className="-mx-5 overflow-x-auto">
-          <table className="w-full text-left text-[13px]">
+          <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-border text-[11px] uppercase tracking-[0.12em] text-text-disabled">
+              <tr className="border-b border-border text-2xs uppercase tracking-[0.12em] text-text-disabled">
                 <th className="w-10 px-5 pb-2 font-bold">#</th>
                 <th className="px-5 pb-2 font-bold">Title</th>
                 <th className="px-5 pb-2 text-right font-bold">Purchases</th>

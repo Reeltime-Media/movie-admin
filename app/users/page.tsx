@@ -10,12 +10,8 @@ import { AdminStatCard } from "../components/AdminStatCard";
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from "../components/AdminTable";
 import { InlineLoading } from "../components/InlineLoading";
 import { AdminShell } from "../components/AdminShell";
-import {
-  adminBadgeClass,
-  adminDeleteButtonClass,
-  adminDeleteConfirmButtonClass,
-  adminTdClass,
-} from "../lib/adminUi";
+import { Button } from "../components/ui/Button";
+import { adminBadgeClass, adminTdClass } from "../lib/adminUi";
 import { deleteUser, setUserActive, type ApiUser } from "../lib/api";
 import { useDashboardSummary, useUsers } from "../hooks/adminQueries";
 
@@ -149,22 +145,24 @@ export default function UsersPage() {
                         </td>
                         <td className={`${adminTdClass} text-right`}>
                           <div className="flex flex-wrap justify-end gap-2">
-                            <button
+                            <Button
                               type="button"
+                              variant="secondary"
+                              size="sm"
                               disabled={busyId === user.id}
                               onClick={() => void handleToggleActive(user)}
-                              className="rounded-md border border-border bg-bg px-2.5 py-1.5 text-[11px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
                             >
                               {user.is_active ? "Suspend" : "Reactivate"}
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                               type="button"
+                              variant="danger-soft"
+                              size="sm"
                               disabled={busyId === user.id}
                               onClick={() => setConfirmDelete(user)}
-                              className={adminDeleteButtonClass}
                             >
                               Delete
-                            </button>
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -192,11 +190,11 @@ export default function UsersPage() {
           aria-modal="true"
           aria-labelledby="delete-user-title"
         >
-          <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6">
-            <h2 id="delete-user-title" className="text-[16px] font-bold tracking-[-0.02em]">
+          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-md">
+            <h2 id="delete-user-title" className="text-lg font-bold tracking-[-0.02em]">
               Delete user
             </h2>
-            <p className="mt-3 text-[13px] leading-relaxed text-text-muted">
+            <p className="mt-3 text-sm leading-relaxed text-text-muted">
               Permanently delete{" "}
               <span className="font-bold text-text">
                 {confirmDelete.full_name || confirmDelete.email}
@@ -205,21 +203,17 @@ export default function UsersPage() {
               suspend them instead.
             </p>
             <div className="mt-6 flex flex-wrap justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(null)}
-                className="rounded-md border border-border bg-bg px-4 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-              >
+              <Button type="button" variant="secondary" onClick={() => setConfirmDelete(null)}>
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="danger"
+                loading={busyId === confirmDelete.id}
                 onClick={() => void confirmRemoveUser()}
-                disabled={busyId === confirmDelete.id}
-                className={adminDeleteConfirmButtonClass}
               >
                 {busyId === confirmDelete.id ? "Deleting…" : "Delete"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
