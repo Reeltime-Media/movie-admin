@@ -128,7 +128,7 @@ export function AdminHlsPlayer({ src, title }: AdminHlsPlayerProps) {
           <button
             type="button"
             onClick={() => setShowQuality((open) => !open)}
-            className="flex items-center gap-1 rounded-md border border-border/60 bg-black/75 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur-sm transition-colors hover:bg-black/90"
+            className="flex items-center gap-1 rounded-lg border border-border/60 bg-black/75 px-2 py-1 text-2xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-black/90"
             aria-label="Video quality"
           >
             <Settings size={13} />
@@ -136,15 +136,15 @@ export function AdminHlsPlayer({ src, title }: AdminHlsPlayerProps) {
           </button>
 
           {showQuality ? (
-            <div className="absolute right-0 top-full mt-1 min-w-32 overflow-hidden rounded-md border border-border bg-surface py-1 shadow-lg">
-              <div className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-text-muted">
+            <div className="absolute right-0 top-full mt-1 min-w-32 overflow-hidden rounded-lg border border-border bg-surface py-1 shadow-lg">
+              <div className="px-3 pb-1 pt-2 text-2xs font-bold uppercase tracking-widest text-text-muted">
                 Quality
               </div>
 
               <button
                 type="button"
                 onClick={() => changeQuality(-1)}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] font-medium text-text transition-colors hover:bg-surface-elevated"
+                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs font-medium text-text transition-colors hover:bg-surface-elevated"
               >
                 {selectedLevel === -1 ? (
                   <span className="h-1.5 w-1.5 rounded-full bg-brand" />
@@ -153,7 +153,7 @@ export function AdminHlsPlayer({ src, title }: AdminHlsPlayerProps) {
                 )}
                 <span className={selectedLevel === -1 ? "text-brand" : ""}>Auto</span>
                 {selectedLevel === -1 && autoLevel >= 0 && levels[autoLevel] ? (
-                  <span className="ml-auto text-[10px] text-text-muted">
+                  <span className="ml-auto text-2xs text-text-muted">
                     {levels[autoLevel].height}p
                   </span>
                 ) : null}
@@ -166,7 +166,7 @@ export function AdminHlsPlayer({ src, title }: AdminHlsPlayerProps) {
                     key={level.index}
                     type="button"
                     onClick={() => changeQuality(level.index)}
-                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] font-medium text-text transition-colors hover:bg-surface-elevated"
+                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs font-medium text-text transition-colors hover:bg-surface-elevated"
                   >
                     {selectedLevel === level.index ? (
                       <span className="h-1.5 w-1.5 rounded-full bg-brand" />
@@ -179,7 +179,7 @@ export function AdminHlsPlayer({ src, title }: AdminHlsPlayerProps) {
                         : `${Math.round(level.bitrate / 1000)}k`}
                     </span>
                     {selectedLevel !== level.index ? (
-                      <span className="ml-auto text-[10px] text-text-muted">
+                      <span className="ml-auto text-2xs text-text-muted">
                         {Math.round(level.bitrate / 1000)}k
                       </span>
                     ) : null}
@@ -196,7 +196,7 @@ export function AdminHlsPlayer({ src, title }: AdminHlsPlayerProps) {
         </div>
       ) : null}
       {error ? (
-        <div className="absolute inset-0 grid place-items-center bg-black/80 px-4 text-center text-[13px] text-white">
+        <div className="absolute inset-0 grid place-items-center bg-black/80 px-4 text-center text-sm text-white">
           {error}
         </div>
       ) : null}

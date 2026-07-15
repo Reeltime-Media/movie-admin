@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "./ui/Button";
+
 function youtubeEmbedUrl(url: string): string | null {
   try {
     const parsed = new URL(url);
@@ -44,7 +46,7 @@ export function TrailerPreview({
               <path d="M2 1.5l6 3.5-6 3.5V1.5z" />
             </svg>
           </div>
-          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/50">
+          <span className="text-2xs font-bold uppercase tracking-[0.12em] text-white/50">
             Trailer preview
           </span>
         </div>
@@ -52,7 +54,7 @@ export function TrailerPreview({
           href={url}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-white/40 transition-colors hover:bg-white/5 hover:text-white/70"
+          className="flex items-center gap-1 rounded-lg px-2 py-1 text-2xs font-semibold text-white/40 transition-colors hover:bg-white/5 hover:text-white/70"
         >
           <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -80,15 +82,10 @@ export function TrailerPreview({
             </svg>
           </div>
           <div>
-            <p className="text-[12px] font-semibold text-white/40">Non-YouTube URL</p>
-            <a
-              href={url}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-1.5 text-[11px] font-bold text-white transition-colors hover:bg-brand-hover"
-            >
+            <p className="text-xs font-semibold text-white/40">Non-YouTube URL</p>
+            <Button href={url} target="_blank" rel="noreferrer" size="sm" className="mt-1.5">
               Open trailer
-            </a>
+            </Button>
           </div>
         </div>
       )}

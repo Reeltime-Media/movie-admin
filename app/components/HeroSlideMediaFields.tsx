@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import { uploadAdminHeroMedia } from "../lib/api";
 
 const inputClass =
-  "w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10";
+  "w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10";
 
 type HeroVideoFieldProps = {
   videoKey: string;
@@ -51,10 +51,10 @@ export function HeroVideoField({
 
   return (
     <div className="space-y-3">
-      <label className="block text-[11px] font-semibold text-text-muted">
+      <label className="block text-2xs font-semibold text-text-muted">
         Hero video{required ? <span className="text-brand"> *</span> : " (optional)"}
       </label>
-      <p className="text-[11px] text-text-disabled">
+      <p className="text-2xs text-text-disabled">
         Autoplays muted in the hero. Short clips work best (≤ 30s, ≤ 50 MB, MP4 or
         WebM). Uploading a file replaces any YouTube link.
       </p>
@@ -65,7 +65,7 @@ export function HeroVideoField({
           accept="video/mp4,video/webm"
           disabled={disabled || uploading}
           onChange={(e) => void handleFile(e.target.files?.[0] ?? null)}
-          className="block w-full text-[12px] text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-surface-elevated file:px-3 file:py-1.5 file:text-[11px] file:font-semibold file:text-text"
+          className="block w-full text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-surface-elevated file:px-3 file:py-1.5 file:text-2xs file:font-semibold file:text-text"
         />
         {uploading ? (
           <div className="mt-2">
@@ -75,16 +75,16 @@ export function HeroVideoField({
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <p className="mt-1 text-[11px] text-text-muted">Uploading… {progress}%</p>
+            <p className="mt-1 text-2xs text-text-muted">Uploading… {progress}%</p>
           </div>
         ) : videoKey ? (
           <div className="mt-2 flex items-center gap-2">
-            <span className="truncate text-[11px] text-success">Uploaded: {videoKey}</span>
+            <span className="truncate text-2xs text-success">Uploaded: {videoKey}</span>
             <button
               type="button"
               onClick={() => onVideoKeyChange("")}
               disabled={disabled}
-              className="shrink-0 text-[11px] font-semibold text-text-muted hover:text-text"
+              className="shrink-0 text-2xs font-semibold text-text-muted hover:text-text"
             >
               Remove
             </button>
@@ -92,7 +92,7 @@ export function HeroVideoField({
         ) : null}
       </div>
       <div>
-        <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+        <label className="mb-1.5 block text-2xs font-semibold text-text-muted">
           Or YouTube URL
         </label>
         <input
@@ -104,7 +104,7 @@ export function HeroVideoField({
           className={`${inputClass} disabled:opacity-40`}
         />
         {videoKey ? (
-          <p className="mt-1 text-[11px] text-text-disabled">
+          <p className="mt-1 text-2xs text-text-disabled">
             Remove the uploaded video to use a YouTube link instead.
           </p>
         ) : null}

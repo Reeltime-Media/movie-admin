@@ -11,7 +11,7 @@ import {
   updateAdminSubscriptionPlan,
   type ApiSubscriptionPlan,
 } from "../lib/api";
-import { adminDeleteButtonClassWide } from "../lib/adminUi";
+import { Button } from "./ui/Button";
 import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../lib/money";
 
 type PlanFormState = {
@@ -177,7 +177,7 @@ export function SubscriptionPlanCreator() {
       action="Add plan"
       actionOnClick={openCreateForm}
     >
-      <p className="mb-4 text-[13px] leading-relaxed text-text-muted">
+      <p className="mb-4 text-sm leading-relaxed text-text-muted">
         Manage Reeltime Plus and other subscription tiers. The first active plan (by sort order) is
         used for new checkouts.
       </p>
@@ -185,19 +185,19 @@ export function SubscriptionPlanCreator() {
       {isLoading && !plans.length ? (
         <InlineLoading label="Loading plans" />
       ) : error ? (
-        <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-4 text-[12px] text-warning">
+        <div className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-4 text-xs text-warning">
           <div>{error}</div>
           <button type="button" onClick={() => void plansQuery.refetch()} className="mt-2 font-bold hover:underline">
             Retry
           </button>
         </div>
       ) : plans.length === 0 && !isLoading ? (
-            <div className="rounded-md border border-dashed border-border py-8 text-center">
-              <p className="text-[13px] text-text-muted">No subscription plans yet.</p>
+            <div className="rounded-lg border border-dashed border-border py-8 text-center">
+              <p className="text-sm text-text-muted">No subscription plans yet.</p>
               <button
                 type="button"
                 onClick={openCreateForm}
-                className="mt-2 text-[12px] font-semibold text-brand hover:underline"
+                className="mt-2 text-xs font-semibold text-brand hover:underline"
               >
                 Add your first plan
               </button>
@@ -207,13 +207,13 @@ export function SubscriptionPlanCreator() {
               {plans.map((plan) => (
                 <div
                   key={plan.id}
-                  className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-border bg-bg p-4"
+                  className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-bg p-4"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-[13px] font-bold">{plan.name}</h3>
+                      <h3 className="text-sm font-bold">{plan.name}</h3>
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                        className={`rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wider ${
                           plan.is_active
                             ? "bg-success/15 text-success"
                             : "bg-text-disabled/25 text-text-muted"
@@ -222,11 +222,11 @@ export function SubscriptionPlanCreator() {
                         {plan.is_active ? "Active" : "Inactive"}
                       </span>
                     </div>
-                    <p className="mt-1 font-mono text-[11px] text-text-disabled">{plan.code}</p>
+                    <p className="mt-1 font-mono text-2xs text-text-disabled">{plan.code}</p>
                     {plan.description && (
-                      <p className="mt-1 text-[12px] text-text-muted">{plan.description}</p>
+                      <p className="mt-1 text-xs text-text-muted">{plan.description}</p>
                     )}
-                    <p className="mt-1 text-[11px] text-text-muted">
+                    <p className="mt-1 text-2xs text-text-muted">
                       {formatPrice(plan.price_usd) === "Free"
                         ? "Free"
                         : `$${formatPrice(plan.price_usd)}`}
@@ -234,22 +234,24 @@ export function SubscriptionPlanCreator() {
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => openEditForm(plan)}
                       disabled={isSaving}
-                      className="rounded-md border border-border bg-surface px-3 py-2 text-[11px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text disabled:opacity-40"
                     >
                       Edit
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="danger-soft"
+                      size="sm"
                       onClick={() => void handleDelete(plan)}
                       disabled={isSaving}
-                      className={adminDeleteButtonClassWide}
                     >
                       Delete
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -274,15 +276,15 @@ export function SubscriptionPlanCreator() {
         >
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 id={formTitleId} className="text-[16px] font-bold tracking-[-0.02em]">
+              <h2 id={formTitleId} className="text-lg font-bold tracking-[-0.02em]">
                 {formTitle}
               </h2>
               {editingPlan ? (
-                <p className="mt-1 text-[12px] text-text-muted">
+                <p className="mt-1 text-xs text-text-muted">
                   Code: <span className="font-mono font-semibold text-text">{editingPlan.code}</span>
                 </p>
               ) : (
-                <p className="mt-1 text-[12px] text-text-muted">
+                <p className="mt-1 text-xs text-text-muted">
                   Create a new subscription tier for checkout.
                 </p>
               )}
@@ -292,7 +294,7 @@ export function SubscriptionPlanCreator() {
               onClick={closeForm}
               disabled={isSaving}
               aria-label="Close"
-              className="shrink-0 rounded-md border border-border px-2 py-1 text-[18px] leading-none text-text-muted transition-colors hover:border-border-hover hover:text-text disabled:opacity-40"
+              className="shrink-0 rounded-lg border border-border px-2 py-1 text-[18px] leading-none text-text-muted transition-colors hover:border-border-hover hover:text-text disabled:opacity-40"
             >
               ×
             </button>
@@ -301,76 +303,76 @@ export function SubscriptionPlanCreator() {
           <div className="mt-5 space-y-3">
             {!editingPlan && (
               <label className="block">
-                <span className="text-[11px] font-semibold text-text-muted">Code</span>
+                <span className="text-2xs font-semibold text-text-muted">Code</span>
                 <input
                   type="text"
                   value={form.code}
                   onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
                   placeholder="e.g. series_monthly"
-                  className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text"
+                  className="mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text"
                   required
                 />
-                <span className="mt-1 block text-[10px] text-text-disabled">
+                <span className="mt-1 block text-2xs text-text-disabled">
                   Lowercase letters, numbers, and underscores only.
                 </span>
               </label>
             )}
             <label className="block">
-              <span className="text-[11px] font-semibold text-text-muted">Name</span>
+              <span className="text-2xs font-semibold text-text-muted">Name</span>
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 placeholder="Reeltime Plus"
-                className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text"
+                className="mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text"
                 required
               />
             </label>
             <label className="block">
-              <span className="text-[11px] font-semibold text-text-muted">Description</span>
+              <span className="text-2xs font-semibold text-text-muted">Description</span>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                 rows={2}
-                className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text"
+                className="mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text"
               />
             </label>
             <div className="grid gap-3 sm:grid-cols-3">
               <label className="block">
-                <span className="text-[11px] font-semibold text-text-muted">Price (USD)</span>
+                <span className="text-2xs font-semibold text-text-muted">Price (USD)</span>
                 <input
                   type="text"
                   inputMode="decimal"
                   value={form.priceUsd}
                   onChange={(e) => setForm((f) => ({ ...f, priceUsd: e.target.value }))}
                   placeholder="0 or 6.99"
-                  className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text"
+                  className="mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text"
                   required
                 />
-                <span className="mt-1 block text-[10px] text-text-disabled">{ADMIN_PRICE_HINT}</span>
+                <span className="mt-1 block text-2xs text-text-disabled">{ADMIN_PRICE_HINT}</span>
               </label>
               <label className="block">
-                <span className="text-[11px] font-semibold text-text-muted">Billing days</span>
+                <span className="text-2xs font-semibold text-text-muted">Billing days</span>
                 <input
                   type="number"
                   min={1}
                   max={365}
                   value={form.billingIntervalDays}
                   onChange={(e) => setForm((f) => ({ ...f, billingIntervalDays: e.target.value }))}
-                  className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text"
+                  className="mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text"
                 />
               </label>
               <label className="block">
-                <span className="text-[11px] font-semibold text-text-muted">Sort order</span>
+                <span className="text-2xs font-semibold text-text-muted">Sort order</span>
                 <input
                   type="number"
                   value={form.sortOrder}
                   onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))}
-                  className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-[13px] text-text"
+                  className="mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text"
                 />
               </label>
             </div>
-            <label className="flex items-center gap-2 text-[12px] text-text-muted">
+            <label className="flex items-center gap-2 text-xs text-text-muted">
               <input
                 type="checkbox"
                 checked={form.isActive}
@@ -382,21 +384,12 @@ export function SubscriptionPlanCreator() {
           </div>
 
           <div className="mt-6 flex flex-wrap justify-end gap-2">
-            <button
-              type="button"
-              onClick={closeForm}
-              disabled={isSaving}
-              className="rounded-md border border-border bg-bg px-4 py-2 text-[12px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text disabled:opacity-40"
-            >
+            <Button type="button" variant="secondary" onClick={closeForm} disabled={isSaving}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="rounded-md bg-brand px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-brand-hover disabled:opacity-50"
-            >
+            </Button>
+            <Button type="submit" loading={isSaving}>
               {isSaving ? "Saving..." : editingPlan ? "Save changes" : "Create plan"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

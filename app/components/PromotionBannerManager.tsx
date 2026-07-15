@@ -16,7 +16,7 @@ import {
   uploadFileToPresignedUrl,
   type ApiPromotionBanner,
 } from "../lib/api";
-import { adminDeleteButtonClassWide, adminPrimaryButtonClass } from "../lib/adminUi";
+import { Button } from "./ui/Button";
 import { mediaUrl } from "../lib/media";
 import { queryKeys } from "../lib/queryKeys";
 
@@ -226,17 +226,18 @@ export function PromotionBannerManager() {
       <AdminCard
         title="Home promotion banners"
         headerAction={
-          <button
+          <Button
             type="button"
+            size="sm"
+            className="shrink-0"
             onClick={openCreateForm}
-            className={`inline-flex shrink-0 items-center gap-1.5 ${adminPrimaryButtonClass}`}
+            icon={<Plus size={14} strokeWidth={2.5} aria-hidden />}
           >
-            <Plus size={14} strokeWidth={2.5} aria-hidden />
             Add banner
-          </button>
+          </Button>
         }
       >
-        <p className="mb-4 text-[13px] leading-relaxed text-text-muted">
+        <p className="mb-4 text-sm leading-relaxed text-text-muted">
           Create promotional strips shown on the client home page. Lower sort order appears first.
           Leave schedule empty to show anytime while active.
         </p>
@@ -244,10 +245,10 @@ export function PromotionBannerManager() {
         {isLoading && !banners.length ? (
           <InlineLoading label="Loading banners" />
         ) : error ? (
-          <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-4 text-[12px] text-warning">
+          <div className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-4 text-xs text-warning">
             <div>{error}</div>
             {error.includes("promotion_banners") ? (
-              <p className="mt-2 text-[11px]">Run: cd movie-api && alembic upgrade head</p>
+              <p className="mt-2 text-2xs">Run: cd movie-api && alembic upgrade head</p>
             ) : null}
             <button
               type="button"
@@ -258,12 +259,12 @@ export function PromotionBannerManager() {
             </button>
           </div>
         ) : banners.length === 0 ? (
-          <div className="rounded-md border border-dashed border-border py-8 text-center">
-            <p className="text-[13px] text-text-muted">No promotion banners yet.</p>
+          <div className="rounded-lg border border-dashed border-border py-8 text-center">
+            <p className="text-sm text-text-muted">No promotion banners yet.</p>
             <button
               type="button"
               onClick={openCreateForm}
-              className="mt-2 text-[12px] font-semibold text-brand hover:underline"
+              className="mt-2 text-xs font-semibold text-brand hover:underline"
             >
               Add your first banner
             </button>
@@ -275,22 +276,22 @@ export function PromotionBannerManager() {
               return (
                 <div
                   key={banner.id}
-                  className="flex flex-wrap items-center gap-4 rounded-md border border-border bg-bg p-4"
+                  className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-bg p-4"
                 >
-                  <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded-sm border border-border bg-surface-elevated">
+                  <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-elevated">
                     {thumb ? (
                       <Image src={thumb} alt="" fill className="object-cover" sizes="112px" />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-[10px] text-text-disabled">
+                      <div className="flex h-full items-center justify-center text-2xs text-text-disabled">
                         No image
                       </div>
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-[13px] font-bold">{banner.title}</h3>
+                      <h3 className="text-sm font-bold">{banner.title}</h3>
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                        className={`rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wider ${
                           banner.is_active
                             ? "bg-success/15 text-success"
                             : "bg-text-disabled/25 text-text-muted"
@@ -298,35 +299,37 @@ export function PromotionBannerManager() {
                       >
                         {banner.is_active ? "Active" : "Inactive"}
                       </span>
-                      <span className="text-[10px] font-semibold uppercase text-text-disabled">
+                      <span className="text-2xs font-semibold uppercase text-text-disabled">
                         {banner.placement}
                       </span>
                     </div>
                     {banner.subtitle ? (
-                      <p className="mt-1 text-[12px] text-text-muted">{banner.subtitle}</p>
+                      <p className="mt-1 text-xs text-text-muted">{banner.subtitle}</p>
                     ) : null}
-                    <p className="mt-1 text-[11px] text-text-muted">
+                    <p className="mt-1 text-2xs text-text-muted">
                       Sort {banner.sort_order}
                       {banner.cta_href ? ` · CTA ${banner.cta_href}` : ""}
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => openEditForm(banner)}
                       disabled={isSaving}
-                      className="rounded-md border border-border bg-surface px-3 py-2 text-[11px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text disabled:opacity-40"
                     >
                       Edit
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="danger-soft"
+                      size="sm"
                       onClick={() => void handleDelete(banner)}
                       disabled={isSaving}
-                      className={adminDeleteButtonClassWide}
                     >
                       Delete
-                    </button>
+                    </Button>
                   </div>
                 </div>
               );
@@ -357,7 +360,7 @@ export function PromotionBannerManager() {
                   <h2 className="text-[17px] font-bold tracking-[-0.02em]">
                     {editingBanner ? "Edit banner" : "New promotion banner"}
                   </h2>
-                  <p className="mt-1 text-[12px] leading-relaxed text-text-muted">
+                  <p className="mt-1 text-xs leading-relaxed text-text-muted">
                     Promotional strips shown on the client home page when active.
                   </p>
                 </div>
@@ -377,12 +380,12 @@ export function PromotionBannerManager() {
             <div className="min-h-0 flex-1 overflow-y-auto">
               {/* Section: Content */}
               <div className="px-6 py-5 space-y-4">
-                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M4.5 5h5M4.5 7.5h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
                   Content
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                  <label className="mb-1.5 block text-2xs font-semibold text-text-muted">
                     Title <span className="text-brand">*</span>
                   </label>
                   <input
@@ -390,12 +393,12 @@ export function PromotionBannerManager() {
                     value={form.title}
                     onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                     placeholder="Enter banner title…"
-                    className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                    className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
                     required
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                  <label className="mb-1.5 block text-2xs font-semibold text-text-muted">
                     Subtitle
                   </label>
                   <textarea
@@ -403,14 +406,14 @@ export function PromotionBannerManager() {
                     onChange={(e) => setForm((f) => ({ ...f, subtitle: e.target.value }))}
                     rows={2}
                     placeholder="Optional supporting text…"
-                    className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10 resize-none"
+                    className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10 resize-none"
                   />
                 </div>
               </div>
 
               {/* Section: Banner Image */}
               <div className="border-t border-border px-6 py-5 space-y-3">
-                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2.5" width="11" height="9" rx="2" stroke="currentColor" strokeWidth="1.4"/><circle cx="5" cy="6" r="1.25" stroke="currentColor" strokeWidth="1.2"/><path d="M1.5 9.5l2.5-2.5 2 2 3-3 3.5 3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   Banner Image
                 </div>
@@ -425,7 +428,7 @@ export function PromotionBannerManager() {
                     <div className="relative h-28 w-full overflow-hidden rounded-lg border border-border">
                       <Image src={previewSrc} alt="" fill className="object-cover" sizes="400px" />
                       <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                        <span className="rounded-md bg-white/90 px-3 py-1.5 text-[11px] font-bold text-text">
+                        <span className="rounded-lg bg-white/90 px-3 py-1.5 text-2xs font-bold text-text">
                           Change image
                         </span>
                       </div>
@@ -435,10 +438,10 @@ export function PromotionBannerManager() {
                       <div className="mb-2 flex size-10 items-center justify-center rounded-full bg-surface-elevated text-text-disabled transition-colors group-hover:bg-brand/10 group-hover:text-brand">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
                       </div>
-                      <p className="text-[12px] font-semibold text-text-muted">
+                      <p className="text-xs font-semibold text-text-muted">
                         Click to upload or drag & drop
                       </p>
-                      <p className="mt-0.5 text-[11px] text-text-disabled">
+                      <p className="mt-0.5 text-2xs text-text-disabled">
                         JPG, PNG or WebP
                       </p>
                     </>
@@ -448,29 +451,29 @@ export function PromotionBannerManager() {
 
               {/* Section: Call-to-Action */}
               <div className="border-t border-border px-6 py-5 space-y-4">
-                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7h6M11.5 7l-3-3m3 3l-3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   Call to Action
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">Button label</label>
+                    <label className="mb-1.5 block text-2xs font-semibold text-text-muted">Button label</label>
                     <input
                       type="text"
                       value={form.ctaLabel}
                       onChange={(e) => setForm((f) => ({ ...f, ctaLabel: e.target.value }))}
                       placeholder="e.g. Subscribe now"
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
                     />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">Button link</label>
+                    <label className="mb-1.5 block text-2xs font-semibold text-text-muted">Button link</label>
                     <input
                       type="text"
                       value={form.ctaHref}
                       onChange={(e) => setForm((f) => ({ ...f, ctaHref: e.target.value }))}
                       placeholder="/pricing"
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
                     />
                   </div>
                 </div>
@@ -478,19 +481,19 @@ export function PromotionBannerManager() {
 
               {/* Section: Display Settings */}
               <div className="border-t border-border px-6 py-5 space-y-4">
-                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4"/><path d="M7 4.5v3l2 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   Display Settings
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">Sort order</label>
+                    <label className="mb-1.5 block text-2xs font-semibold text-text-muted">Sort order</label>
                     <input
                       type="number"
                       value={form.sortOrder}
                       onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))}
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
                     />
                   </div>
                   <div className="flex items-end pb-1">
@@ -514,7 +517,7 @@ export function PromotionBannerManager() {
                           ].join(" ")}
                         />
                       </span>
-                      <span className="text-[12px] font-semibold text-text">
+                      <span className="text-xs font-semibold text-text">
                         {form.isActive ? "Active" : "Inactive"}
                       </span>
                     </button>
@@ -523,7 +526,7 @@ export function PromotionBannerManager() {
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                    <label className="mb-1.5 block text-2xs font-semibold text-text-muted">
                       <span className="flex items-center gap-1.5">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v2M6 9v2M1 6h2M9 6h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
                         Starts at
@@ -533,11 +536,11 @@ export function PromotionBannerManager() {
                       type="datetime-local"
                       value={form.startsAt}
                       onChange={(e) => setForm((f) => ({ ...f, startsAt: e.target.value }))}
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
                     />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                    <label className="mb-1.5 block text-2xs font-semibold text-text-muted">
                       <span className="flex items-center gap-1.5">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v2M6 9v2M1 6h2M9 6h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
                         Ends at
@@ -547,11 +550,11 @@ export function PromotionBannerManager() {
                       type="datetime-local"
                       value={form.endsAt}
                       onChange={(e) => setForm((f) => ({ ...f, endsAt: e.target.value }))}
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
                     />
                   </div>
                 </div>
-                <p className="text-[11px] text-text-disabled">
+                <p className="text-2xs text-text-disabled">
                   Leave empty to show anytime while active.
                 </p>
               </div>
@@ -559,21 +562,12 @@ export function PromotionBannerManager() {
 
             {/* ── Footer ── */}
             <div className="flex items-center justify-end gap-2.5 border-t border-border bg-bg/50 px-6 py-4">
-              <button
-                type="button"
-                onClick={closeForm}
-                disabled={isSaving}
-                className="rounded-lg border border-border bg-surface px-4 py-2.5 text-[12px] font-semibold text-text-muted transition-all hover:border-border-hover hover:bg-surface-elevated hover:text-text disabled:opacity-40"
-              >
+              <Button type="button" variant="secondary" onClick={closeForm} disabled={isSaving}>
                 Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="rounded-lg bg-brand px-5 py-2.5 text-[12px] font-bold text-white shadow-[0_1px_3px_rgba(229,9,20,0.3)] transition-all hover:bg-brand-hover hover:shadow-[0_2px_8px_rgba(229,9,20,0.4)] active:scale-[0.98] disabled:opacity-60 disabled:shadow-none"
-              >
+              </Button>
+              <Button type="submit" loading={isSaving}>
                 {isSaving ? "Saving…" : editingBanner ? "Save changes" : "Create banner"}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

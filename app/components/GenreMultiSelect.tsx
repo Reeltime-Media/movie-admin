@@ -4,10 +4,10 @@ import { useEffect, useId, useRef, useState } from "react";
 import { GENRE_OPTIONS } from "../lib/genres";
 
 const triggerClass =
-  "flex w-full items-center justify-between gap-2 rounded-md border border-border bg-bg px-3 py-2.5 text-left text-[13px] outline-none transition-colors hover:border-border-hover focus:border-border-hover focus:bg-surface-elevated";
+  "flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-bg px-3 py-2.5 text-left text-sm outline-none transition-colors hover:border-border-hover focus:border-border-hover focus:bg-surface-elevated";
 
 const panelClass =
-  "absolute left-0 right-0 z-40 mt-1 max-h-60 overflow-y-auto rounded-md border border-border bg-surface-elevated py-1";
+  "absolute left-0 right-0 z-40 mt-1 max-h-60 overflow-y-auto rounded-xl border border-border bg-surface-elevated py-1 shadow-md";
 
 type GenreMultiSelectProps = {
   selected: string[];
@@ -100,7 +100,7 @@ export function GenreMultiSelect({ selected, onChange, disabled, options, onDele
             return (
               <div
                 key={genre}
-                className="group flex items-center gap-2.5 px-3 py-2 text-[13px] text-text hover:bg-bg"
+                className="group flex items-center gap-2.5 px-3 py-2 text-sm text-text hover:bg-bg"
               >
                 <label className="flex flex-1 cursor-pointer items-center gap-2.5 min-w-0">
                   <input

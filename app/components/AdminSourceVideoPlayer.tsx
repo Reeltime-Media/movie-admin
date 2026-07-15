@@ -52,7 +52,7 @@ export function AdminSourceVideoPlayer({
 
   if (!hasVideo) {
     return (
-      <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-[12px] text-text-muted">
+      <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-xs text-text-muted">
         No original video uploaded.
       </div>
     );
@@ -60,7 +60,7 @@ export function AdminSourceVideoPlayer({
 
   if (loading) {
     return (
-      <div className="grid aspect-video place-items-center rounded-lg border border-border bg-black text-[12px] text-text-muted">
+      <div className="grid aspect-video place-items-center rounded-lg border border-border bg-black text-xs text-text-muted">
         <Loader2 size={28} className="animate-spin text-white" aria-hidden />
       </div>
     );
@@ -68,7 +68,7 @@ export function AdminSourceVideoPlayer({
 
   if (error || !src) {
     return (
-      <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg px-4 text-center text-[12px] text-text-muted">
+      <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg px-4 text-center text-xs text-text-muted">
         {error ?? "Could not load original video."}
       </div>
     );

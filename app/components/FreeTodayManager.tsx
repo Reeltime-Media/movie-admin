@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { AdminCard } from "./AdminCard";
 import { AdminCatalogSearchBar } from "./AdminCatalogSearchBar";
+import { Button } from "./ui/Button";
 import { InlineLoading } from "./InlineLoading";
 import {
   createAdminFreeToday,
@@ -154,7 +155,7 @@ export function FreeTodayManager() {
           </button>
         }
       >
-        <p className="mb-4 text-[13px] leading-relaxed text-text-muted">
+        <p className="mb-4 text-sm leading-relaxed text-text-muted">
           Movies listed here are <strong className="font-semibold text-text">free to watch
           for everyone</strong> while listed — no purchase or subscription needed. Remove a
           movie and normal pricing applies again immediately. Up to {MAX_PICKS} picks; lower
@@ -164,10 +165,10 @@ export function FreeTodayManager() {
         {isLoading && !items.length ? (
           <InlineLoading label="Loading free movies" />
         ) : error ? (
-          <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-4 text-[12px] text-warning">
+          <div className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-4 text-xs text-warning">
             <div>{error}</div>
             {error.includes("free_today_items") ? (
-              <p className="mt-2 text-[11px]">Run: cd movie-api && alembic upgrade head (or restart the api container)</p>
+              <p className="mt-2 text-2xs">Run: cd movie-api && alembic upgrade head (or restart the api container)</p>
             ) : null}
             <button
               type="button"
@@ -178,9 +179,9 @@ export function FreeTodayManager() {
             </button>
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-md border border-dashed border-border py-8 text-center">
-            <p className="text-[13px] text-text-muted">No free movies picked yet.</p>
-            <p className="mt-1 text-[12px] text-text-disabled">
+          <div className="rounded-lg border border-dashed border-border py-8 text-center">
+            <p className="text-sm text-text-muted">No free movies picked yet.</p>
+            <p className="mt-1 text-xs text-text-disabled">
               Click &ldquo;Add movie&rdquo; to make up to {MAX_PICKS} titles free on the home page.
             </p>
           </div>
@@ -191,39 +192,39 @@ export function FreeTodayManager() {
               return (
                 <div
                   key={item.id}
-                  className="flex flex-wrap items-center gap-4 rounded-md border border-border bg-bg p-4"
+                  className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-bg p-4"
                 >
-                  <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded-sm border border-border bg-surface-elevated">
+                  <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-elevated">
                     {thumb ? (
                       <Image src={thumb} alt="" fill className="object-cover" sizes="56px" />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-[10px] text-text-disabled">
+                      <div className="flex h-full items-center justify-center text-2xs text-text-disabled">
                         No poster
                       </div>
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-[13px] font-bold">
+                      <h3 className="text-sm font-bold">
                         {item.content_title ?? "Unknown title"}
                       </h3>
-                      <span className="rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-success">
+                      <span className="rounded-full bg-success/15 px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-success">
                         Free
                       </span>
                     </div>
                     {item.content_slug ? (
-                      <p className="mt-1 text-[11px] text-text-muted">{item.content_slug}</p>
+                      <p className="mt-1 text-2xs text-text-muted">{item.content_slug}</p>
                     ) : null}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-text-muted">
+                    <label className="flex items-center gap-1.5 text-2xs font-semibold text-text-muted">
                       Order
                       <input
                         type="number"
                         defaultValue={item.sort_order}
                         onBlur={(e) => void handleOrderChange(item, e.target.value)}
                         disabled={isSaving}
-                        className="w-16 rounded-md border border-border bg-surface px-2 py-1.5 text-[12px] text-text outline-none focus:border-brand/40"
+                        className="w-16 rounded-lg border border-border bg-surface px-2 py-1.5 text-xs text-text outline-none focus:border-brand/40"
                       />
                     </label>
                     <button
@@ -250,7 +251,7 @@ export function FreeTodayManager() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-[17px] font-bold tracking-[-0.02em]">Add a free movie</h2>
-                  <p className="mt-1 text-[12px] leading-relaxed text-text-muted">
+                  <p className="mt-1 text-xs leading-relaxed text-text-muted">
                     The movie becomes free to watch for everyone the moment you add it.
                     {" "}{items.length}/{MAX_PICKS} picked.
                   </p>
@@ -277,11 +278,11 @@ export function FreeTodayManager() {
               />
               <div className="mt-4 max-h-[340px] overflow-y-auto rounded-lg border border-border">
                 {moviesLoading ? (
-                  <p className="py-6 text-center text-[12px] text-text-muted">Loading movies…</p>
+                  <p className="py-6 text-center text-xs text-text-muted">Loading movies…</p>
                 ) : moviesError ? (
-                  <p className="py-6 text-center text-[12px] text-warning">{moviesError}</p>
+                  <p className="py-6 text-center text-xs text-warning">{moviesError}</p>
                 ) : filteredMovies.length === 0 ? (
-                  <p className="py-6 text-center text-[12px] text-text-muted">No movies match.</p>
+                  <p className="py-6 text-center text-xs text-text-muted">No movies match.</p>
                 ) : (
                   filteredMovies.map((movie, idx) => {
                     const listed = listedIds.has(movie.id);
@@ -293,27 +294,29 @@ export function FreeTodayManager() {
                           idx > 0 ? "border-t border-border" : "",
                         ].join(" ")}
                       >
-                        <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-text">
                           {movie.title}
                         </span>
                         {!movie.is_published ? (
-                          <span className="shrink-0 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-bold text-warning">
+                          <span className="shrink-0 rounded-full bg-warning/10 px-2 py-0.5 text-2xs font-bold text-warning">
                             Draft
                           </span>
                         ) : null}
                         {listed ? (
-                          <span className="shrink-0 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-success">
+                          <span className="shrink-0 rounded-full bg-success/15 px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-success">
                             Free
                           </span>
                         ) : (
-                          <button
+                          <Button
                             type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="shrink-0"
                             onClick={() => void handleAdd(movie)}
                             disabled={isSaving || atLimit}
-                            className="shrink-0 rounded-md border border-border bg-surface px-3 py-1.5 text-[11px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text disabled:opacity-40"
                           >
                             Make free
-                          </button>
+                          </Button>
                         )}
                       </div>
                     );
@@ -323,14 +326,14 @@ export function FreeTodayManager() {
             </div>
 
             <div className="flex items-center justify-end gap-2.5 border-t border-border bg-bg/50 px-6 py-4">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => setShowPicker(false)}
                 disabled={isSaving}
-                className="rounded-lg border border-border bg-surface px-4 py-2.5 text-[12px] font-semibold text-text-muted transition-all hover:border-border-hover hover:bg-surface-elevated hover:text-text disabled:opacity-40"
               >
                 Done
-              </button>
+              </Button>
             </div>
           </div>
         </div>

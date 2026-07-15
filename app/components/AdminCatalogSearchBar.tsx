@@ -95,7 +95,7 @@ export function AdminCatalogSearchBar({
         ) : null}
       </div>
       {showCount ? (
-        <p className="text-[12px] text-text-muted">
+        <p className="text-xs text-text-muted">
           {resultCount} of {totalCount} match &ldquo;{value.trim()}&rdquo;
         </p>
       ) : null}

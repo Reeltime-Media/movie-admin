@@ -20,8 +20,7 @@ import {
   type ApiHeroFeaturedItem,
   type ApiSeries,
 } from "../lib/api";
-import { adminPrimaryButtonClass } from "../lib/adminUi";
-import { adminDeleteButtonClassWide } from "../lib/adminUi";
+import { Button } from "./ui/Button";
 import { mediaUrl } from "../lib/media";
 import { queryKeys } from "../lib/queryKeys";
 
@@ -323,17 +322,18 @@ export function HeroFeaturedManager() {
       <AdminCard
         title="Home hero carousel"
         headerAction={
-          <button
+          <Button
             type="button"
+            size="sm"
+            className="shrink-0"
             onClick={openCreateForm}
-            className={`inline-flex shrink-0 items-center gap-1.5 ${adminPrimaryButtonClass}`}
+            icon={<Plus size={14} strokeWidth={2.5} aria-hidden />}
           >
-            <Plus size={14} strokeWidth={2.5} aria-hidden />
             Add slide
-          </button>
+          </Button>
         }
       >
-        <p className="mb-4 text-[13px] leading-relaxed text-text-muted">
+        <p className="mb-4 text-sm leading-relaxed text-text-muted">
           The big carousel at the top of the client home page. Feature a{" "}
           <strong className="font-semibold text-text">movie or series</strong> — its trailer plays
           automatically — or add a <strong className="font-semibold text-text">video-only</strong>{" "}
@@ -341,11 +341,11 @@ export function HeroFeaturedManager() {
         </p>
 
         {catalogLoading ? (
-          <p className="mb-4 text-[12px] text-text-muted">Loading catalog…</p>
+          <p className="mb-4 text-xs text-text-muted">Loading catalog…</p>
         ) : catalogError ? (
-          <p className="mb-4 text-[12px] text-warning">{catalogError}</p>
+          <p className="mb-4 text-xs text-warning">{catalogError}</p>
         ) : (
-          <p className="mb-4 text-[12px] text-text-muted">
+          <p className="mb-4 text-xs text-text-muted">
             Catalog ready: {movies.length} movies · {seriesList.length} series
           </p>
         )}
@@ -353,10 +353,10 @@ export function HeroFeaturedManager() {
         {isLoading && !items.length ? (
           <InlineLoading label="Loading hero slides" />
         ) : error ? (
-          <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-4 text-[12px] text-warning">
+          <div className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-4 text-xs text-warning">
             <div>{error}</div>
             {error.includes("hero_featured_items") ? (
-              <p className="mt-2 text-[11px]">Run: cd movie-api && alembic upgrade head</p>
+              <p className="mt-2 text-2xs">Run: cd movie-api && alembic upgrade head</p>
             ) : null}
             <button
               type="button"
@@ -367,18 +367,14 @@ export function HeroFeaturedManager() {
             </button>
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-md border border-dashed border-border py-8 text-center">
-            <p className="text-[13px] text-text-muted">No hero slides yet.</p>
-            <p className="mt-1 text-[12px] text-text-disabled">
+          <div className="rounded-lg border border-dashed border-border py-8 text-center">
+            <p className="text-sm text-text-muted">No hero slides yet.</p>
+            <p className="mt-1 text-xs text-text-disabled">
               Click &ldquo;Add slide&rdquo; — feature a movie or series, or add a video-only slide.
             </p>
-            <button
-              type="button"
-              onClick={openCreateForm}
-              className={`mt-4 ${adminPrimaryButtonClass}`}
-            >
+            <Button type="button" className="mt-4" onClick={openCreateForm}>
               Add slide
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="space-y-3">
@@ -387,28 +383,28 @@ export function HeroFeaturedManager() {
               return (
                 <div
                   key={item.id}
-                  className="flex flex-wrap items-center gap-4 rounded-md border border-border bg-bg p-4"
+                  className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-bg p-4"
                 >
-                  <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded-sm border border-border bg-surface-elevated">
+                  <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-elevated">
                     {thumb ? (
                       <Image src={thumb} alt="" fill className="object-cover" sizes="56px" />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-[10px] text-text-disabled">
+                      <div className="flex h-full items-center justify-center text-2xs text-text-disabled">
                         No poster
                       </div>
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-[13px] font-bold">
+                      <h3 className="text-sm font-bold">
                         {item.content_title ??
                           (item.content_type === "custom" ? "Custom video" : "Unknown title")}
                       </h3>
-                      <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                      <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-text-muted">
                         {item.content_type === "custom" ? "video only" : item.content_type}
                       </span>
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                        className={`rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wider ${
                           item.is_active
                             ? "bg-success/15 text-success"
                             : "bg-text-disabled/25 text-text-muted"
@@ -417,38 +413,40 @@ export function HeroFeaturedManager() {
                         {item.is_active ? "Active" : "Inactive"}
                       </span>
                       {(item.video_key || item.youtube_url) ? (
-                        <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-600">
+                        <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-blue-600">
                           Video
                         </span>
                       ) : null}
                       {item.content_type !== "custom" && item.video_enabled === false ? (
-                        <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                        <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-text-muted">
                           Banner only
                         </span>
                       ) : null}
                     </div>
-                    <p className="mt-1 text-[11px] text-text-muted">
+                    <p className="mt-1 text-2xs text-text-muted">
                       Order {item.sort_order}
                       {item.content_slug ? ` · ${item.content_slug}` : ""}
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => openEditForm(item)}
                       disabled={isSaving}
-                      className="rounded-md border border-border bg-surface px-3 py-2 text-[11px] font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text disabled:opacity-40"
                     >
                       Edit
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="danger-soft"
+                      size="sm"
                       onClick={() => void handleDelete(item)}
                       disabled={isSaving}
-                      className={adminDeleteButtonClassWide}
                     >
                       Remove
-                    </button>
+                    </Button>
                   </div>
                 </div>
               );
@@ -468,7 +466,7 @@ export function HeroFeaturedManager() {
                   <h2 className="text-[17px] font-bold tracking-[-0.02em]">
                     {editingItem ? "Edit hero slide" : "Add hero slide"}
                   </h2>
-                  <p className="mt-1 text-[12px] leading-relaxed text-text-muted">
+                  <p className="mt-1 text-xs leading-relaxed text-text-muted">
                     What plays in the big carousel at the top of the client home page.
                   </p>
                 </div>
@@ -531,12 +529,12 @@ export function HeroFeaturedManager() {
                               ) : null}
                             </span>
                             <span
-                              className={`text-[13px] font-bold ${isActive ? "text-text" : "text-text-muted"}`}
+                              className={`text-sm font-bold ${isActive ? "text-text" : "text-text-muted"}`}
                             >
                               {label}
                             </span>
                           </span>
-                          <span className="mt-1.5 block pl-6 text-[11px] leading-relaxed text-text-muted">
+                          <span className="mt-1.5 block pl-6 text-2xs leading-relaxed text-text-muted">
                             {hint}
                           </span>
                         </button>
@@ -549,7 +547,7 @@ export function HeroFeaturedManager() {
                 <>
                 {/* ── Section: Select Content ── */}
                 <div className="px-6 py-5">
-                  <div className="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                  <div className="mb-4 flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7.5l2.5 2.5L11 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     Pick the title
                   </div>
@@ -557,7 +555,7 @@ export function HeroFeaturedManager() {
                   {/* Selected entry preview */}
                   {selectedEntry ? (
                     <div className="mb-5 flex items-center gap-3 rounded-xl border border-brand/25 bg-gradient-to-r from-brand/[0.04] to-transparent p-3.5">
-                      <div className="relative h-16 w-11 shrink-0 overflow-hidden rounded-md border border-border bg-surface-elevated shadow-sm">
+                      <div className="relative h-16 w-11 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-elevated shadow-sm">
                         {mediaUrl(selectedEntry.posterKey) ? (
                           <Image
                             src={mediaUrl(selectedEntry.posterKey)!}
@@ -569,8 +567,8 @@ export function HeroFeaturedManager() {
                         ) : null}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-bold">{selectedEntry.title}</p>
-                        <p className="text-[11px] text-text-muted">
+                        <p className="truncate text-sm font-bold">{selectedEntry.title}</p>
+                        <p className="text-2xs text-text-muted">
                           {selectedEntry.contentType === "movie" ? "Movie" : "Series"}
                           {!selectedEntry.isPublished ? " · Draft (won't show until published)" : ""}
                         </p>
@@ -584,10 +582,10 @@ export function HeroFeaturedManager() {
                       <div className="mb-2 flex size-10 items-center justify-center rounded-full bg-surface-elevated text-text-disabled">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
                       </div>
-                      <p className="text-[12px] font-semibold text-text-muted">
+                      <p className="text-xs font-semibold text-text-muted">
                         No title selected
                       </p>
-                      <p className="mt-0.5 text-[11px] text-text-disabled">
+                      <p className="mt-0.5 text-2xs text-text-disabled">
                         Pick one from the grid below
                       </p>
                     </div>
@@ -610,7 +608,7 @@ export function HeroFeaturedManager() {
                           type="button"
                           onClick={() => setTypeFilter(key)}
                           className={[
-                            "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-all duration-150",
+                            "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all duration-150",
                             isActive
                               ? "border-brand bg-brand text-white shadow-[0_1px_4px_rgba(229,9,20,0.25)]"
                               : "border-border bg-bg text-text-muted hover:border-border-hover hover:bg-surface-elevated hover:text-text",
@@ -637,15 +635,15 @@ export function HeroFeaturedManager() {
 
                   <div className="mt-4 max-h-[280px] overflow-y-auto rounded-lg border border-border">
                     {catalogLoading ? (
-                      <p className="py-6 text-center text-[12px] text-text-muted">
+                      <p className="py-6 text-center text-xs text-text-muted">
                         Loading catalog…
                       </p>
                     ) : catalogError ? (
-                      <p className="py-6 text-center text-[12px] text-warning">
+                      <p className="py-6 text-center text-xs text-warning">
                         {catalogError}
                       </p>
                     ) : filteredCatalog.length === 0 ? (
-                      <p className="py-6 text-center text-[12px] text-text-muted">
+                      <p className="py-6 text-center text-xs text-text-muted">
                         No titles match. Add movies under Movies or series under Series first.
                       </p>
                     ) : (
@@ -666,7 +664,7 @@ export function HeroFeaturedManager() {
                           >
                             <span
                               className={[
-                                "shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                                "shrink-0 rounded-lg px-2 py-0.5 text-2xs font-bold uppercase tracking-wider",
                                 entry.contentType === "movie"
                                   ? "bg-blue-500/10 text-blue-600"
                                   : "bg-violet-500/10 text-violet-600",
@@ -674,11 +672,11 @@ export function HeroFeaturedManager() {
                             >
                               {entry.contentType === "movie" ? "Movie" : "Series"}
                             </span>
-                            <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">
+                            <span className="min-w-0 flex-1 truncate text-sm font-medium text-text">
                               {entry.title}
                             </span>
                             {!entry.isPublished ? (
-                              <span className="shrink-0 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-bold text-warning">
+                              <span className="shrink-0 rounded-full bg-warning/10 px-2 py-0.5 text-2xs font-bold text-warning">
                                 Draft
                               </span>
                             ) : null}
@@ -698,7 +696,7 @@ export function HeroFeaturedManager() {
 
                 {/* ── Section: Video (catalog) ── */}
                 <div className="border-t border-border px-6 py-5">
-                  <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                  <div className="mb-3 flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 3.5A1.5 1.5 0 014 2h6a1.5 1.5 0 011.5 1.5v7A1.5 1.5 0 0110 12H4a1.5 1.5 0 01-1.5-1.5v-7z" stroke="currentColor" strokeWidth="1.3"/><path d="M6 5.5l2.5 1.5L6 8.5v-3z" fill="currentColor"/></svg>
                     Video
                   </div>
@@ -719,10 +717,10 @@ export function HeroFeaturedManager() {
                       className="mt-0.5 size-4 shrink-0 cursor-pointer accent-brand"
                     />
                     <span>
-                      <span className="block text-[13px] font-semibold text-text">
+                      <span className="block text-sm font-semibold text-text">
                         Play a video on this slide
                       </span>
-                      <span className="mt-0.5 block text-[11px] text-text-muted">
+                      <span className="mt-0.5 block text-2xs text-text-muted">
                         {form.videoEnabled
                           ? "The title's trailer plays automatically."
                           : "Just the banner image — no video."}
@@ -749,7 +747,7 @@ export function HeroFeaturedManager() {
                               setForm((prev) => ({ ...prev, videoKey: "", youtubeUrl: "" }));
                             }}
                             disabled={isSaving || mediaUploading}
-                            className="cursor-pointer text-[11px] font-semibold text-text-muted transition-colors hover:text-text"
+                            className="cursor-pointer text-2xs font-semibold text-text-muted transition-colors hover:text-text"
                           >
                             Never mind — just use the trailer
                           </button>
@@ -758,7 +756,7 @@ export function HeroFeaturedManager() {
                         <button
                           type="button"
                           onClick={() => setShowVideoOverride(true)}
-                          className="cursor-pointer text-[12px] font-semibold text-brand transition-colors hover:text-brand-hover"
+                          className="cursor-pointer text-xs font-semibold text-brand transition-colors hover:text-brand-hover"
                         >
                           Use a different video
                         </button>
@@ -770,7 +768,7 @@ export function HeroFeaturedManager() {
                 ) : (
                 <div className="px-6 py-5 space-y-5">
                   <div>
-                    <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                    <div className="mb-3 flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 3.5A1.5 1.5 0 014 2h6a1.5 1.5 0 011.5 1.5v7A1.5 1.5 0 0110 12H4a1.5 1.5 0 01-1.5-1.5v-7z" stroke="currentColor" strokeWidth="1.3"/><path d="M6 5.5l2.5 1.5L6 8.5v-3z" fill="currentColor"/></svg>
                       The video
                     </div>
@@ -785,7 +783,7 @@ export function HeroFeaturedManager() {
                     />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                    <label className="mb-1.5 block text-2xs font-semibold text-text-muted">
                       Title (optional)
                     </label>
                     <input
@@ -793,9 +791,9 @@ export function HeroFeaturedManager() {
                       value={form.title}
                       onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
                       placeholder="Shown in big text over the video"
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
                     />
-                    <p className="mt-1 text-[11px] text-text-disabled">
+                    <p className="mt-1 text-2xs text-text-disabled">
                       Leave empty to show just the video.
                     </p>
                   </div>
@@ -804,23 +802,23 @@ export function HeroFeaturedManager() {
 
                 {/* ── Section: Display Settings ── */}
                 <div className="border-t border-border px-6 py-5 space-y-4">
-                  <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted">
+                  <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4"/><path d="M7 4.5v3l2 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     Display
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     <div>
-                      <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                      <label className="mb-1.5 block text-2xs font-semibold text-text-muted">
                         Order
                       </label>
                       <input
                         type="number"
                         value={form.sortOrder}
                         onChange={(e) => setForm((prev) => ({ ...prev, sortOrder: e.target.value }))}
-                        className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                        className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
                       />
-                      <p className="mt-1 text-[11px] text-text-disabled">Lower shows first.</p>
+                      <p className="mt-1 text-2xs text-text-disabled">Lower shows first.</p>
                     </div>
                     <div className="flex items-end pb-1">
                       <button
@@ -843,7 +841,7 @@ export function HeroFeaturedManager() {
                             ].join(" ")}
                           />
                         </span>
-                        <span className="text-[12px] font-semibold text-text">
+                        <span className="text-xs font-semibold text-text">
                           {form.isActive ? "Active" : "Inactive"}
                         </span>
                       </button>
@@ -854,7 +852,7 @@ export function HeroFeaturedManager() {
                     <>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div>
-                          <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                          <label className="mb-1.5 block text-2xs font-semibold text-text-muted">
                             <span className="flex items-center gap-1.5">
                               <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v2M6 9v2M1 6h2M9 6h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
                               Starts at
@@ -864,11 +862,11 @@ export function HeroFeaturedManager() {
                             type="datetime-local"
                             value={form.startsAt}
                             onChange={(e) => setForm((prev) => ({ ...prev, startsAt: e.target.value }))}
-                            className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                            className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
                           />
                         </div>
                         <div>
-                          <label className="mb-1.5 block text-[11px] font-semibold text-text-muted">
+                          <label className="mb-1.5 block text-2xs font-semibold text-text-muted">
                             <span className="flex items-center gap-1.5">
                               <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v2M6 9v2M1 6h2M9 6h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
                               Ends at
@@ -878,12 +876,12 @@ export function HeroFeaturedManager() {
                             type="datetime-local"
                             value={form.endsAt}
                             onChange={(e) => setForm((prev) => ({ ...prev, endsAt: e.target.value }))}
-                            className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-[13px] text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                            className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
                           />
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-[11px] text-text-disabled">
+                        <p className="text-2xs text-text-disabled">
                           Leave empty to show anytime while active.
                         </p>
                         <button
@@ -892,7 +890,7 @@ export function HeroFeaturedManager() {
                             setShowSchedule(false);
                             setForm((prev) => ({ ...prev, startsAt: "", endsAt: "" }));
                           }}
-                          className="cursor-pointer text-[11px] font-semibold text-text-muted transition-colors hover:text-text"
+                          className="cursor-pointer text-2xs font-semibold text-text-muted transition-colors hover:text-text"
                         >
                           Remove schedule
                         </button>
@@ -902,7 +900,7 @@ export function HeroFeaturedManager() {
                     <button
                       type="button"
                       onClick={() => setShowSchedule(true)}
-                      className="cursor-pointer text-[12px] font-semibold text-text-muted transition-colors hover:text-text"
+                      className="cursor-pointer text-xs font-semibold text-text-muted transition-colors hover:text-text"
                     >
                       + Schedule start and end dates (optional)
                     </button>
@@ -912,16 +910,17 @@ export function HeroFeaturedManager() {
 
               {/* ── Footer ── */}
               <div className="flex items-center justify-end gap-2.5 border-t border-border bg-bg/50 px-6 py-4">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={closeForm}
                   disabled={isSaving || mediaUploading}
-                  className="rounded-lg border border-border bg-surface px-4 py-2.5 text-[12px] font-semibold text-text-muted transition-all hover:border-border-hover hover:bg-surface-elevated hover:text-text disabled:opacity-40"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  loading={isSaving}
                   disabled={
                     isSaving ||
                     mediaUploading ||
@@ -929,10 +928,9 @@ export function HeroFeaturedManager() {
                       ? !form.contentId
                       : !form.videoKey && !form.youtubeUrl.trim())
                   }
-                  className="rounded-lg bg-brand px-5 py-2.5 text-[12px] font-bold text-white shadow-[0_1px_3px_rgba(229,9,20,0.3)] transition-all hover:bg-brand-hover hover:shadow-[0_2px_8px_rgba(229,9,20,0.4)] active:scale-[0.98] disabled:opacity-60 disabled:shadow-none"
                 >
                   {isSaving ? "Saving…" : editingItem ? "Save changes" : "Add to hero"}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
