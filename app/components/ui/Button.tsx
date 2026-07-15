@@ -65,15 +65,16 @@ export function Button(props: ButtonAsButton | ButtonAsLink) {
   if ("href" in props && props.href) {
     const { href, ...linkRest } = rest as Omit<ButtonAsLink, keyof CommonProps>;
     return (
-      <Link href={href} className={cls} {...linkRest}>
+      <Link {...linkRest} href={href} className={cls}>
         {content(loading, icon, children)}
       </Link>
     );
   }
 
   const btnRest = rest as ComponentPropsWithoutRef<"button">;
+  // Spread first so the computed className/disabled always win over caller props.
   return (
-    <button className={cls} disabled={loading || btnRest.disabled} {...btnRest}>
+    <button {...btnRest} className={cls} disabled={loading || btnRest.disabled}>
       {content(loading, icon, children)}
     </button>
   );
