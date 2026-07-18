@@ -19,33 +19,29 @@ export function AdminContentHlsPlayer({
 }: AdminContentHlsPlayerProps) {
   const [src, setSrc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(hasVideo);
 
   useEffect(() => {
-    if (!hasVideo) {
-      setSrc(null);
-      setError(null);
-      setLoading(false);
-      return;
-    }
+    if (!hasVideo) return;
 
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setSrc(null);
 
-    getAdminPlaybackUrl(contentId)
-      .then((url) => {
-        if (!cancelled) setSrc(url);
-      })
-      .catch((err: unknown) => {
+    void (async () => {
+      try {
+        const url = await getAdminPlaybackUrl(contentId);
         if (!cancelled) {
+          setSrc(url);
+          setError(null);
+        }
+      } catch (err: unknown) {
+        if (!cancelled) {
+          setSrc(null);
           setError(err instanceof Error ? err.message : "Could not load playback URL.");
         }
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    })();
 
     return () => {
       cancelled = true;
