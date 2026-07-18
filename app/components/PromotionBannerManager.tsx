@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { AdminCard } from "./AdminCard";
 import { InlineLoading } from "./InlineLoading";
+import { SortableList, persistReorderedSort } from "./SortableList";
 import {
   createAdminPromotionBanner,
   deleteAdminPromotionBanner,
@@ -218,6 +219,25 @@ export function PromotionBannerManager() {
     }
   };
 
+  const handleReorder = async (next: ApiPromotionBanner[]) => {
+    const previous = banners;
+    const optimistic = next.map((item, index) => ({ ...item, sort_order: index }));
+    queryClient.setQueryData(queryKeys.promotionBanners, optimistic);
+    setIsSaving(true);
+    try {
+      await persistReorderedSort(next, (id, sortOrder) =>
+        updateAdminPromotionBanner(id, { sortOrder }),
+      );
+      toast.success("Banner order updated");
+    } catch (err) {
+      queryClient.setQueryData(queryKeys.promotionBanners, previous);
+      toast.error(err instanceof Error ? err.message : "Could not reorder.");
+    } finally {
+      setIsSaving(false);
+      invalidate();
+    }
+  };
+
   const previewSrc =
     imagePreviewUrl ?? (editingBanner ? mediaUrl(editingBanner.image_key) : null);
 
@@ -238,8 +258,8 @@ export function PromotionBannerManager() {
         }
       >
         <p className="mb-4 text-sm leading-relaxed text-text-muted">
-          Create promotional strips shown on the client home page. Lower sort order appears first.
-          Leave schedule empty to show anytime while active.
+          Create promotional strips shown on the client home page. Drag a card to reorder
+          (top shows first). Leave schedule empty to show anytime while active.
         </p>
 
         {isLoading && !banners.length ? (
@@ -270,14 +290,14 @@ export function PromotionBannerManager() {
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {banners.map((banner) => {
+          <SortableList
+            items={banners}
+            disabled={isSaving}
+            onReorder={handleReorder}
+            renderItem={(banner, index) => {
               const thumb = mediaUrl(banner.image_key);
               return (
-                <div
-                  key={banner.id}
-                  className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-bg p-4"
-                >
+                <div className="flex flex-wrap items-center gap-4">
                   <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-elevated">
                     {thumb ? (
                       <Image src={thumb} alt="" fill className="object-cover" sizes="112px" />
@@ -289,6 +309,9 @@ export function PromotionBannerManager() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-md bg-surface-elevated px-1.5 py-0.5 font-mono text-2xs font-semibold tabular-nums text-text-muted">
+                        #{index + 1}
+                      </span>
                       <h3 className="text-sm font-bold">{banner.title}</h3>
                       <span
                         className={`rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wider ${
@@ -306,10 +329,9 @@ export function PromotionBannerManager() {
                     {banner.subtitle ? (
                       <p className="mt-1 text-xs text-text-muted">{banner.subtitle}</p>
                     ) : null}
-                    <p className="mt-1 text-2xs text-text-muted">
-                      Sort {banner.sort_order}
-                      {banner.cta_href ? ` · CTA ${banner.cta_href}` : ""}
-                    </p>
+                    {banner.cta_href ? (
+                      <p className="mt-1 text-2xs text-text-muted">CTA {banner.cta_href}</p>
+                    ) : null}
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <Button
@@ -333,14 +355,14 @@ export function PromotionBannerManager() {
                   </div>
                 </div>
               );
-            })}
-          </div>
+            }}
+          />
         )}
       </AdminCard>
 
       {showForm ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 sm:p-6"
           role="dialog"
           aria-modal="true"
           onClick={() => {
@@ -350,7 +372,7 @@ export function PromotionBannerManager() {
           <form
             onSubmit={(e) => void handleSubmit(e)}
             onClick={(e) => e.stopPropagation()}
-            className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-[0_24px_80px_-12px_rgba(0,0,0,0.18)]"
+            className="flex h-[min(90vh,920px)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-2xl shadow-black/50"
           >
             {/* ── Header ── */}
             <div className="relative border-b border-border px-6 py-5">

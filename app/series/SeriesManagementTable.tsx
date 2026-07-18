@@ -61,7 +61,8 @@ export function SeriesManagementTable({
           <table className="w-full min-w-200 text-left text-sm">
             <thead>
               <tr className="border-b border-border text-2xs uppercase tracking-widest text-text-disabled">
-                <th className="px-5 pb-3 font-bold">Title</th>
+                <th className="px-5 pb-3 font-bold">Khmer title</th>
+                <th className="px-5 pb-3 font-bold">English title</th>
                 <th className="px-5 pb-3 font-bold">Structure</th>
                 <th className="px-5 pb-3 font-bold">Genre</th>
                 <th className="px-5 pb-3 font-bold">Status</th>
@@ -71,7 +72,7 @@ export function SeriesManagementTable({
             <tbody className="divide-y divide-border">
               {entries.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center text-sm text-text-muted">
+                  <td colSpan={6} className="px-5 py-10 text-center text-sm text-text-muted">
                     {emptyHint}
                   </td>
                 </tr>
@@ -91,7 +92,14 @@ export function SeriesManagementTable({
                     }}
                   >
                     <td className="p-0 font-bold">
-                      <div className="px-5 py-4 transition-colors hover:text-brand">{item.title}</div>
+                      <div className="max-w-56 truncate px-5 py-4 transition-colors hover:text-brand">
+                        {item.titleKm?.trim() || "—"}
+                      </div>
+                    </td>
+                    <td className="p-0 font-bold">
+                      <div className="max-w-56 truncate px-5 py-4 transition-colors hover:text-brand">
+                        {item.title}
+                      </div>
                     </td>
                     <td className="px-5 py-4 text-text-muted">{seriesStructureSummary(item)}</td>
                     <td className="px-5 py-4 text-text-muted">{item.genre}</td>

@@ -11,6 +11,7 @@ export function pickFileFromInput(files: FileList | null | undefined): File | nu
 export function toMovieDraft(entry: CatalogEntry): Omit<CatalogEntry, "id"> {
   return {
     title: entry.title,
+    titleKm: entry.titleKm ?? null,
     description: entry.description,
     type: entry.type,
     price: entry.price,

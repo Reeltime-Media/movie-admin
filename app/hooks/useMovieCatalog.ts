@@ -21,7 +21,7 @@ export function useMovieCatalog() {
     queryKey: queryKeys.catalog,
     queryFn: fetchCatalog,
     enabled: isAuthReady && Boolean(getAdminToken()),
-    staleTime: 3 * 60_000,
+    staleTime: 30_000,
   });
 
   const updateMutation = useMutation({

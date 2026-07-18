@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,6 +8,7 @@ import { AdminCard } from "./AdminCard";
 import { AdminCatalogSearchBar } from "./AdminCatalogSearchBar";
 import { Button } from "./ui/Button";
 import { InlineLoading } from "./InlineLoading";
+import { SortableList, persistReorderedSort } from "./SortableList";
 import {
   createAdminFreeToday,
   deleteAdminFreeToday,
@@ -19,7 +19,6 @@ import {
   type ApiFreeTodayItem,
 } from "../lib/api";
 import { adminDeleteButtonClassWide, adminPrimaryButtonClass } from "../lib/adminUi";
-import { mediaUrl } from "../lib/media";
 import { queryKeys } from "../lib/queryKeys";
 
 const MAX_PICKS = 10;
@@ -124,17 +123,22 @@ export function FreeTodayManager() {
     }
   };
 
-  const handleOrderChange = async (item: ApiFreeTodayItem, value: string) => {
-    const sortOrder = Number.parseInt(value, 10);
-    if (Number.isNaN(sortOrder) || sortOrder === item.sort_order) return;
+  const handleReorder = async (next: ApiFreeTodayItem[]) => {
+    const previous = items;
+    const optimistic = next.map((item, index) => ({ ...item, sort_order: index }));
+    queryClient.setQueryData(queryKeys.freeToday, optimistic);
     setIsSaving(true);
     try {
-      await updateAdminFreeToday(item.id, { sortOrder });
-      invalidate();
+      await persistReorderedSort(next, (id, sortOrder) =>
+        updateAdminFreeToday(id, { sortOrder }),
+      );
+      toast.success("Order updated");
     } catch (err) {
+      queryClient.setQueryData(queryKeys.freeToday, previous);
       toast.error(err instanceof Error ? err.message : "Could not reorder.");
     } finally {
       setIsSaving(false);
+      invalidate();
     }
   };
 
@@ -158,8 +162,8 @@ export function FreeTodayManager() {
         <p className="mb-4 text-sm leading-relaxed text-text-muted">
           Movies listed here are <strong className="font-semibold text-text">free to watch
           for everyone</strong> while listed — no purchase or subscription needed. Remove a
-          movie and normal pricing applies again immediately. Up to {MAX_PICKS} picks; lower
-          order shows first on the home page.
+          movie and normal pricing applies again immediately. Up to {MAX_PICKS} picks; drag
+          a card to set home page order (top shows first).
         </p>
 
         {isLoading && !items.length ? (
@@ -186,66 +190,37 @@ export function FreeTodayManager() {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {items.map((item) => {
-              const thumb = mediaUrl(item.poster_key);
-              return (
-                <div
-                  key={item.id}
-                  className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-bg p-4"
-                >
-                  <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-elevated">
-                    {thumb ? (
-                      <Image src={thumb} alt="" fill className="object-cover" sizes="56px" />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-2xs text-text-disabled">
-                        No poster
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-sm font-bold">
-                        {item.content_title ?? "Unknown title"}
-                      </h3>
-                      <span className="rounded-full bg-success/15 px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-success">
-                        Free
-                      </span>
-                    </div>
-                    {item.content_slug ? (
-                      <p className="mt-1 text-2xs text-text-muted">{item.content_slug}</p>
-                    ) : null}
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <label className="flex items-center gap-1.5 text-2xs font-semibold text-text-muted">
-                      Order
-                      <input
-                        type="number"
-                        defaultValue={item.sort_order}
-                        onBlur={(e) => void handleOrderChange(item, e.target.value)}
-                        disabled={isSaving}
-                        className="w-16 rounded-lg border border-border bg-surface px-2 py-1.5 text-xs text-text outline-none focus:border-brand/40"
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => void handleRemove(item)}
-                      disabled={isSaving}
-                      className={adminDeleteButtonClassWide}
-                    >
-                      Remove
-                    </button>
-                  </div>
+          <SortableList
+            items={items}
+            disabled={isSaving}
+            onReorder={handleReorder}
+            renderItem={(item, index) => (
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <span className="rounded-md bg-surface-elevated px-1.5 py-0.5 font-mono text-2xs font-semibold tabular-nums text-text-muted">
+                    #{index + 1}
+                  </span>
+                  <h3 className="truncate text-sm font-bold text-text">
+                    {item.content_title ?? "Unknown title"}
+                  </h3>
                 </div>
-              );
-            })}
-          </div>
+                <button
+                  type="button"
+                  onClick={() => void handleRemove(item)}
+                  disabled={isSaving}
+                  className={adminDeleteButtonClassWide}
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+          />
         )}
       </AdminCard>
 
       {showPicker ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-[0_24px_80px_-12px_rgba(0,0,0,0.18)]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 sm:p-6">
+          <div className="flex h-[min(90vh,920px)] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-2xl shadow-black/50">
             <div className="relative border-b border-border px-6 py-5">
               <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-brand via-brand-hover to-brand/60" />
               <div className="flex items-start justify-between gap-4">
@@ -268,7 +243,7 @@ export function FreeTodayManager() {
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-5">
               <AdminCatalogSearchBar
                 value={search}
                 onChange={setSearch}
@@ -276,7 +251,7 @@ export function FreeTodayManager() {
                 resultCount={filteredMovies.length}
                 totalCount={movies.length}
               />
-              <div className="mt-4 max-h-[340px] overflow-y-auto rounded-lg border border-border">
+              <div className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-lg border border-border">
                 {moviesLoading ? (
                   <p className="py-6 text-center text-xs text-text-muted">Loading movies…</p>
                 ) : moviesError ? (

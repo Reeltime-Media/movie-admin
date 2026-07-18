@@ -179,7 +179,7 @@ export function AdminShell({
     <button
       type="button"
       onClick={handleSignOut}
-      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-elevated hover:text-text"
+      className="flex w-full items-center gap-2.5 rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:border-border-hover hover:bg-border/60 hover:text-text"
     >
       <LogOut size={15} strokeWidth={2} className="text-text-disabled" aria-hidden />
       Sign out
@@ -212,7 +212,7 @@ export function AdminShell({
                 type="button"
                 aria-label="Close menu"
                 onClick={() => setMobileNavOpen(false)}
-                className="grid h-8 w-8 place-items-center rounded-lg border border-border text-text-muted transition-colors hover:border-border-hover hover:text-text"
+                className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-surface-elevated text-text-muted transition-colors hover:border-border-hover hover:bg-border/60 hover:text-text"
               >
                 <X size={15} aria-hidden />
               </button>
@@ -235,7 +235,7 @@ export function AdminShell({
                 aria-label="Open menu"
                 aria-expanded={mobileNavOpen}
                 onClick={() => setMobileNavOpen(true)}
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border text-text-muted transition-colors hover:border-border-hover hover:text-text lg:hidden"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border bg-surface-elevated text-text-muted transition-colors hover:border-border-hover hover:bg-border/60 hover:text-text lg:hidden"
               >
                 <Menu size={17} aria-hidden />
               </button>
@@ -361,8 +361,8 @@ export function AdminShell({
           </div>
         </header>
 
-        <main className="flex-1 px-5 py-6 md:px-8">
-          <div className="space-y-6">{children}</div>
+        <main className="flex w-full min-w-0 flex-1 flex-col px-4 py-5 sm:px-6 lg:px-8">
+          <div className="w-full min-w-0 flex-1 space-y-6">{children}</div>
         </main>
       </div>
     </div>

@@ -263,12 +263,20 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
             <div className="min-h-[calc(100vh-13rem)] rounded-xl border border-border bg-surface">
               <table className="w-full text-left text-sm">
                 <tbody className="divide-y divide-border">
-                  <EditRow label="Title">
+                  <EditRow label="English title">
                     <input
                       className={movieEditInputClass}
                       value={editDraft.title}
                       onChange={(e) => patchDraft({ title: e.target.value })}
                       required
+                    />
+                  </EditRow>
+                  <EditRow label="Khmer title">
+                    <input
+                      className={movieEditInputClass}
+                      value={editDraft.titleKm ?? ""}
+                      onChange={(e) => patchDraft({ titleKm: e.target.value })}
+                      placeholder="Optional"
                     />
                   </EditRow>
                   <EditRow label="Status">

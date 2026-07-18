@@ -24,9 +24,20 @@ import { useUploadProgress } from "../../components/UploadProgressContext";
 import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../../lib/money";
 import { validateMoviePublishReady } from "../../lib/moviePublish";
 import { parseRuntimeMinutesInput } from "../../lib/runtime";
+import { adminTabClass } from "../../lib/adminUi";
 
 const textInputClass =
   "w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated";
+
+const RUNTIME_PRESETS = [
+  { minutes: 90, label: "1h 30m" },
+  { minutes: 100, label: "1h 40m" },
+  { minutes: 110, label: "1h 50m" },
+  { minutes: 120, label: "2h" },
+  { minutes: 135, label: "2h 15m" },
+  { minutes: 150, label: "2h 30m" },
+  { minutes: 180, label: "3h" },
+] as const;
 
 const selectClass =
   "w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-text outline-none transition-colors focus:border-border-hover focus:bg-surface-elevated";
@@ -76,6 +87,7 @@ export default function NewMoviePage() {
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState("Published");
   const [genres, setGenres] = useState<string[]>([]);
+  const [runtimeMinutes, setRuntimeMinutes] = useState("");
   const [showNewGenre, setShowNewGenre] = useState(false);
   const [newGenreName, setNewGenreName] = useState("");
   const { data: genreData } = useGenres();
@@ -148,6 +160,7 @@ export default function NewMoviePage() {
     return {
       ok: true as const,
       title,
+      titleKm: String(fd.get("titleKm") || "").trim(),
       genres,
       priceUsd: priceResult.value,
       runtimeMinutes: runtimeResult.value,
@@ -191,6 +204,7 @@ export default function NewMoviePage() {
     try {
       const created = await createAdminMovieDraft({
         title: fields.title,
+        titleKm: fields.titleKm || null,
         description: fields.description || undefined,
         genres: fields.genres,
         releaseYear: fields.releaseYear,
@@ -352,6 +366,7 @@ export default function NewMoviePage() {
           uploadId: upload.upload_id,
           parts,
           title: fields.title,
+          titleKm: fields.titleKm || null,
           priceUsd: fields.priceUsd,
           description: fields.description,
           genres: fields.genres,
@@ -417,8 +432,11 @@ export default function NewMoviePage() {
         <div className={step === 0 ? "block" : "hidden"} aria-hidden={step !== 0}>
           <AdminCard title="Movie details">
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Title">
+              <Field label="English title">
                 <input name="title" placeholder="The Last Drive" className={textInputClass} />
+              </Field>
+              <Field label="Khmer title">
+                <input name="titleKm" placeholder="Optional" className={textInputClass} />
               </Field>
 
               <div>
@@ -469,16 +487,34 @@ export default function NewMoviePage() {
                 <input name="rating" inputMode="decimal" placeholder="8.7" className={textInputClass} />
               </Field>
 
-              <Field label="Runtime (minutes)" hint="Whole minutes only, e.g. 102 for 1h 42m.">
+              <Field label="Runtime (minutes)" hint="Pick a preset or type whole minutes, e.g. 102 for 1h 42m.">
                 <input
                   name="runtimeMinutes"
                   type="number"
                   min={0}
                   step={1}
                   inputMode="numeric"
+                  value={runtimeMinutes}
+                  onChange={(e) => setRuntimeMinutes(e.target.value)}
                   placeholder="102"
                   className={textInputClass}
                 />
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {RUNTIME_PRESETS.map((preset) => {
+                    const active = runtimeMinutes === String(preset.minutes);
+                    return (
+                      <button
+                        key={preset.minutes}
+                        type="button"
+                        onClick={() => setRuntimeMinutes(String(preset.minutes))}
+                        className={adminTabClass(active)}
+                      >
+                        {preset.label}
+                        <span className="ml-1 font-mono text-2xs opacity-70">{preset.minutes}m</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </Field>
 
               <Field label="Status" hint="Published requires a poster and video on the Assets step. Save draft does not.">

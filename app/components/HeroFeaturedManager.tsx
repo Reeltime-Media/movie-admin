@@ -9,6 +9,7 @@ import { AdminCard } from "./AdminCard";
 import { AdminCatalogSearchBar } from "./AdminCatalogSearchBar";
 import { InlineLoading } from "./InlineLoading";
 import { HeroVideoField } from "./HeroSlideMediaFields";
+import { SortableList, persistReorderedSort } from "./SortableList";
 import {
   createAdminHeroFeatured,
   deleteAdminHeroFeatured,
@@ -43,8 +44,6 @@ type ItemFormState = {
   slideMode: SlideMode;
   contentType: ContentType;
   contentId: string;
-  isActive: boolean;
-  sortOrder: string;
   startsAt: string;
   endsAt: string;
   title: string;
@@ -60,8 +59,6 @@ const emptyForm = (): ItemFormState => ({
   slideMode: "catalog",
   contentType: "movie",
   contentId: "",
-  isActive: true,
-  sortOrder: "0",
   startsAt: "",
   endsAt: "",
   title: "",
@@ -200,7 +197,7 @@ export function HeroFeaturedManager() {
 
   const openCreateForm = () => {
     setEditingItem(null);
-    setForm({ ...emptyForm(), sortOrder: String(items.length) });
+    setForm(emptyForm());
     setCatalogSearch("");
     setTypeFilter("all");
     setShowVideoOverride(false);
@@ -215,8 +212,6 @@ export function HeroFeaturedManager() {
       slideMode: isCustom ? "custom" : "catalog",
       contentType: item.content_type === "series" ? "series" : "movie",
       contentId: item.content_id ?? "",
-      isActive: item.is_active,
-      sortOrder: String(item.sort_order),
       startsAt: toDatetimeLocalValue(item.starts_at),
       endsAt: toDatetimeLocalValue(item.ends_at),
       title: item.title ?? "",
@@ -269,8 +264,9 @@ export function HeroFeaturedManager() {
         contentType: isCustom ? ("custom" as const) : form.contentType,
         contentId: isCustom ? null : form.contentId,
         placement: "home",
-        isActive: form.isActive,
-        sortOrder: Number.parseInt(form.sortOrder, 10) || 0,
+        isActive: true,
+        // New slides append to the end; existing keep their drag order.
+        sortOrder: editingItem ? editingItem.sort_order : items.length,
         startsAt: fromDatetimeLocalValue(form.startsAt),
         endsAt: fromDatetimeLocalValue(form.endsAt),
         title: isCustom ? form.title.trim() || null : null,
@@ -318,6 +314,25 @@ export function HeroFeaturedManager() {
     }
   };
 
+  const handleReorder = async (next: ApiHeroFeaturedItem[]) => {
+    const previous = items;
+    const optimistic = next.map((item, index) => ({ ...item, sort_order: index }));
+    queryClient.setQueryData(queryKeys.heroFeatured, optimistic);
+    setIsSaving(true);
+    try {
+      await persistReorderedSort(next, (id, sortOrder) =>
+        updateAdminHeroFeatured(id, { sortOrder }),
+      );
+      toast.success("Carousel order updated");
+    } catch (err) {
+      queryClient.setQueryData(queryKeys.heroFeatured, previous);
+      toast.error(err instanceof Error ? err.message : "Could not reorder.");
+    } finally {
+      setIsSaving(false);
+      invalidate();
+    }
+  };
+
   return (
     <>
       <AdminCard
@@ -338,7 +353,8 @@ export function HeroFeaturedManager() {
           The big carousel at the top of the client home page. Feature a{" "}
           <strong className="font-semibold text-text">movie or series</strong> — its trailer plays
           automatically — or add a <strong className="font-semibold text-text">video-only</strong>{" "}
-          slide. Lower order shows first; only published titles appear to visitors.
+          slide. Drag a card to reorder (top shows first); only published titles appear
+          to visitors.
         </p>
 
         {catalogLoading ? (
@@ -378,14 +394,14 @@ export function HeroFeaturedManager() {
             </Button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {items.map((item) => {
+          <SortableList
+            items={items}
+            disabled={isSaving}
+            onReorder={handleReorder}
+            renderItem={(item, index) => {
               const thumb = mediaUrl(item.poster_key);
               return (
-                <div
-                  key={item.id}
-                  className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-bg p-4"
-                >
+                <div className="flex flex-wrap items-center gap-4">
                   <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-elevated">
                     {thumb ? (
                       <Image src={thumb} alt="" fill className="object-cover" sizes="56px" />
@@ -397,6 +413,9 @@ export function HeroFeaturedManager() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-md bg-surface-elevated px-1.5 py-0.5 font-mono text-2xs font-semibold tabular-nums text-text-muted">
+                        #{index + 1}
+                      </span>
                       <h3 className="text-sm font-bold">
                         {item.content_title ??
                           (item.content_type === "custom" ? "Custom video" : "Unknown title")}
@@ -404,16 +423,7 @@ export function HeroFeaturedManager() {
                       <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-text-muted">
                         {item.content_type === "custom" ? "video only" : item.content_type}
                       </span>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wider ${
-                          item.is_active
-                            ? "bg-success/15 text-success"
-                            : "bg-text-disabled/25 text-text-muted"
-                        }`}
-                      >
-                        {item.is_active ? "Active" : "Inactive"}
-                      </span>
-                      {(item.video_key || item.youtube_url) ? (
+                      {item.video_key || item.youtube_url ? (
                         <span className={adminBadgeClass("brand")}>Video</span>
                       ) : null}
                       {item.content_type !== "custom" && item.video_enabled === false ? (
@@ -422,10 +432,9 @@ export function HeroFeaturedManager() {
                         </span>
                       ) : null}
                     </div>
-                    <p className="mt-1 text-2xs text-text-muted">
-                      Order {item.sort_order}
-                      {item.content_slug ? ` · ${item.content_slug}` : ""}
-                    </p>
+                    {item.content_slug ? (
+                      <p className="mt-1 text-2xs text-text-muted">{item.content_slug}</p>
+                    ) : null}
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <Button
@@ -449,14 +458,14 @@ export function HeroFeaturedManager() {
                   </div>
                 </div>
               );
-            })}
-          </div>
+            }}
+          />
         )}
       </AdminCard>
 
       {showForm ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-[0_24px_80px_-12px_rgba(0,0,0,0.18)]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 sm:p-6">
+          <div className="flex h-[min(90vh,920px)] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-2xl shadow-black/50">
             {/* ── Header ── */}
             <div className="relative border-b border-border px-6 py-5">
               <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-brand via-brand-hover to-brand/60" />
@@ -632,7 +641,7 @@ export function HeroFeaturedManager() {
                     totalCount={catalog.length}
                   />
 
-                  <div className="mt-4 max-h-[280px] overflow-y-auto rounded-lg border border-border">
+                  <div className="mt-4 max-h-[min(50vh,420px)] overflow-y-auto rounded-lg border border-border">
                     {catalogLoading ? (
                       <p className="py-6 text-center text-xs text-text-muted">
                         Loading catalog…
@@ -798,47 +807,6 @@ export function HeroFeaturedManager() {
                   <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4"/><path d="M7 4.5v3l2 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     Display
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    <div>
-                      <label className="mb-1.5 block text-2xs font-semibold text-text-muted">
-                        Order
-                      </label>
-                      <input
-                        type="number"
-                        value={form.sortOrder}
-                        onChange={(e) => setForm((prev) => ({ ...prev, sortOrder: e.target.value }))}
-                        className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
-                      />
-                      <p className="mt-1 text-2xs text-text-disabled">Lower shows first.</p>
-                    </div>
-                    <div className="flex items-end pb-1">
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={form.isActive}
-                        onClick={() => setForm((prev) => ({ ...prev, isActive: !prev.isActive }))}
-                        className="group flex items-center gap-3"
-                      >
-                        <span
-                          className={[
-                            "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200",
-                            form.isActive ? "bg-success" : "bg-text-disabled/30",
-                          ].join(" ")}
-                        >
-                          <span
-                            className={[
-                              "pointer-events-none inline-block size-5 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200",
-                              form.isActive ? "translate-x-5" : "translate-x-0",
-                            ].join(" ")}
-                          />
-                        </span>
-                        <span className="text-xs font-semibold text-text">
-                          {form.isActive ? "Active" : "Inactive"}
-                        </span>
-                      </button>
-                    </div>
                   </div>
 
                   {showSchedule ? (

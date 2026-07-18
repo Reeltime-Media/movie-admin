@@ -104,7 +104,8 @@ export function MovieDetail({ movieId }: { movieId: string }) {
             <div className="min-h-[calc(100vh-13rem)] overflow-hidden rounded-xl border border-border bg-surface">
               <table className="w-full text-left text-sm">
                 <tbody className="divide-y divide-border">
-                  <InfoRow label="Title" value={movie.title} />
+                  <InfoRow label="English title" value={movie.title} />
+                  <InfoRow label="Khmer title" value={movie.titleKm || "—"} />
                   <tr>
                     <th
                       scope="row"

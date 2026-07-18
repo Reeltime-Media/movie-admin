@@ -295,7 +295,7 @@ export function SubscriptionPlanCreator() {
               onClick={closeForm}
               disabled={isSaving}
               aria-label="Close"
-              className="shrink-0 rounded-lg border border-border px-2 py-1 text-[18px] leading-none text-text-muted transition-colors hover:border-border-hover hover:text-text disabled:opacity-40"
+              className="shrink-0 rounded-lg border border-border bg-surface-elevated px-2 py-1 text-[18px] leading-none text-text-muted transition-colors hover:border-border-hover hover:bg-border/60 hover:text-text disabled:opacity-40"
             >
               ×
             </button>

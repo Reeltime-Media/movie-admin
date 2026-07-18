@@ -3,6 +3,7 @@ import type { CatalogEntry } from "../lib/adminData";
 export function toSeriesDraft(entry: CatalogEntry): Omit<CatalogEntry, "id"> {
   return {
     title: entry.title,
+    titleKm: entry.titleKm ?? null,
     description: entry.description,
     type: entry.type,
     price: entry.price,

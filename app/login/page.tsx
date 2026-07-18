@@ -35,22 +35,12 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-bg text-text">
       <section className="flex flex-1 items-center justify-center px-6 py-12">
         <div className="w-full max-w-[410px]">
-          <Link href="/" className="mb-8 inline-flex items-center gap-2.5">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-[15px] font-black text-white">
-              R
-            </div>
-            <span className="text-sm font-black tracking-[0.08em] text-text">REELTIME</span>
-          </Link>
-
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
             <div>
-              <div className="text-2xs font-bold uppercase tracking-[0.16em] text-text-muted">
+              <div className="text-2xs font-bold uppercase tracking-[0.16em] text-text-muted text-center">
                 Admin sign in
               </div>
-              <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.03em]">Welcome back</h2>
-              <p className="mt-2 text-sm leading-relaxed text-text-muted">
-                Use your Reeltime staff account to access movies and payment tools.
-              </p>
+              <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.03em] text-center">Welcome back</h2>
             </div>
 
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>

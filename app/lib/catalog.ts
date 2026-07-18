@@ -46,6 +46,7 @@ export function apiContentToCatalogEntry(content: ApiContent): CatalogEntry {
     id: content.id,
     slug: content.slug,
     title: content.title,
+    titleKm: content.title_km ?? null,
     type: "Movie",
     description: content.description,
     price:
@@ -101,6 +102,7 @@ export function apiSeriesToCatalogEntry(series: ApiSeries, apiSeasons: ApiSeason
     id: series.id,
     slug: series.slug,
     title: series.title,
+    titleKm: series.title_km ?? null,
     type: "Series",
     description: series.description,
     price:
@@ -159,6 +161,7 @@ export async function updateCatalogEntry(
   if (existing.type === "Series" && existing.slug) {
     const patch: Parameters<typeof updateSeriesApi>[1] = {
       title: entry.title,
+      title_km: entry.titleKm?.trim() || null,
       description: entry.description ?? null,
       genres: parseGenresFromStored(entry.genre),
       is_published: entry.status === "Published",
@@ -214,6 +217,7 @@ export async function updateCatalogEntry(
   }
   const updated = await updateAdminMovie(id, {
     title: entry.title,
+    titleKm: entry.titleKm ?? null,
     description: entry.description ?? null,
     genres: parseGenresFromStored(entry.genre),
     priceUsd: priceResult.value,

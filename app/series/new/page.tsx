@@ -154,6 +154,7 @@ export default function NewSeriesPage() {
     const intent = String(fd.get("intent") || "");
     const title = String(fd.get("title") || "").trim();
     if (!title) return;
+    const titleKm = String(fd.get("titleKm") || "").trim();
 
     if (genres.length === 0) return;
 
@@ -184,6 +185,7 @@ export default function NewSeriesPage() {
       try {
         const series = await createSeries({
           title,
+          titleKm: titleKm || null,
           monthlyPriceUsd: "6.99",
           description: String(fd.get("description") || "").trim() || undefined,
           genres,
@@ -276,8 +278,11 @@ export default function NewSeriesPage() {
         <div className={step === 0 ? "block" : "hidden"} aria-hidden={step !== 0}>
           <AdminCard title="Series details">
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Title">
+              <Field label="English title">
                 <input name="title" required placeholder="Echo Valley" className={textInputClass} />
+              </Field>
+              <Field label="Khmer title">
+                <input name="titleKm" placeholder="Optional" className={textInputClass} />
               </Field>
 
               <div>

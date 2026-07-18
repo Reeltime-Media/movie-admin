@@ -66,7 +66,7 @@ export default function Home() {
         ))}
       </AdminStatGrid>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid w-full gap-6">
         <DashboardRevenue />
         <DashboardTopMovies />
       </div>

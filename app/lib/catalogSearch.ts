@@ -7,6 +7,7 @@ export function matchesCatalogSearch(entry: CatalogEntry, query: string): boolea
 
   const parts = [
     entry.title,
+    entry.titleKm,
     entry.slug,
     entry.description,
     entry.genre,

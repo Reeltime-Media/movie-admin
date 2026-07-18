@@ -31,6 +31,8 @@ export type CatalogEntry = {
   /** API slug — used for series PATCH/DELETE since those endpoints are slug-based */
   slug?: string;
   title: string;
+  /** Khmer title — optional bilingual companion to English `title`. */
+  titleKm?: string | null;
   type: "Movie" | "Series";
   description?: string | null;
   price: string;

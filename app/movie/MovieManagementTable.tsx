@@ -60,7 +60,8 @@ export function MovieManagementTable({
           <table className="w-full min-w-230 text-left text-sm">
             <thead>
               <tr className="border-b border-border text-2xs font-semibold uppercase tracking-[0.16em] text-text-disabled">
-                <th className="px-5 pb-2.5 font-semibold">Title</th>
+                <th className="px-5 pb-2.5 font-semibold">Khmer title</th>
+                <th className="px-5 pb-2.5 font-semibold">English title</th>
                 <th className="px-5 pb-2.5 font-semibold">Genre</th>
                 <th className="px-5 pb-2.5 text-right font-semibold">Price</th>
                 <th className="px-5 pb-2.5 text-right font-semibold">Views</th>
@@ -71,7 +72,7 @@ export function MovieManagementTable({
             <tbody className="divide-y divide-border/60">
               {entries.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-10 text-center text-sm text-text-muted">
+                  <td colSpan={7} className="px-5 py-10 text-center text-sm text-text-muted">
                     {emptyHint}
                   </td>
                 </tr>
@@ -91,7 +92,12 @@ export function MovieManagementTable({
                     }}
                   >
                     <td className="p-0">
-                      <div className="px-5 py-3 font-medium text-text transition-colors group-hover:text-brand">
+                      <div className="max-w-56 truncate px-5 py-3 font-medium text-text transition-colors group-hover:text-brand">
+                        {item.titleKm?.trim() || "—"}
+                      </div>
+                    </td>
+                    <td className="p-0">
+                      <div className="max-w-56 truncate px-5 py-3 font-medium text-text transition-colors group-hover:text-brand">
                         {item.title}
                       </div>
                     </td>

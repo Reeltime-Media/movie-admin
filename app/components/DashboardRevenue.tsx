@@ -14,6 +14,7 @@ export function DashboardRevenue() {
       onRetry={reload}
       cardTitle="Revenue"
       cardAction={{ label: "View all", href: "/revenue" }}
+      chartHeight={280}
     />
   );
 }
