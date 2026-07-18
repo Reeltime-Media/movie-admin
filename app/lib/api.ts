@@ -149,7 +149,7 @@ export function clearAdminToken() {
 export type ApiPaymentIntent = {
   intent_id: string;
   order_id: string;
-  user_id: string;
+  user_id: string | null;
   user_email: string;
   user_full_name: string | null;
   kind: string;
