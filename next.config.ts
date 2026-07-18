@@ -7,6 +7,22 @@ const apiProxyTarget = process.env.API_PROXY_TARGET?.replace(/\/$/, "")?.replace
 );
 
 const nextConfig: NextConfig = {
+  async headers() {
+    return [
+      {
+        // Build-hashed — safe to cache forever.
+        source: "/_next/static/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
+      {
+        // /public media — filenames aren't hashed, so keep a shorter cache with revalidation.
+        source: "/:path*.(svg|jpg|jpeg|png|webp|avif|gif|ico|woff|woff2|ttf|mp4|webm)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" },
+        ],
+      },
+    ];
+  },
   async rewrites() {
     if (!apiProxyTarget) return [];
     return [{ source: "/api-proxy/:path*", destination: `${apiProxyTarget}/:path*` }];
