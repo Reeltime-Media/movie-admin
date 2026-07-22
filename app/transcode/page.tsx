@@ -267,7 +267,7 @@ export default function TranscodePage() {
                   className={adminUnderlineTabClass(filter === tab.key)}
                 >
                   {tab.label}
-                  <span className="ml-1 opacity-60">({count})</span>
+                  <span className="ml-1">({count})</span>
                 </button>
               );
             })}

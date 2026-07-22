@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+/* Replace Tailwind preflight's 50%-transparent placeholders on the dark admin. */
+@layer base {
+  ::placeholder {
+    opacity: 1;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    :root:not([data-theme="light"]) ::placeholder {
+      color: #9a9aae;
+      -webkit-text-fill-color: #9a9aae;
+    }
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────
    Reeltime Admin — dark OLED console
    Deep near-black canvas, layered elevation, brand red as the
@@ -10,18 +24,18 @@
   color-scheme: dark;
 
   /* Canvas → elevated surfaces. Each step is a real elevation level. */
-  --rt-bg: #08080c;
-  --rt-surface: #0e0e14;
-  --rt-surface-elevated: #16161f;
-  --rt-surface-soft: #0b0b11;
+  --rt-bg: #101018;
+  --rt-surface: #181822;
+  --rt-surface-elevated: #22222e;
+  --rt-surface-soft: #14141c;
 
-  /* Hairlines. Low-contrast by design; hover lifts them. */
-  --rt-border: #22222e;
-  --rt-border-hover: #33334a;
+  /* Hairlines. Slightly lifted so inputs and cards stay readable. */
+  --rt-border: #353545;
+  --rt-border-hover: #4a4a5e;
 
   --rt-text: #ffffff;
-  --rt-text-muted: #eeeef4;
-  --rt-text-disabled: #d0d0dc;
+  --rt-text-muted: #ffffff;
+  --rt-text-disabled: #ffffff;
 
   --rt-brand: #e50914;
   --rt-brand-hover: #ff1f2d;
@@ -32,9 +46,63 @@
   --rt-danger: #ff4d4f;
 
   --background: var(--rt-bg);
-  --foreground: var(--rt-text);
+  --foreground: #ffffff;
 
   --toastify-toast-shadow: none;
+}
+
+/*
+  Force readable white text on the dark admin.
+  Placeholders stay gray so empty fields are easy to spot.
+*/
+:root:not([data-theme="light"]) {
+  --color-text: #ffffff;
+  --color-text-muted: #ffffff;
+  --color-text-disabled: #ffffff;
+  --foreground: #ffffff;
+}
+
+:root:not([data-theme="light"]) body {
+  color: #ffffff;
+}
+
+:root:not([data-theme="light"]) .text-text,
+:root:not([data-theme="light"]) .text-text-muted,
+:root:not([data-theme="light"]) .text-text-disabled {
+  color: #ffffff !important;
+}
+
+:root:not([data-theme="light"]) ::placeholder,
+:root:not([data-theme="light"]) .placeholder\:text-text-muted::placeholder,
+:root:not([data-theme="light"]) .placeholder\:text-text-disabled::placeholder,
+:root:not([data-theme="light"]) .placeholder\:text-text::placeholder,
+:root:not([data-theme="light"]) .placeholder\:text-white::placeholder {
+  color: #9a9aae !important;
+  -webkit-text-fill-color: #9a9aae !important;
+  opacity: 1 !important;
+}
+
+/* Keep placeholders solid gray (not Tailwind's 50% mix). */
+@supports (color: color-mix(in lab, red, red)) {
+  :root:not([data-theme="light"]) ::placeholder {
+    color: #9a9aae !important;
+    -webkit-text-fill-color: #9a9aae !important;
+  }
+}
+
+:root:not([data-theme="light"]) input,
+:root:not([data-theme="light"]) textarea,
+:root:not([data-theme="light"]) select,
+:root:not([data-theme="light"]) button {
+  color: #ffffff;
+}
+
+:root:not([data-theme="light"]) input[type="file"] {
+  color: #ffffff;
+}
+
+:root:not([data-theme="light"]) input[type="file"]::file-selector-button {
+  color: #ffffff;
 }
 
 :root[data-theme="light"] {

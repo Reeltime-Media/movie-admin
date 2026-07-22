@@ -415,7 +415,7 @@ export function PromotionBannerManager() {
                     value={form.title}
                     onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                     placeholder="Enter banner title…"
-                    className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                    className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-white focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
                     required
                   />
                 </div>
@@ -428,7 +428,7 @@ export function PromotionBannerManager() {
                     onChange={(e) => setForm((f) => ({ ...f, subtitle: e.target.value }))}
                     rows={2}
                     placeholder="Optional supporting text…"
-                    className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10 resize-none"
+                    className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-white focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10 resize-none"
                   />
                 </div>
               </div>
@@ -485,7 +485,7 @@ export function PromotionBannerManager() {
                       value={form.ctaLabel}
                       onChange={(e) => setForm((f) => ({ ...f, ctaLabel: e.target.value }))}
                       placeholder="e.g. Subscribe now"
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-white focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
                     />
                   </div>
                   <div>
@@ -495,7 +495,7 @@ export function PromotionBannerManager() {
                       value={form.ctaHref}
                       onChange={(e) => setForm((f) => ({ ...f, ctaHref: e.target.value }))}
                       placeholder="/pricing"
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-white focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
                     />
                   </div>
                 </div>
@@ -515,7 +515,7 @@ export function PromotionBannerManager() {
                       type="number"
                       value={form.sortOrder}
                       onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))}
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-white focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
                     />
                   </div>
                   <div className="flex items-end pb-1">

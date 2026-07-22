@@ -8,7 +8,7 @@ export const adminLabelClass =
   "mb-1.5 block text-2xs font-semibold uppercase tracking-[0.16em] text-text-disabled";
 
 export const adminInputClass =
-  "w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-text outline-none transition-colors placeholder:text-text-disabled hover:border-border-hover focus:border-brand/60 focus:bg-surface";
+  "w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-text outline-none transition-colors placeholder:text-white hover:border-border-hover focus:border-brand/60 focus:bg-surface";
 
 export const adminFilterBarClass =
   "mb-5 flex flex-col gap-3 border-b border-border pb-5";
@@ -52,7 +52,7 @@ export function adminTabClass(active: boolean) {
     "rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
     active
       ? "border border-brand/40 bg-brand-soft text-text"
-      : "border border-border bg-surface text-text-muted hover:border-border-hover hover:bg-surface-elevated hover:text-text",
+      : "border border-border bg-surface-elevated text-white hover:border-border-hover hover:bg-border/60",
   ].join(" ");
 }
 

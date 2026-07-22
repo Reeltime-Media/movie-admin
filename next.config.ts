@@ -8,6 +8,12 @@ const apiProxyTarget = process.env.API_PROXY_TARGET?.replace(/\/$/, "")?.replace
 
 const nextConfig: NextConfig = {
   async headers() {
+    // Skip custom Cache-Control in dev — Next already no-caches, and pinning
+    // /_next/static (even briefly) caused stale JS vs SSR hydration mismatches.
+    if (process.env.NODE_ENV !== "production") {
+      return [];
+    }
+
     return [
       {
         // Build-hashed — safe to cache forever.

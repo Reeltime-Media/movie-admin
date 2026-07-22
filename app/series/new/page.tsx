@@ -28,7 +28,7 @@ import {
 } from "../../lib/seriesHelpers";
 
 const textInputClass =
-  "w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated";
+  "w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-text outline-none transition-colors placeholder:text-white focus:border-border-hover focus:bg-surface-elevated";
 
 const selectClass =
   "w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-text outline-none transition-colors focus:border-border-hover focus:bg-surface-elevated";
@@ -65,9 +65,9 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold text-text-muted">{label}</span>
+      <span className="mb-1.5 block text-xs font-semibold text-white">{label}</span>
       {children}
-      {hint ? <span className="mt-1.5 block text-2xs text-text-disabled">{hint}</span> : null}
+      {hint ? <span className="mt-1.5 block text-2xs font-medium text-white">{hint}</span> : null}
     </label>
   );
 }
@@ -104,15 +104,22 @@ export default function NewSeriesPage() {
   const { jobs, startJob, updateJob, setJobLabel, finishJob, failJob } = useUploadProgress();
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
 
-  const continueFromSeasons = () => {
+  const goToStep = (next: number) => {
+    setDetailsError(null);
     setSeasonsError(null);
-    if (!validateSeriesSeasons(seasons)) {
-      const message = "Add at least one season with episodes, and give every episode a title before continuing.";
-      setSeasonsError(message);
-      toast.warning(message);
-      return;
-    }
-    setStep(2);
+    setSubmitError(null);
+    setStep(next);
+  };
+
+  const failValidation = (message: string, targetStep: 0 | 1 | 2) => {
+    setDetailsError(null);
+    setSeasonsError(null);
+    setSubmitError(null);
+    if (targetStep === 0) setDetailsError(message);
+    else if (targetStep === 1) setSeasonsError(message);
+    else setSubmitError(message);
+    setStep(targetStep);
+    toast.warning(message);
   };
 
   const handleAddGenre = async () => {
@@ -128,51 +135,50 @@ export default function NewSeriesPage() {
     }
   };
 
-  const continueFromDetails = () => {
-    setDetailsError(null);
-    const form = document.getElementById("series-wizard-form") as HTMLFormElement | null;
-    const title = form?.querySelector<HTMLInputElement>('input[name="title"]')?.value?.trim() ?? "";
-    if (!title) {
-      const message = "Enter a title to continue.";
-      setDetailsError(message);
-      toast.warning(message);
-      return;
-    }
-    if (genres.length === 0) {
-      const message = "Select at least one genre.";
-      setDetailsError(message);
-      toast.warning(message);
-      return;
-    }
-    setStep(1);
-  };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const fd = new FormData(form);
     const intent = String(fd.get("intent") || "");
+
+    // Enter on earlier steps just advances — required fields are checked on Save/Upload.
+    if (intent !== "draft" && intent !== "upload") {
+      if (step < 2) goToStep(step + 1);
+      return;
+    }
+
     const title = String(fd.get("title") || "").trim();
-    if (!title) return;
     const titleKm = String(fd.get("titleKm") || "").trim();
 
-    if (genres.length === 0) return;
+    if (!title) {
+      failValidation("Enter a title to save.", 0);
+      return;
+    }
 
-    setSubmitError(null);
+    if (genres.length === 0) {
+      failValidation("Select at least one genre.", 0);
+      return;
+    }
 
     if (!validateSeriesSeasons(seasons)) {
-      const message = "Add at least one season with episodes, and give every episode a title.";
-      setSubmitError(message);
-      toast.warning(message);
+      failValidation(
+        "Add at least one season with episodes, and give every episode a title.",
+        1,
+      );
       return;
     }
 
     if (intent === "upload" && !episodesAllHaveVideo(seasons)) {
-      const message = "Upload requires a video file for every episode. Poster per episode is optional.";
-      setSubmitError(message);
-      toast.warning(message);
+      failValidation(
+        "Upload requires a video file for every episode. Poster per episode is optional.",
+        2,
+      );
       return;
     }
+
+    setSubmitError(null);
+    setDetailsError(null);
+    setSeasonsError(null);
 
     const status: Status = intent === "draft" ? "Draft" : parseStatus(String(fd.get("status")));
     const seriesJobId = `series-${title}-${Date.now()}`;
@@ -243,7 +249,7 @@ export default function NewSeriesPage() {
   return (
     <AdminShell title="Upload new series">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <p className="max-w-[72ch] text-sm leading-relaxed text-text-muted">
+        <p className="max-w-[72ch] text-sm font-medium leading-relaxed text-white">
           Enter show details, build seasons and episodes, then attach poster and per-episode video
           files.
         </p>
@@ -261,25 +267,32 @@ export default function NewSeriesPage() {
               {i > 0 ? (
                 <span className="text-xs font-bold text-text-disabled" aria-hidden>/</span>
               ) : null}
-              <span
+              <button
+                type="button"
+                onClick={() => goToStep(i)}
+                aria-current={active ? "step" : undefined}
                 className={[
-                  "rounded-full px-3 py-1 text-2xs font-bold uppercase tracking-widest",
-                  active ? "bg-brand text-white" : done ? "bg-success/15 text-success" : "bg-surface text-text-muted",
+                  "rounded-full px-3 py-1 text-2xs font-bold uppercase tracking-widest transition-colors",
+                  active
+                    ? "bg-brand text-white"
+                    : done
+                      ? "bg-success/15 text-success hover:bg-success/25"
+                      : "bg-surface-elevated text-white hover:bg-border/60",
                 ].join(" ")}
               >
                 {i + 1}. {label}
-              </span>
+              </button>
             </div>
           );
         })}
       </div>
 
-      <form id="series-wizard-form" onSubmit={handleSubmit} className="w-full space-y-6">
+      <form id="series-wizard-form" onSubmit={handleSubmit} noValidate className="w-full space-y-6">
         <div className={step === 0 ? "block" : "hidden"} aria-hidden={step !== 0}>
           <AdminCard title="Series details">
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="English title">
-                <input name="title" required placeholder="Echo Valley" className={textInputClass} />
+                <input name="title" placeholder="Echo Valley" className={textInputClass} />
               </Field>
               <Field label="Khmer title">
                 <input name="titleKm" placeholder="Optional" className={textInputClass} />
@@ -377,7 +390,7 @@ export default function NewSeriesPage() {
               <Button href="/series" variant="secondary">
                 Cancel
               </Button>
-              <Button type="button" onClick={continueFromDetails}>
+              <Button type="button" onClick={() => goToStep(1)}>
                 Continue
               </Button>
             </div>
@@ -395,10 +408,10 @@ export default function NewSeriesPage() {
               <p className="mt-4 text-xs font-semibold text-warning">{seasonsError}</p>
             ) : null}
             <div className="mt-6 flex flex-wrap justify-end gap-2">
-              <Button type="button" variant="secondary" onClick={() => setStep(0)}>
+              <Button type="button" variant="secondary" onClick={() => goToStep(0)}>
                 Back
               </Button>
-              <Button type="button" onClick={continueFromSeasons}>
+              <Button type="button" onClick={() => goToStep(2)}>
                 Continue
               </Button>
             </div>
@@ -465,7 +478,7 @@ export default function NewSeriesPage() {
             ) : null}
 
             <div className="mt-6 flex flex-wrap justify-end gap-3">
-              <Button type="button" variant="secondary" onClick={() => setStep(1)}>
+              <Button type="button" variant="secondary" onClick={() => goToStep(1)}>
                 Back
               </Button>
               <Button

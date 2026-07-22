@@ -46,7 +46,7 @@ export function TrailerPreview({
               <path d="M2 1.5l6 3.5-6 3.5V1.5z" />
             </svg>
           </div>
-          <span className="text-2xs font-bold uppercase tracking-[0.12em] text-white/50">
+          <span className="text-2xs font-bold uppercase tracking-[0.12em] text-white">
             Trailer preview
           </span>
         </div>
@@ -54,7 +54,7 @@ export function TrailerPreview({
           href={url}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-1 rounded-lg px-2 py-1 text-2xs font-semibold text-white/40 transition-colors hover:bg-white/5 hover:text-white/70"
+          className="flex items-center gap-1 rounded-lg px-2 py-1 text-2xs font-semibold text-white transition-colors hover:bg-white/10"
         >
           <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -76,13 +76,13 @@ export function TrailerPreview({
         </div>
       ) : (
         <div className="flex aspect-video flex-col items-center justify-center gap-3 p-6 text-center">
-          <div className="grid h-12 w-12 place-items-center rounded-full border border-white/10 bg-white/5">
-            <svg className="h-5 w-5 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="grid h-12 w-12 place-items-center rounded-full border border-white/20 bg-white/10">
+            <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
             </svg>
           </div>
           <div>
-            <p className="text-xs font-semibold text-white/40">Non-YouTube URL</p>
+            <p className="text-xs font-semibold text-white">Non-YouTube URL</p>
             <Button href={url} target="_blank" rel="noreferrer" size="sm" className="mt-1.5">
               Open trailer
             </Button>

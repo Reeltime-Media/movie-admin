@@ -24,20 +24,9 @@ import { useUploadProgress } from "../../components/UploadProgressContext";
 import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../../lib/money";
 import { validateMoviePublishReady } from "../../lib/moviePublish";
 import { parseRuntimeMinutesInput } from "../../lib/runtime";
-import { adminTabClass } from "../../lib/adminUi";
 
 const textInputClass =
-  "w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover focus:bg-surface-elevated";
-
-const RUNTIME_PRESETS = [
-  { minutes: 90, label: "1h 30m" },
-  { minutes: 100, label: "1h 40m" },
-  { minutes: 110, label: "1h 50m" },
-  { minutes: 120, label: "2h" },
-  { minutes: 135, label: "2h 15m" },
-  { minutes: 150, label: "2h 30m" },
-  { minutes: 180, label: "3h" },
-] as const;
+  "w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-text outline-none transition-colors placeholder:text-white focus:border-border-hover focus:bg-surface-elevated";
 
 const selectClass =
   "w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-text outline-none transition-colors focus:border-border-hover focus:bg-surface-elevated";
@@ -74,9 +63,9 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold text-text-muted">{label}</span>
+      <span className="mb-1.5 block text-xs font-semibold text-white">{label}</span>
       {children}
-      {hint ? <span className="mt-1.5 block text-2xs text-text-disabled">{hint}</span> : null}
+      {hint ? <span className="mt-1.5 block text-2xs font-medium text-white">{hint}</span> : null}
     </label>
   );
 }
@@ -87,7 +76,6 @@ export default function NewMoviePage() {
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState("Published");
   const [genres, setGenres] = useState<string[]>([]);
-  const [runtimeMinutes, setRuntimeMinutes] = useState("");
   const [showNewGenre, setShowNewGenre] = useState(false);
   const [newGenreName, setNewGenreName] = useState("");
   const { data: genreData } = useGenres();
@@ -122,23 +110,22 @@ export default function NewMoviePage() {
     }
   };
 
-  const continueFromDetails = () => {
+  const goToStep = (next: number) => {
     setDetailsError(null);
-    const form = document.getElementById("movie-wizard-form") as HTMLFormElement | null;
-    const title = form?.querySelector<HTMLInputElement>('input[name="title"]')?.value?.trim() ?? "";
-    if (!title) {
-      const message = "Enter a title to continue.";
+    setSubmitError(null);
+    setStep(next);
+  };
+
+  const failValidation = (message: string, targetStep: 0 | 1) => {
+    if (targetStep === 0) {
       setDetailsError(message);
-      toast.warning(message);
-      return;
+      setSubmitError(null);
+    } else {
+      setSubmitError(message);
+      setDetailsError(null);
     }
-    if (genres.length === 0) {
-      const message = "Select at least one genre.";
-      setDetailsError(message);
-      toast.warning(message);
-      return;
-    }
-    setStep(1);
+    setStep(targetStep);
+    toast.warning(message);
   };
 
   const readCommonFields = (fd: FormData) => {
@@ -185,10 +172,7 @@ export default function NewMoviePage() {
   const saveDraftFromForm = async (fd: FormData) => {
     const fields = readCommonFields(fd);
     if (!fields.ok) {
-      const message = fields.message;
-      if (step === 0) setDetailsError(message);
-      else setSubmitError(message);
-      toast.warning(message);
+      failValidation(fields.message, 0);
       return;
     }
 
@@ -227,8 +211,13 @@ export default function NewMoviePage() {
       router.push("/movie");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not save draft";
-      if (step === 0) setDetailsError(message);
-      else setSubmitError(message);
+      if (step === 0) {
+        setDetailsError(message);
+        setSubmitError(null);
+      } else {
+        setSubmitError(message);
+        setDetailsError(null);
+      }
       toast.error(message);
     } finally {
       setIsSubmitting(false);
@@ -242,9 +231,7 @@ export default function NewMoviePage() {
 
     const fields = readCommonFields(fd);
     if (!fields.ok) {
-      if (step === 0) setDetailsError(fields.message);
-      else setSubmitError(fields.message);
-      toast.warning(fields.message);
+      failValidation(fields.message, 0);
       return;
     }
 
@@ -265,13 +252,12 @@ export default function NewMoviePage() {
     }
 
     if (genres.length === 0) {
-      const message = "Select at least one genre.";
-      setSubmitError(message);
-      toast.warning(message);
+      failValidation("Select at least one genre.", 0);
       return;
     }
 
     setSubmitError(null);
+    setDetailsError(null);
 
     const status: Status = parseStatus(String(fd.get("status")));
 
@@ -281,14 +267,11 @@ export default function NewMoviePage() {
         { posterFile: posterImage, videoFile: video },
       );
       if (!publishCheck.ok) {
-        setSubmitError(publishCheck.message);
-        toast.warning(publishCheck.message);
+        failValidation(publishCheck.message, 1);
         return;
       }
     } else if (!video) {
-      const message = "Choose a movie video file before uploading.";
-      setSubmitError(message);
-      toast.warning(message);
+      failValidation("Choose a movie video file before uploading.", 1);
       return;
     }
 
@@ -301,9 +284,9 @@ export default function NewMoviePage() {
 
   const handleUploadSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Pressing Enter on the Details step should advance, not trigger the upload.
+    // Enter on Details just moves forward — required fields are checked on Upload.
     if (step !== 1) {
-      continueFromDetails();
+      goToStep(1);
       return;
     }
     void runWizardAction("upload");
@@ -397,7 +380,7 @@ export default function NewMoviePage() {
   return (
     <AdminShell title="Upload new movie">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <p className="max-w-[72ch] text-sm leading-relaxed text-text-muted">
+        <p className="max-w-[72ch] text-sm font-medium leading-relaxed text-white">
           Enter movie details and publishing settings, then upload the video directly to storage
           before transcoding starts. You can save a draft at any step and finish the video later.
         </p>
@@ -415,14 +398,21 @@ export default function NewMoviePage() {
               {i > 0 ? (
                 <span className="text-xs font-bold text-text-disabled" aria-hidden>/</span>
               ) : null}
-              <span
+              <button
+                type="button"
+                onClick={() => goToStep(i)}
+                aria-current={active ? "step" : undefined}
                 className={[
-                  "rounded-full px-3 py-1 text-2xs font-bold uppercase tracking-widest",
-                  active ? "bg-brand text-white" : done ? "bg-success/15 text-success" : "bg-surface text-text-muted",
+                  "rounded-full px-3 py-1 text-2xs font-bold uppercase tracking-widest transition-colors",
+                  active
+                    ? "bg-brand text-white"
+                    : done
+                      ? "bg-success/15 text-success hover:bg-success/25"
+                      : "bg-surface-elevated text-white hover:bg-border/60",
                 ].join(" ")}
               >
                 {i + 1}. {label}
-              </span>
+              </button>
             </div>
           );
         })}
@@ -487,34 +477,16 @@ export default function NewMoviePage() {
                 <input name="rating" inputMode="decimal" placeholder="8.7" className={textInputClass} />
               </Field>
 
-              <Field label="Runtime (minutes)" hint="Pick a preset or type whole minutes, e.g. 102 for 1h 42m.">
+              <Field label="Runtime (minutes)" hint="Whole minutes only, e.g. 102 for 1h 42m.">
                 <input
                   name="runtimeMinutes"
                   type="number"
                   min={0}
                   step={1}
                   inputMode="numeric"
-                  value={runtimeMinutes}
-                  onChange={(e) => setRuntimeMinutes(e.target.value)}
                   placeholder="102"
                   className={textInputClass}
                 />
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {RUNTIME_PRESETS.map((preset) => {
-                    const active = runtimeMinutes === String(preset.minutes);
-                    return (
-                      <button
-                        key={preset.minutes}
-                        type="button"
-                        onClick={() => setRuntimeMinutes(String(preset.minutes))}
-                        className={adminTabClass(active)}
-                      >
-                        {preset.label}
-                        <span className="ml-1 font-mono text-2xs opacity-70">{preset.minutes}m</span>
-                      </button>
-                    );
-                  })}
-                </div>
               </Field>
 
               <Field label="Status" hint="Published requires a poster and video on the Assets step. Save draft does not.">
@@ -576,7 +548,7 @@ export default function NewMoviePage() {
               >
                 {isSubmitting ? "Saving…" : "Save draft"}
               </Button>
-              <Button type="button" onClick={continueFromDetails}>
+              <Button type="button" onClick={() => goToStep(1)}>
                 Continue
               </Button>
             </div>
@@ -633,7 +605,7 @@ export default function NewMoviePage() {
             ) : null}
 
             <div className="mt-6 flex flex-wrap justify-end gap-3">
-              <Button type="button" variant="secondary" onClick={() => setStep(0)}>
+              <Button type="button" variant="secondary" onClick={() => goToStep(0)}>
                 Back
               </Button>
               <Button
@@ -644,7 +616,7 @@ export default function NewMoviePage() {
               >
                 {isSubmitting ? "Saving…" : "Save draft"}
               </Button>
-              <Button type="submit" loading={isSubmitting} disabled={isSubmitting || step !== 1}>
+              <Button type="submit" loading={isSubmitting} disabled={isSubmitting}>
                 {isSubmitting ? "Uploading…" : "Upload"}
               </Button>
             </div>

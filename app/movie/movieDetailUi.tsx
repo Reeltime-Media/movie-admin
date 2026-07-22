@@ -64,7 +64,7 @@ export function EditField({
 }
 
 export const movieEditInputClass =
-  "w-full rounded-lg border border-border bg-surface px-2.5 py-2 text-sm font-semibold text-text outline-none transition-colors placeholder:text-text-disabled focus:border-border-hover";
+  "w-full rounded-lg border border-border bg-surface px-2.5 py-2 text-sm font-semibold text-text outline-none transition-colors placeholder:text-white focus:border-border-hover";
 
 export const movieEditSelectClass =
   "w-full rounded-lg border border-border bg-surface px-2.5 py-2 text-sm font-semibold text-text outline-none transition-colors focus:border-border-hover";
