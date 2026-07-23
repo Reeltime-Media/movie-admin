@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "danger-soft";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "danger-soft" | "success";
 type Size = "sm" | "md";
 
 const base =
@@ -26,6 +26,8 @@ const variantClass: Record<Variant, string> = {
   // Soft destructive: tinted surface so the action still reads as a button.
   "danger-soft":
     "border border-danger/40 bg-danger/15 text-danger hover:border-danger/55 hover:bg-danger/25",
+  success:
+    "bg-success font-semibold text-black shadow-[0_0_0_1px_rgba(46,224,106,0.45),0_1px_12px_-2px_rgba(46,224,106,0.35)] hover:brightness-110 active:translate-y-px disabled:shadow-none",
 };
 
 function content(loading: boolean, icon: ReactNode | undefined, children: ReactNode) {

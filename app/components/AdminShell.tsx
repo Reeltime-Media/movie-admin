@@ -127,9 +127,12 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AdminShell({
   title = "Content dashboard",
+  headerAction,
   children,
 }: {
   title?: string;
+  /** Optional control shown on the right of the page title (e.g. Back button). */
+  headerAction?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -245,6 +248,7 @@ export function AdminShell({
             </div>
 
             <div className="flex items-center gap-2">
+              {headerAction}
               {/* Upload progress dropdown */}
               {jobs.length > 0 ? (
                 <div ref={dropdownRef} className="relative">

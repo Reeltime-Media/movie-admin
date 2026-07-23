@@ -298,7 +298,7 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
           <Button href={`/series/${series.id}`} variant="secondary" size="sm">
             Cancel
           </Button>
-          <Button type="submit" size="sm" loading={isSaving}>
+          <Button type="submit" variant="success" size="sm" loading={isSaving}>
             {isSaving ? uploadProgressLabel || "Saving…" : "Save changes"}
           </Button>
         </div>

@@ -248,17 +248,14 @@ export default function NewSeriesPage() {
   const currentJob = activeJobId ? (jobs.find((j) => j.id === activeJobId) ?? null) : null;
 
   return (
-    <AdminShell title="Upload new series">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <p className="max-w-[72ch] text-sm font-medium leading-relaxed text-white">
-          Enter show details, build seasons and episodes, then attach poster and per-episode video
-          files.
-        </p>
+    <AdminShell
+      title="Upload new series"
+      headerAction={
         <Button href="/series" variant="secondary" size="sm" className="shrink-0">
           Back to series
         </Button>
-      </div>
-
+      }
+    >
       <WizardSteps labels={stepLabels} step={step} onStepChange={goToStep} />
 
       <form id="series-wizard-form" onSubmit={handleSubmit} noValidate className="w-full space-y-6">
@@ -468,6 +465,7 @@ export default function NewSeriesPage() {
                 type="submit"
                 name="intent"
                 value="upload"
+                variant="success"
                 loading={isSubmitting}
                 disabled={isSubmitting}
               >

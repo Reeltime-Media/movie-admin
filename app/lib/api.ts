@@ -1278,6 +1278,16 @@ export async function listTranscodeJobs(
   );
 }
 
+export async function listTranscodeJobCounts(): Promise<{
+  all: number;
+  queued: number;
+  running: number;
+  success: number;
+  failed: number;
+}> {
+  return apiFetch(`/admin/transcode-jobs/counts`);
+}
+
 export async function retryTranscodeJob(jobId: string): Promise<TranscodeJob> {
   return apiFetch<TranscodeJob>(`/admin/transcode-jobs/${jobId}/retry`, { method: "POST" });
 }

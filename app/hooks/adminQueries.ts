@@ -15,6 +15,7 @@ import {
   listAdminTopTitles,
   listGenres,
   listSeriesEpisodesApi,
+  listTranscodeJobCounts,
   listTranscodeJobs,
   listUsers,
   retryTranscodeJob,
@@ -195,22 +196,7 @@ export function useTranscodeJobs(params: {
 
   const countsQuery = useQuery({
     queryKey: queryKeys.transcodeCounts,
-    queryFn: async () => {
-      const statuses = ["queued", "running", "success", "failed"] as const;
-      const [allRes, ...statusTotals] = await Promise.all([
-        listTranscodeJobs({ page: 1, pageSize: 1 }),
-        ...statuses.map((status) =>
-          listTranscodeJobs({ page: 1, pageSize: 1, status }).then((res) => res.total),
-        ),
-      ]);
-      return {
-        all: allRes.total,
-        queued: statusTotals[0],
-        running: statusTotals[1],
-        success: statusTotals[2],
-        failed: statusTotals[3],
-      };
-    },
+    queryFn: () => listTranscodeJobCounts(),
     enabled: isAuthReady && Boolean(getAdminToken()),
     staleTime: 10_000,
   });

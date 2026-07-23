@@ -379,17 +379,14 @@ export default function NewMoviePage() {
   const currentJob = activeJobId ? (jobs.find((j) => j.id === activeJobId) ?? null) : null;
 
   return (
-    <AdminShell title="Upload new movie">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <p className="max-w-[72ch] text-sm font-medium leading-relaxed text-white">
-          Enter movie details and publishing settings, then upload the video directly to storage
-          before transcoding starts. You can save a draft at any step and finish the video later.
-        </p>
+    <AdminShell
+      title="Upload new movie"
+      headerAction={
         <Button href="/movie" variant="secondary" size="sm" className="shrink-0">
           Back to movies
         </Button>
-      </div>
-
+      }
+    >
       <WizardSteps labels={stepLabels} step={step} onStepChange={goToStep} />
 
       <form id="movie-wizard-form" onSubmit={handleUploadSubmit} noValidate className="w-full space-y-6">
@@ -590,7 +587,7 @@ export default function NewMoviePage() {
               >
                 {isSubmitting ? "Saving…" : "Save draft"}
               </Button>
-              <Button type="submit" loading={isSubmitting} disabled={isSubmitting}>
+              <Button type="submit" variant="success" loading={isSubmitting} disabled={isSubmitting}>
                 {isSubmitting ? "Uploading…" : "Upload"}
               </Button>
             </div>

@@ -251,7 +251,7 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
           <Button href={`/movie/${movie.id}`} variant="secondary" size="sm">
             Cancel
           </Button>
-          <Button type="submit" size="sm" loading={isSaving}>
+          <Button type="submit" variant="success" size="sm" loading={isSaving}>
             {isSaving ? "Saving…" : "Save changes"}
           </Button>
         </div>
