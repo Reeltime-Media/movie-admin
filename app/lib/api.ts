@@ -93,6 +93,13 @@ export type MovieAssetUploadStartResponse = {
   banner_upload_url: string | null;
 };
 
+export type EpisodeAssetUploadStartResponse = {
+  source_key: string | null;
+  video_upload_url: string | null;
+  poster_key: string | null;
+  poster_upload_url: string | null;
+};
+
 export type ApiContent = {
   id: string;
   type: string;
@@ -1011,6 +1018,87 @@ export async function updateEpisodeApi(
       ...(data.status !== undefined ? { status: data.status } : {}),
     }),
   });
+}
+
+export async function startEpisodeAssetUpload(
+  seriesSlug: string,
+  episodeSlug: string,
+  input: {
+    videoContentType?: string | null;
+    posterContentType?: string | null;
+  },
+) {
+  return apiFetch<EpisodeAssetUploadStartResponse>(
+    `/series/${seriesSlug}/episodes/${episodeSlug}/assets/start`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        video_content_type: normalizeAssetContentType(input.videoContentType),
+        poster_content_type: normalizeAssetContentType(input.posterContentType),
+      }),
+    },
+  );
+}
+
+export async function completeEpisodeAssetUpload(
+  seriesSlug: string,
+  episodeSlug: string,
+  input: {
+    sourceKey?: string | null;
+    posterKey?: string | null;
+  },
+) {
+  return apiFetch<ApiContent>(`/series/${seriesSlug}/episodes/${episodeSlug}/assets/complete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      source_key: input.sourceKey ?? null,
+      poster_key: input.posterKey ?? null,
+    }),
+  });
+}
+
+export async function uploadEpisodeAsset(
+  seriesSlug: string,
+  episodeSlug: string,
+  kind: "poster" | "video",
+  file: File,
+  onProgress?: (percent: number) => void,
+) {
+  const contentType = kind === "video" ? videoContentType(file) : imageContentType(file);
+  const upload = await startEpisodeAssetUpload(seriesSlug, episodeSlug, {
+    videoContentType: kind === "video" ? contentType : null,
+    posterContentType: kind === "poster" ? contentType : null,
+  });
+
+  const uploadUrl = kind === "poster" ? upload.poster_upload_url : upload.video_upload_url;
+  const assetKey = kind === "poster" ? upload.poster_key : upload.source_key;
+
+  if (!uploadUrl || !assetKey) {
+    throw new Error(`Could not start episode ${kind} upload.`);
+  }
+
+  await uploadFileToPresignedUrl(uploadUrl, file, onProgress, contentType);
+  await completeEpisodeAssetUpload(seriesSlug, episodeSlug, {
+    sourceKey: kind === "video" ? assetKey : null,
+    posterKey: kind === "poster" ? assetKey : null,
+  });
+}
+
+/** Replace video and/or poster on an existing episode. */
+export async function uploadEpisodeAssets(
+  seriesSlug: string,
+  episodeSlug: string,
+  assets: { poster?: File | null; video?: File | null },
+  onVideoProgress?: (percent: number) => void,
+) {
+  const poster = hasUploadFile(assets.poster) ? assets.poster : null;
+  const video = hasUploadFile(assets.video) ? assets.video : null;
+  if (!poster && !video) return;
+
+  if (poster) await uploadEpisodeAsset(seriesSlug, episodeSlug, "poster", poster);
+  if (video) await uploadEpisodeAsset(seriesSlug, episodeSlug, "video", video, onVideoProgress);
 }
 
 export async function startEpisodeUpload(

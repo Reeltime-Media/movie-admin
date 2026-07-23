@@ -89,6 +89,8 @@ function mapApiSeasons(apiSeasons: ApiSeasonRead[]): Season[] {
       title: ep.title,
       runtime: ep.runtime ?? "",
       isFree: ep.is_free,
+      posterKey: ep.poster_key,
+      posterUrl: mediaUrl(ep.poster_key),
       posterFileName: ep.poster_key ?? undefined,
       videoFileName: ep.hls_master_key ?? undefined,
       hlsMasterKey: ep.hls_master_key,

@@ -13,7 +13,7 @@ import { SeasonsEpisodesEditor } from "../components/SeasonsEpisodesEditor";
 import { TrailerPreview } from "../components/TrailerPreview";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
 import { useDeleteGenre, useGenres } from "../hooks/adminQueries";
-import { uploadSeriesAssets } from "../lib/api";
+import { uploadEpisodeAssets, uploadSeriesAssets } from "../lib/api";
 import type { CatalogEntry, Status } from "../lib/adminData";
 import { formatGenres, parseGenresFromStored } from "../lib/genres";
 import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../lib/money";
@@ -106,6 +106,7 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
   const [editPosterFile, setEditPosterFile] = useState<File | null>(null);
   const [editBannerFile, setEditBannerFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgressLabel, setUploadProgressLabel] = useState<string | null>(null);
   const [tab, setTab] = useState<"overview" | "media" | "episodes">("overview");
   const [prevSeriesId, setPrevSeriesId] = useState<string | null>(null);
   const [prevSeriesUpdatedAt, setPrevSeriesUpdatedAt] = useState<string | null>(null);
@@ -188,14 +189,47 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
 
     setEditSaveError(null);
     setIsSaving(true);
+    setUploadProgressLabel(null);
     try {
       const hasNewAssets = Boolean(posterFile || bannerFile);
       if (hasNewAssets) {
+        setUploadProgressLabel("Uploading series artwork…");
         await uploadSeriesAssets(series.slug, { poster: posterFile, banner: bannerFile });
       }
 
+      const episodeAssetJobs = editDraft.seasons.flatMap((season) =>
+        season.episodes
+          .filter(
+            (ep) =>
+              Boolean(ep.slug) &&
+              ((ep.videoFile instanceof File && ep.videoFile.size > 0) ||
+                (ep.posterFile instanceof File && ep.posterFile.size > 0)),
+          )
+          .map((ep) => ({
+            seasonNumber: season.number,
+            episodeNumber: ep.number,
+            episodeSlug: ep.slug!,
+            video: ep.videoFile instanceof File && ep.videoFile.size > 0 ? ep.videoFile : null,
+            poster: ep.posterFile instanceof File && ep.posterFile.size > 0 ? ep.posterFile : null,
+          })),
+      );
+
+      for (const job of episodeAssetJobs) {
+        const label = `S${job.seasonNumber}E${job.episodeNumber}`;
+        setUploadProgressLabel(
+          job.video
+            ? `Uploading ${label} video…`
+            : `Uploading ${label} poster…`,
+        );
+        await uploadEpisodeAssets(series.slug, job.episodeSlug, {
+          video: job.video,
+          poster: job.poster,
+        });
+      }
+
+      setUploadProgressLabel("Saving series…");
       await updateMovie(series.id, editDraft);
-      if (hasNewAssets) {
+      if (hasNewAssets || episodeAssetJobs.length > 0) {
         await refreshMovies();
       }
       toast.success("Series updated successfully");
@@ -206,6 +240,7 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
       toast.error(message);
     } finally {
       setIsSaving(false);
+      setUploadProgressLabel(null);
     }
   };
 
@@ -264,7 +299,7 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
             Cancel
           </Button>
           <Button type="submit" size="sm" loading={isSaving}>
-            {isSaving ? "Saving…" : "Save changes"}
+            {isSaving ? uploadProgressLabel || "Saving…" : "Save changes"}
           </Button>
         </div>
       </div>
@@ -398,12 +433,13 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
             <div className="rounded-xl border border-border bg-surface p-6">
               <h3 className="mb-1 text-base font-bold tracking-[-0.02em]">Seasons and episodes</h3>
               <p className="mb-5 text-sm text-text-muted">
-                Edit season and episode metadata. Episode video uploads are managed when creating a
-                series or from the series detail page.
+                Click Edit on an episode to change title, runtime, free flag, video, or poster. New
+                video uploads re-queue transcoding.
               </p>
               <SeasonsEpisodesEditor
                 seasons={editDraft.seasons}
                 onChange={(next) => patchDraft({ seasons: next })}
+                allowAssetReplace
               />
             </div>
           </div>

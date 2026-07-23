@@ -3,12 +3,14 @@ export type RevenueKind = "Rental" | "Subscription" | "Ownership";
 
 export type Episode = {
   id: string;
-  /** API slug — required to PATCH episode metadata */
+  /** API slug — required to PATCH episode metadata / replace assets */
   slug?: string;
   number: number;
   title: string;
   runtime: string;
   isFree?: boolean;
+  posterKey?: string | null;
+  posterUrl?: string | null;
   posterFileName?: string;
   videoFileName?: string;
   hlsMasterKey?: string | null;
