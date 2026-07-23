@@ -54,7 +54,7 @@ export function MovieManagementTable({
 
   return (
     <>
-      <section className="rounded-xl border border-border bg-surface">
+      <section className="border border-border bg-surface">
         <div className="px-5 pb-5 pt-5">
         <div className="-mx-5 overflow-x-auto">
           <table className="w-full min-w-230 text-left text-sm">

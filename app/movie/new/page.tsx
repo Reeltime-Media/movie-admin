@@ -9,6 +9,7 @@ import { Button } from "../../components/ui/Button";
 import { AdminSelect } from "../../components/AdminSelect";
 import { GenreMultiSelect } from "../../components/GenreMultiSelect";
 import { useMovieCatalog } from "../../components/MovieCatalogProvider";
+import { WizardSteps } from "../../components/WizardSteps";
 import { useCreateGenre, useDeleteGenre, useGenres } from "../../hooks/adminQueries";
 import type { Status } from "../../lib/adminData";
 import {
@@ -389,34 +390,7 @@ export default function NewMoviePage() {
         </Button>
       </div>
 
-      <div className="mb-8 flex flex-wrap items-center gap-2">
-        {stepLabels.map((label, i) => {
-          const done = i < step;
-          const active = i === step;
-          return (
-            <div key={label} className="flex items-center gap-2">
-              {i > 0 ? (
-                <span className="text-xs font-bold text-text-disabled" aria-hidden>/</span>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => goToStep(i)}
-                aria-current={active ? "step" : undefined}
-                className={[
-                  "rounded-full px-3 py-1 text-2xs font-bold uppercase tracking-widest transition-colors",
-                  active
-                    ? "bg-brand text-white"
-                    : done
-                      ? "bg-success/15 text-success hover:bg-success/25"
-                      : "bg-surface-elevated text-white hover:bg-border/60",
-                ].join(" ")}
-              >
-                {i + 1}. {label}
-              </button>
-            </div>
-          );
-        })}
-      </div>
+      <WizardSteps labels={stepLabels} step={step} onStepChange={goToStep} />
 
       <form id="movie-wizard-form" onSubmit={handleUploadSubmit} noValidate className="w-full space-y-6">
         <div className={step === 0 ? "block" : "hidden"} aria-hidden={step !== 0}>
