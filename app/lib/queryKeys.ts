@@ -12,6 +12,7 @@ export const queryKeys = {
     page: number;
     pageSize: number;
     search?: string;
+    status?: string;
     dateFrom?: string;
     dateTo?: string;
   }) => ["payments", params] as const,

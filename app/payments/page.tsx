@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AdminCard } from "../components/AdminCard";
 import { AdminEmptyState } from "../components/AdminEmptyState";
 import { AdminErrorAlert } from "../components/AdminErrorAlert";
+import { AdminSelect } from "../components/AdminSelect";
 import { InlineLoading } from "../components/InlineLoading";
 import { AdminShell } from "../components/AdminShell";
 import { AdminPagination } from "../components/AdminPagination";
@@ -19,6 +20,15 @@ import {
 } from "../lib/adminUi";
 
 const PAGE_SIZE = 20;
+
+const STATUS_OPTIONS = [
+  { value: "all", label: "All statuses" },
+  { value: "pending", label: "Pending" },
+  { value: "succeeded", label: "Succeeded" },
+  { value: "failed", label: "Failed" },
+] as const;
+
+type StatusFilter = (typeof STATUS_OPTIONS)[number]["value"];
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
@@ -56,10 +66,11 @@ export default function PaymentsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [status, setStatus] = useState<StatusFilter>("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  const hasFilters = Boolean(debouncedSearch || dateFrom || dateTo);
+  const hasFilters = Boolean(debouncedSearch || status !== "all" || dateFrom || dateTo);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 300);
@@ -67,12 +78,19 @@ export default function PaymentsPage() {
   }, [search]);
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
+  const [prevStatus, setPrevStatus] = useState(status);
   const [prevDateFrom, setPrevDateFrom] = useState(dateFrom);
   const [prevDateTo, setPrevDateTo] = useState(dateTo);
 
   let currentPage = page;
-  if (debouncedSearch !== prevSearch || dateFrom !== prevDateFrom || dateTo !== prevDateTo) {
+  if (
+    debouncedSearch !== prevSearch ||
+    status !== prevStatus ||
+    dateFrom !== prevDateFrom ||
+    dateTo !== prevDateTo
+  ) {
     setPrevSearch(debouncedSearch);
+    setPrevStatus(status);
     setPrevDateFrom(dateFrom);
     setPrevDateTo(dateTo);
     currentPage = 1;
@@ -89,6 +107,7 @@ export default function PaymentsPage() {
     page: currentPage,
     pageSize: PAGE_SIZE,
     search: debouncedSearch || undefined,
+    status: status === "all" ? undefined : status,
     dateFrom: dateFrom || undefined,
     dateTo: dateTo || undefined,
   });
@@ -105,6 +124,7 @@ export default function PaymentsPage() {
   const clearFilters = () => {
     setSearch("");
     setDebouncedSearch("");
+    setStatus("all");
     setDateFrom("");
     setDateTo("");
   };
@@ -118,7 +138,7 @@ export default function PaymentsPage() {
         flush
       >
         <div className={adminFilterBarClass}>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <label className="block sm:col-span-2 lg:col-span-2">
               <span className={adminLabelClass}>Search user</span>
               <input
@@ -128,6 +148,16 @@ export default function PaymentsPage() {
                 placeholder="Name or email"
                 className={adminInputClass}
                 autoComplete="off"
+              />
+            </label>
+            <label className="block">
+              <span className={adminLabelClass}>Status</span>
+              <AdminSelect
+                value={status}
+                onChange={(v) => setStatus(v as StatusFilter)}
+                options={[...STATUS_OPTIONS]}
+                aria-label="Filter by status"
+                className={`${adminInputClass} py-2`}
               />
             </label>
             <label className="block">
@@ -175,7 +205,7 @@ export default function PaymentsPage() {
             title={hasFilters ? "No transactions match your filters" : "No transactions yet"}
             description={
               hasFilters
-                ? "Try a different name, email, or date range."
+                ? "Try a different name, email, status, or date range."
                 : "Payment intents will appear here once users start checking out."
             }
             action={
