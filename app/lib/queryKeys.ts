@@ -26,4 +26,6 @@ export const queryKeys = {
   genres: ["genres"] as const,
   comments: (params: { movieId: string; page: number; pageSize: number }) =>
     ["comments", params] as const,
+  tvChannels: (params: { page: number; pageSize: number }) => ["tv-channels", params] as const,
+  tvChannel: (id: string) => ["tv-channel", id] as const,
 };

@@ -1675,3 +1675,129 @@ export async function deleteGenre(id: string): Promise<void> {
   await apiFetch<void>(`/genres/${id}`, { method: "DELETE" });
 }
 
+// ── TV channels ──────────────────────────────────────────────────────────────
+
+export type ApiTvChannel = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  logo_key: string | null;
+  /** Admin-only: origin restream source. Never sent to the public endpoint. */
+  source_url: string;
+  /** Admin-only: live HLS output once the restream is running. */
+  hls_playback_url: string | null;
+  /** "offline" | "starting" | "live" | "error" */
+  status: string;
+  status_error: string | null;
+  is_published: boolean;
+  is_free: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TvChannelLogoUploadStartResponse = {
+  logo_key: string;
+  upload_url: string;
+};
+
+export async function listAdminTvChannels(
+  query: PaginationQuery = {},
+): Promise<PaginatedResponse<ApiTvChannel>> {
+  return apiFetch<PaginatedResponse<ApiTvChannel>>(`/admin/tv-channels${paginationQuery(query)}`);
+}
+
+export async function getAdminTvChannel(id: string): Promise<ApiTvChannel> {
+  return apiFetch<ApiTvChannel>(`/admin/tv-channels/${id}`);
+}
+
+export async function createAdminTvChannel(input: {
+  name: string;
+  description?: string | null;
+  sourceUrl: string;
+  isFree?: boolean;
+}): Promise<ApiTvChannel> {
+  return apiFetch<ApiTvChannel>("/admin/tv-channels", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: input.name,
+      description: input.description ?? null,
+      source_url: input.sourceUrl,
+      is_free: input.isFree ?? false,
+    }),
+  });
+}
+
+export async function updateAdminTvChannel(
+  id: string,
+  input: Partial<{
+    name: string;
+    description: string | null;
+    sourceUrl: string;
+    isPublished: boolean;
+    isFree: boolean;
+    sortOrder: number;
+  }>,
+): Promise<ApiTvChannel> {
+  return apiFetch<ApiTvChannel>(`/admin/tv-channels/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...(input.name !== undefined ? { name: input.name } : {}),
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.sourceUrl !== undefined ? { source_url: input.sourceUrl } : {}),
+      ...(input.isPublished !== undefined ? { is_published: input.isPublished } : {}),
+      ...(input.isFree !== undefined ? { is_free: input.isFree } : {}),
+      ...(input.sortOrder !== undefined ? { sort_order: input.sortOrder } : {}),
+    }),
+  });
+}
+
+export async function deleteAdminTvChannel(id: string): Promise<void> {
+  await apiFetch<void>(`/admin/tv-channels/${id}`, { method: "DELETE" });
+}
+
+export async function startAdminTvChannel(id: string): Promise<ApiTvChannel> {
+  return apiFetch<ApiTvChannel>(`/admin/tv-channels/${id}/start`, { method: "POST" });
+}
+
+export async function stopAdminTvChannel(id: string): Promise<ApiTvChannel> {
+  return apiFetch<ApiTvChannel>(`/admin/tv-channels/${id}/stop`, { method: "POST" });
+}
+
+/** Polls the live restream service and syncs its reported state onto the channel row. */
+export async function refreshAdminTvChannelStatus(id: string): Promise<ApiTvChannel> {
+  return apiFetch<ApiTvChannel>(`/admin/tv-channels/${id}/status`);
+}
+
+export async function startAdminTvChannelLogoUpload(
+  id: string,
+  contentType: string,
+): Promise<TvChannelLogoUploadStartResponse> {
+  return apiFetch<TvChannelLogoUploadStartResponse>(`/admin/tv-channels/${id}/logo/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content_type: contentType }),
+  });
+}
+
+export async function completeAdminTvChannelLogoUpload(
+  id: string,
+  logoKey: string,
+): Promise<ApiTvChannel> {
+  return apiFetch<ApiTvChannel>(`/admin/tv-channels/${id}/logo/complete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ logo_key: logoKey }),
+  });
+}
+
+export async function uploadAdminTvChannelLogo(id: string, file: File): Promise<ApiTvChannel> {
+  const contentType = imageContentType(file);
+  const start = await startAdminTvChannelLogoUpload(id, contentType);
+  await uploadFileToPresignedUrl(start.upload_url, file, undefined, contentType);
+  return completeAdminTvChannelLogoUpload(id, start.logo_key);
+}
+

@@ -10,9 +10,11 @@ import {
   getAdminRevenueTimeline,
   getAdminSeriesById,
   getAdminToken,
+  getAdminTvChannel,
   listAdminPayments,
   listAdminSubscriptionPlans,
   listAdminTopTitles,
+  listAdminTvChannels,
   listGenres,
   listSeriesEpisodesApi,
   listTranscodeJobCounts,
@@ -24,6 +26,7 @@ import {
   type ApiSeasonRead,
   type ApiSubscriptionPlan,
   type ApiTopTitleReport,
+  type ApiTvChannel,
   type ApiUser,
   type TranscodeJob,
 } from "../lib/api";
@@ -261,11 +264,39 @@ export function useDeleteGenre() {
   });
 }
 
+export function useTvChannels(page: number, pageSize: number) {
+  const isAuthReady = useClientAuthReady();
+
+  const query = useQuery({
+    queryKey: queryKeys.tvChannels({ page, pageSize }),
+    queryFn: () => listAdminTvChannels({ page, pageSize }),
+    enabled: isAuthReady && Boolean(getAdminToken()),
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
+  });
+
+  return { ...query, isAuthReady };
+}
+
+export function useTvChannel(id: string) {
+  const isAuthReady = useClientAuthReady();
+
+  const query = useQuery({
+    queryKey: queryKeys.tvChannel(id),
+    queryFn: () => getAdminTvChannel(id),
+    enabled: isAuthReady && Boolean(getAdminToken()) && Boolean(id),
+    staleTime: 30_000,
+  });
+
+  return { ...query, isAuthReady };
+}
+
 export type {
   ApiGenre,
   ApiPaymentIntent,
   ApiSubscriptionPlan,
   ApiTopTitleReport,
+  ApiTvChannel,
   ApiUser,
   TranscodeJob,
 };
