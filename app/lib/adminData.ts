@@ -35,6 +35,8 @@ export type CatalogEntry = {
   title: string;
   /** Khmer title — optional bilingual companion to English `title`. */
   titleKm?: string | null;
+  /** Optional region tag for the movie (e.g. country/locale of origin). Movies only. */
+  region?: string | null;
   type: "Movie" | "Series";
   description?: string | null;
   price: string;

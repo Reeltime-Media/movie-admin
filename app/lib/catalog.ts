@@ -47,6 +47,7 @@ export function apiContentToCatalogEntry(content: ApiContent): CatalogEntry {
     slug: content.slug,
     title: content.title,
     titleKm: content.title_km ?? null,
+    region: content.region ?? null,
     type: "Movie",
     description: content.description,
     price:
@@ -220,6 +221,7 @@ export async function updateCatalogEntry(
   const updated = await updateAdminMovie(id, {
     title: entry.title,
     titleKm: entry.titleKm ?? null,
+    region: entry.region ?? null,
     description: entry.description ?? null,
     genres: parseGenresFromStored(entry.genre),
     priceUsd: priceResult.value,

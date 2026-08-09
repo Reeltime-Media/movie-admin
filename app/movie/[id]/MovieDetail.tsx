@@ -6,6 +6,7 @@ import { Button } from "../../components/ui/Button";
 import { AdminSectionTabs } from "../../components/AdminSectionTabs";
 import { InlineLoading } from "../../components/InlineLoading";
 import { statusClasses } from "../../lib/adminData";
+import { regionLabel } from "../../lib/regions";
 import { AdminContentHlsPlayer } from "../../components/AdminContentHlsPlayer";
 import { AdminSourceVideoPlayer } from "../../components/AdminSourceVideoPlayer";
 import { MovieCommentsAdmin } from "../MovieCommentsAdmin";
@@ -106,6 +107,7 @@ export function MovieDetail({ movieId }: { movieId: string }) {
                 <tbody className="divide-y divide-border">
                   <InfoRow label="English title" value={movie.title} />
                   <InfoRow label="Khmer title" value={movie.titleKm || "—"} />
+                  <InfoRow label="Region" value={regionLabel(movie.region)} />
                   <tr>
                     <th
                       scope="row"

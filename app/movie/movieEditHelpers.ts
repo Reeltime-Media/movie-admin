@@ -12,6 +12,7 @@ export function toMovieDraft(entry: CatalogEntry): Omit<CatalogEntry, "id"> {
   return {
     title: entry.title,
     titleKm: entry.titleKm ?? null,
+    region: entry.region ?? null,
     description: entry.description,
     type: entry.type,
     price: entry.price,

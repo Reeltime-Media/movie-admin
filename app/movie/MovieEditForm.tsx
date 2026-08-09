@@ -18,6 +18,7 @@ import type { CatalogEntry, Status } from "../lib/adminData";
 import { formatGenres, parseGenresFromStored } from "../lib/genres";
 import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../lib/money";
 import { validateMoviePublishReady } from "../lib/moviePublish";
+import { REGION_OPTIONS } from "../lib/regions";
 import {
   pickAssetFile,
   pickFileFromInput,
@@ -277,6 +278,15 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                       value={editDraft.titleKm ?? ""}
                       onChange={(e) => patchDraft({ titleKm: e.target.value })}
                       placeholder="Optional"
+                    />
+                  </EditRow>
+                  <EditRow label="Region">
+                    <AdminSelect
+                      className={movieEditSelectClass}
+                      value={editDraft.region ?? ""}
+                      onChange={(v) => patchDraft({ region: v || null })}
+                      options={[{ value: "", label: "None" }, ...REGION_OPTIONS]}
+                      aria-label="Region"
                     />
                   </EditRow>
                   <EditRow label="Status">

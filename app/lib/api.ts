@@ -106,6 +106,7 @@ export type ApiContent = {
   slug: string;
   title: string;
   title_km?: string | null;
+  region?: string | null;
   description: string | null;
   series_id: string | null;
   season_number: number | null;
@@ -434,6 +435,7 @@ export async function getAdminSourceVideoUrl(contentId: string): Promise<string>
 export async function createAdminMovieDraft(input: {
   title: string;
   titleKm?: string | null;
+  region?: string | null;
   description?: string;
   genres: string[];
   releaseYear?: number;
@@ -448,6 +450,7 @@ export async function createAdminMovieDraft(input: {
     body: JSON.stringify({
       title: input.title,
       title_km: input.titleKm?.trim() || null,
+      region: input.region?.trim() || null,
       description: input.description || null,
       genres: input.genres,
       release_year: input.releaseYear ?? null,
@@ -464,6 +467,7 @@ export async function updateAdminMovie(
   input: {
     title: string;
     titleKm?: string | null;
+    region?: string | null;
     description?: string | null;
     genres: string[];
     priceUsd?: string | null;
@@ -480,6 +484,7 @@ export async function updateAdminMovie(
     body: JSON.stringify({
       title: input.title,
       title_km: input.titleKm?.trim() || null,
+      region: input.region?.trim() || null,
       description: input.description ?? null,
       genres: input.genres,
       price_usd: input.priceUsd || null,
@@ -642,6 +647,7 @@ export async function completeMovieUpload(input: {
   parts: { partNumber: number; etag: string }[];
   title: string;
   titleKm?: string | null;
+  region?: string | null;
   priceUsd: string;
   description?: string;
   genres: string[];
@@ -667,6 +673,7 @@ export async function completeMovieUpload(input: {
       })),
       title: input.title,
       title_km: input.titleKm?.trim() || null,
+      region: input.region?.trim() || null,
       price_usd: input.priceUsd,
       description: input.description || null,
       genres: input.genres,

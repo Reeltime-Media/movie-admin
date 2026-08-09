@@ -25,6 +25,7 @@ import { useUploadProgress } from "../../components/UploadProgressContext";
 import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../../lib/money";
 import { validateMoviePublishReady } from "../../lib/moviePublish";
 import { parseRuntimeMinutesInput } from "../../lib/runtime";
+import { REGION_OPTIONS } from "../../lib/regions";
 
 const textInputClass =
   "w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-text outline-none transition-colors placeholder:text-white focus:border-border-hover focus:bg-surface-elevated";
@@ -76,6 +77,7 @@ export default function NewMoviePage() {
   const { refreshMovies } = useMovieCatalog();
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState("Published");
+  const [region, setRegion] = useState("");
   const [genres, setGenres] = useState<string[]>([]);
   const [showNewGenre, setShowNewGenre] = useState(false);
   const [newGenreName, setNewGenreName] = useState("");
@@ -149,6 +151,7 @@ export default function NewMoviePage() {
       ok: true as const,
       title,
       titleKm: String(fd.get("titleKm") || "").trim(),
+      region: String(fd.get("region") || "").trim(),
       genres,
       priceUsd: priceResult.value,
       runtimeMinutes: runtimeResult.value,
@@ -190,6 +193,7 @@ export default function NewMoviePage() {
       const created = await createAdminMovieDraft({
         title: fields.title,
         titleKm: fields.titleKm || null,
+        region: fields.region || null,
         description: fields.description || undefined,
         genres: fields.genres,
         releaseYear: fields.releaseYear,
@@ -351,6 +355,7 @@ export default function NewMoviePage() {
           parts,
           title: fields.title,
           titleKm: fields.titleKm || null,
+          region: fields.region || null,
           priceUsd: fields.priceUsd,
           description: fields.description,
           genres: fields.genres,
@@ -398,6 +403,17 @@ export default function NewMoviePage() {
               </Field>
               <Field label="Khmer title">
                 <input name="titleKm" placeholder="Optional" className={textInputClass} />
+              </Field>
+
+              <Field label="Region" hint="Optional.">
+                <AdminSelect
+                  value={region}
+                  onChange={setRegion}
+                  options={[{ value: "", label: "None" }, ...REGION_OPTIONS]}
+                  className={selectClass}
+                  aria-label="Region"
+                />
+                <input type="hidden" name="region" value={region} />
               </Field>
 
               <div>
