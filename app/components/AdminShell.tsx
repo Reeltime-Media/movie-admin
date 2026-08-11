@@ -59,15 +59,10 @@ const navGroups: NavGroup[] = [
 
 function Wordmark({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <Link href="/" onClick={onNavigate} className="group flex items-center gap-2.5">
-      <div className="relative grid h-8 w-8 place-items-center rounded-lg bg-brand text-[15px] font-bold text-white shadow-[0_0_16px_rgba(229,9,20,0.45)]">
-        R
-      </div>
-      <div className="leading-none">
-        <div className="text-sm font-bold tracking-[0.14em] text-text">REELTIME</div>
-        <div className="mt-1 text-2xs font-medium tracking-wide text-text-disabled">
-          Admin console
-        </div>
+    <Link href="/" onClick={onNavigate} className="group block leading-none">
+      <div className="text-sm font-bold tracking-[0.14em] text-text">REELTIME</div>
+      <div className="mt-1 text-2xs font-medium tracking-wide text-text-disabled">
+        Admin console
       </div>
     </Link>
   );
