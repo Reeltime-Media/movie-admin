@@ -10,11 +10,10 @@ import { AdminEmptyState } from "../components/AdminEmptyState";
 import { AdminErrorAlert } from "../components/AdminErrorAlert";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminShell } from "../components/AdminShell";
-import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from "../components/AdminTable";
 import { InlineLoading } from "../components/InlineLoading";
 import { Button } from "../components/ui/Button";
 import { useTvChannels } from "../hooks/adminQueries";
-import { adminBadgeClass, type AdminBadgeTone, adminTdClass } from "../lib/adminUi";
+import { adminBadgeClass, type AdminBadgeTone } from "../lib/adminUi";
 import {
   deleteAdminTvChannel,
   startAdminTvChannel,
@@ -104,7 +103,6 @@ export default function TvChannelsPage() {
     <AdminShell title="TV channels">
       <AdminCard
         title="Live channels"
-        flush
         headerAction={
           <Button href="/tv-channels/new" size="sm">
             New channel
@@ -127,122 +125,122 @@ export default function TvChannelsPage() {
           />
         ) : (
           <>
-            <AdminTableWrap>
-              <div className="-mx-5">
-                <AdminTable minWidth="880px">
-                  <AdminTableHead>
-                    <AdminTh>Channel</AdminTh>
-                    <AdminTh>Status</AdminTh>
-                    <AdminTh>Access</AdminTh>
-                    <AdminTh>Published</AdminTh>
-                    <AdminTh>Updated</AdminTh>
-                    <AdminTh className="text-right">Actions</AdminTh>
-                  </AdminTableHead>
-                  <tbody className="divide-y divide-border">
-                    {channels.map((channel) => {
-                      const logoUrl = mediaUrl(channel.logo_key);
-                      const isRunning =
-                        channel.status === "live" || channel.status === "starting";
-                      const isBusy = busyId === channel.id;
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {channels.map((channel) => {
+                const logoUrl = mediaUrl(channel.logo_key);
+                const isRunning =
+                  channel.status === "live" || channel.status === "starting";
+                const isBusy = busyId === channel.id;
 
-                      return (
-                        <tr key={channel.id}>
-                          <td className={adminTdClass}>
-                            <div className="flex items-center gap-3">
-                              <div className="relative size-9 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-elevated">
-                                {logoUrl ? (
-                                  <Image
-                                    src={logoUrl}
-                                    alt=""
-                                    fill
-                                    className="object-cover"
-                                    sizes="36px"
-                                  />
-                                ) : null}
-                              </div>
-                              <div className="min-w-0">
-                                <Link
-                                  href={`/tv-channels/${channel.id}`}
-                                  className="block truncate font-semibold text-text transition-colors hover:text-brand"
-                                >
-                                  {channel.name}
-                                </Link>
-                                <span className="block truncate font-mono text-2xs text-text-muted">
-                                  {channel.slug}
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className={adminTdClass}>
-                            <span className={adminBadgeClass(statusTone(channel.status))}>
-                              {channel.status}
-                            </span>
-                            {channel.status === "error" && channel.status_error ? (
-                              <span
-                                className="mt-1 block max-w-56 truncate text-2xs text-danger"
-                                title={channel.status_error}
-                              >
-                                {channel.status_error}
-                              </span>
-                            ) : null}
-                          </td>
-                          <td className={adminTdClass}>
-                            <span className={adminBadgeClass(channel.is_free ? "brand" : "muted")}>
-                              {channel.is_free ? "Free" : "Paid"}
-                            </span>
-                          </td>
-                          <td className={adminTdClass}>
-                            <span
-                              className={adminBadgeClass(
-                                channel.is_published ? "success" : "muted",
-                              )}
-                            >
-                              {channel.is_published ? "Published" : "Unpublished"}
-                            </span>
-                          </td>
-                          <td className={`${adminTdClass} text-text-muted`}>
-                            {formatDate(channel.updated_at)}
-                          </td>
-                          <td className={`${adminTdClass} text-right`}>
-                            <div className="flex flex-wrap justify-end gap-2">
-                              <Button
-                                type="button"
-                                variant={isRunning ? "danger-soft" : "ghost"}
-                                size="sm"
-                                disabled={isBusy}
-                                onClick={() => void handleToggleStream(channel)}
-                              >
-                                {isBusy ? "Working…" : isRunning ? "Stop" : "Start"}
-                              </Button>
-                              <Button href={`/tv-channels/${channel.id}`} variant="ghost" size="sm">
-                                Edit
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="danger-soft"
-                                size="sm"
-                                disabled={isBusy}
-                                onClick={() => setConfirmDelete(channel)}
-                              >
-                                Delete
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </AdminTable>
-              </div>
-            </AdminTableWrap>
-            <AdminPagination
-              page={page}
-              pages={pages}
-              total={total}
-              pageSize={PAGE_SIZE}
-              isLoading={isFetching}
-              onPageChange={setPage}
-            />
+                return (
+                  <article
+                    key={channel.id}
+                    className="flex flex-col overflow-hidden rounded-lg border border-border bg-surface-elevated transition-colors hover:border-border-hover"
+                  >
+                    <Link
+                      href={`/tv-channels/${channel.id}`}
+                      className="group relative block aspect-video bg-surface"
+                    >
+                      {logoUrl ? (
+                        <Image
+                          src={logoUrl}
+                          alt=""
+                          fill
+                          className="object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                        />
+                      ) : (
+                        <div className="grid h-full place-items-center text-2xs font-semibold uppercase tracking-[0.16em] text-text-disabled">
+                          No logo
+                        </div>
+                      )}
+                      <span
+                        className={[
+                          "absolute left-2 top-2",
+                          adminBadgeClass(statusTone(channel.status)),
+                        ].join(" ")}
+                      >
+                        {channel.status}
+                      </span>
+                    </Link>
+
+                    <div className="flex flex-1 flex-col gap-2 p-3">
+                      <div className="min-w-0">
+                        <Link
+                          href={`/tv-channels/${channel.id}`}
+                          className="block truncate text-sm font-semibold text-text transition-colors hover:text-brand"
+                        >
+                          {channel.name}
+                        </Link>
+                        <span className="mt-0.5 block truncate font-mono text-2xs text-text-muted">
+                          {channel.slug}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-1">
+                        <span className={adminBadgeClass(channel.is_free ? "brand" : "muted")}>
+                          {channel.is_free ? "Free" : "Paid"}
+                        </span>
+                        <span
+                          className={adminBadgeClass(
+                            channel.is_published ? "success" : "muted",
+                          )}
+                        >
+                          {channel.is_published ? "Published" : "Unpublished"}
+                        </span>
+                      </div>
+
+                      {channel.status === "error" && channel.status_error ? (
+                        <p
+                          className="line-clamp-2 text-2xs text-danger"
+                          title={channel.status_error}
+                        >
+                          {channel.status_error}
+                        </p>
+                      ) : null}
+
+                      <p className="text-2xs text-text-muted">
+                        Updated {formatDate(channel.updated_at)}
+                      </p>
+
+                      <div className="mt-auto flex flex-wrap gap-1.5 border-t border-border pt-2">
+                        <Button
+                          type="button"
+                          variant={isRunning ? "danger-soft" : "ghost"}
+                          size="sm"
+                          disabled={isBusy}
+                          onClick={() => void handleToggleStream(channel)}
+                        >
+                          {isBusy ? "Working…" : isRunning ? "Stop" : "Start"}
+                        </Button>
+                        <Button href={`/tv-channels/${channel.id}`} variant="ghost" size="sm">
+                          Edit
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="danger-soft"
+                          size="sm"
+                          disabled={isBusy}
+                          onClick={() => setConfirmDelete(channel)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+            <div className="mt-5">
+              <AdminPagination
+                page={page}
+                pages={pages}
+                total={total}
+                pageSize={PAGE_SIZE}
+                isLoading={isFetching}
+                onPageChange={setPage}
+              />
+            </div>
           </>
         )}
       </AdminCard>
