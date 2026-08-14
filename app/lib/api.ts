@@ -1631,6 +1631,51 @@ export async function deleteAdminFreeToday(id: string): Promise<void> {
   await apiFetch<void>(`/admin/free-today/${id}`, { method: "DELETE" });
 }
 
+export type ApiComingSoonItem = {
+  id: string;
+  content_id: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  content_title: string | null;
+  content_slug: string | null;
+  poster_key: string | null;
+  is_published: boolean | null;
+};
+
+export async function listAdminComingSoon(): Promise<ApiComingSoonItem[]> {
+  return apiFetch<ApiComingSoonItem[]>("/admin/coming-soon");
+}
+
+export async function createAdminComingSoon(input: {
+  contentId: string;
+  sortOrder?: number;
+}): Promise<ApiComingSoonItem> {
+  return apiFetch<ApiComingSoonItem>("/admin/coming-soon", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      content_id: input.contentId,
+      sort_order: input.sortOrder ?? 0,
+    }),
+  });
+}
+
+export async function updateAdminComingSoon(
+  id: string,
+  input: { sortOrder: number },
+): Promise<ApiComingSoonItem> {
+  return apiFetch<ApiComingSoonItem>(`/admin/coming-soon/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sort_order: input.sortOrder }),
+  });
+}
+
+export async function deleteAdminComingSoon(id: string): Promise<void> {
+  await apiFetch<void>(`/admin/coming-soon/${id}`, { method: "DELETE" });
+}
+
 export type HeroUploadStartResponse = {
   key: string;
   upload_url: string;

@@ -23,6 +23,7 @@ export const queryKeys = {
   promotionBanners: ["promotion-banners"] as const,
   heroFeatured: ["hero-featured"] as const,
   freeToday: ["free-today"] as const,
+  comingSoon: ["coming-soon"] as const,
   genres: ["genres"] as const,
   comments: (params: { movieId: string; page: number; pageSize: number }) =>
     ["comments", params] as const,
