@@ -40,9 +40,15 @@ export function inferFileContentType(file: File): string {
   return imageContentType(file);
 }
 
-export function mediaUrl(key?: string | null) {
+/**
+ * `version`, when given, is appended as a `?v=` query param so a re-uploaded
+ * asset (same key, new bytes) busts the browser cache and Cloudflare's edge
+ * cache for r2.dev hosts — both key off the full URL including query string.
+ */
+export function mediaUrl(key?: string | null, version?: string | null) {
   if (!key) return null;
   if (/^https?:\/\//i.test(key)) return key;
   if (!MEDIA_BASE_URL) return null;
-  return `${MEDIA_BASE_URL.replace(/\/$/, "")}/${key.replace(/^\//, "")}`;
+  const url = `${MEDIA_BASE_URL.replace(/\/$/, "")}/${key.replace(/^\//, "")}`;
+  return version ? `${url}?v=${encodeURIComponent(version)}` : url;
 }
