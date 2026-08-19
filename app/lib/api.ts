@@ -122,7 +122,6 @@ export type ApiContent = {
   hls_master_key: string | null;
   price_usd: string | null;
   status: string;
-  release_at: string | null;
   is_published: boolean;
   transcode_status: string;
   watch_count: number;
@@ -444,10 +443,6 @@ export async function createAdminMovieDraft(input: {
   runtimeMinutes?: number;
   priceUsd: string;
   trailerUrl?: string;
-  /** "draft" | "coming_soon" — defaults to "draft" server-side when omitted. */
-  status?: string;
-  /** ISO datetime. Only meaningful when status is "coming_soon"; null = TBA. */
-  releaseAt?: string | null;
 }) {
   return apiFetch<ApiContent>("/admin/movies", {
     method: "POST",
@@ -463,8 +458,6 @@ export async function createAdminMovieDraft(input: {
       runtime_minutes: input.runtimeMinutes ?? null,
       price_usd: input.priceUsd,
       trailer_url: input.trailerUrl || null,
-      status: input.status,
-      release_at: input.releaseAt ?? null,
     }),
   });
 }
@@ -482,7 +475,6 @@ export async function updateAdminMovie(
     runtimeMinutes?: number | null;
     releaseYear?: number | null;
     status: string;
-    releaseAt?: string | null;
     trailerUrl?: string | null;
   },
 ) {
@@ -500,7 +492,6 @@ export async function updateAdminMovie(
       runtime_minutes: input.runtimeMinutes ?? null,
       release_year: input.releaseYear ?? null,
       status: input.status,
-      release_at: input.releaseAt ?? null,
       trailer_url: input.trailerUrl || null,
     }),
   });
@@ -664,7 +655,6 @@ export async function completeMovieUpload(input: {
   rating?: string;
   runtimeMinutes?: number;
   status: string;
-  releaseAt?: string | null;
   posterKey?: string | null;
   bannerKey?: string | null;
   trailerUrl?: string | null;
@@ -691,7 +681,6 @@ export async function completeMovieUpload(input: {
       rating: input.rating || null,
       runtime_minutes: input.runtimeMinutes ?? null,
       status: input.status,
-      release_at: input.releaseAt ?? null,
       poster_key: input.posterKey ?? null,
       banner_key: input.bannerKey ?? null,
       trailer_url: input.trailerUrl || null,

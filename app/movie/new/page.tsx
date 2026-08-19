@@ -39,27 +39,12 @@ const fileInputClass =
 const stepLabels = ["Details", "Assets"] as const;
 
 function parseStatus(s: string): Status {
-  if (s === "Published" || s === "Draft" || s === "Scheduled" || s === "Review" || s === "Coming soon")
-    return s;
+  if (s === "Published" || s === "Draft" || s === "Scheduled" || s === "Review") return s;
   return "Draft";
 }
 
 function toApiStatus(status: Status) {
-  if (status === "Coming soon") return "coming_soon";
   return status.toLowerCase();
-}
-
-/** "Save draft" only ever creates draft or coming-soon rows (no video required). */
-function draftStatusFromForm(fd: FormData): Status {
-  return parseStatus(String(fd.get("status"))) === "Coming soon" ? "Coming soon" : "Draft";
-}
-
-function fromDatetimeLocalValue(value: string): string | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const date = new Date(trimmed);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toISOString();
 }
 
 function parseOptionalNumber(value: FormDataEntryValue | null) {
@@ -174,7 +159,6 @@ export default function NewMoviePage() {
       releaseYear: parseOptionalNumber(fd.get("releaseYear")),
       rating: String(fd.get("rating") || "").trim(),
       trailerUrl: String(fd.get("trailerUrl") || "").trim(),
-      releaseAt: fromDatetimeLocalValue(String(fd.get("releaseAt") || "")),
     };
   };
 
@@ -217,8 +201,6 @@ export default function NewMoviePage() {
         runtimeMinutes: fields.runtimeMinutes,
         priceUsd: fields.priceUsd,
         trailerUrl: fields.trailerUrl || undefined,
-        status: toApiStatus(draftStatusFromForm(fd)),
-        releaseAt: fields.releaseAt,
       });
 
       if (poster) {
@@ -267,7 +249,7 @@ export default function NewMoviePage() {
 
     if (intent === "draft") {
       if (video) {
-        await uploadMovieWithStatus(fd, fields, video, posterImage, bannerImage, draftStatusFromForm(fd));
+        await uploadMovieWithStatus(fd, fields, video, posterImage, bannerImage, "Draft");
       } else {
         await saveDraftFromForm(fd);
       }
@@ -329,14 +311,10 @@ export default function NewMoviePage() {
     setIsSubmitting(true);
     setSubmitError(null);
     setDetailsError(null);
-    router.push(status === "Coming soon" ? "/coming-soon" : "/movie");
+    router.push("/movie");
 
     const successMessage =
-      status === "Draft"
-        ? "Draft saved with video"
-        : status === "Coming soon"
-          ? "Coming soon movie saved with video"
-          : "Movie uploaded successfully";
+      status === "Draft" ? "Draft saved with video" : "Movie uploaded successfully";
 
     void (async () => {
       try {
@@ -385,7 +363,6 @@ export default function NewMoviePage() {
           rating: fields.rating,
           runtimeMinutes: fields.runtimeMinutes,
           status: toApiStatus(status),
-          releaseAt: fields.releaseAt,
           posterKey: upload.poster_key,
           bannerKey: upload.banner_key,
           trailerUrl: fields.trailerUrl,
@@ -505,7 +482,6 @@ export default function NewMoviePage() {
                   onChange={setStatus}
                   options={[
                     { value: "Draft", label: "Draft" },
-                    { value: "Coming soon", label: "Coming soon" },
                     { value: "Review", label: "Review" },
                     { value: "Scheduled", label: "Scheduled" },
                     { value: "Published", label: "Published" },
@@ -518,13 +494,6 @@ export default function NewMoviePage() {
 
               <Field label="Price (USD)" hint={ADMIN_PRICE_HINT}>
                 <input name="price" placeholder="0 or 2.99" className={textInputClass} />
-              </Field>
-
-              <Field
-                label="Release date"
-                hint="Only used by Coming soon: once this passes and the video is ready, the movie auto-publishes. Leave blank for no announced date (TBA)."
-              >
-                <input name="releaseAt" type="datetime-local" className={textInputClass} />
               </Field>
 
               <div className="md:col-span-2">

@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   BarChart3,
-  Clock,
   CreditCard,
   Film,
   Home,
@@ -37,7 +36,6 @@ const navGroups: NavGroup[] = [
       { label: "Movies", href: "/movie", icon: Film },
       { label: "Series", href: "/series", icon: Tv },
       { label: "TV channels", href: "/tv-channels", icon: Radio },
-      { label: "Coming soon", href: "/coming-soon", icon: Clock },
       { label: "Home page", href: "/promotions", icon: Home },
     ],
   },
