@@ -25,10 +25,12 @@ function toStatus(status: string): Status {
   if (normalized === "published") return "Published";
   if (normalized === "scheduled") return "Scheduled";
   if (normalized === "review") return "Review";
+  if (normalized === "coming_soon") return "Coming soon";
   return "Draft";
 }
 
 function toApiStatus(status: Status) {
+  if (status === "Coming soon") return "coming_soon";
   return status.toLowerCase();
 }
 
@@ -64,6 +66,7 @@ export function apiContentToCatalogEntry(content: ApiContent): CatalogEntry {
     runtime: content.runtime,
     runtimeMinutes: runtimeMinutesFromApi(content),
     releaseYear: content.release_year,
+    releaseAt: content.release_at ?? null,
     posterKey: content.poster_key,
     posterUrl: mediaUrl(content.poster_key),
     bannerKey: content.banner_key,
@@ -229,6 +232,7 @@ export async function updateCatalogEntry(
     runtimeMinutes: entry.runtimeMinutes ?? null,
     releaseYear: entry.releaseYear ?? null,
     status: toApiStatus(entry.status as Status),
+    releaseAt: entry.releaseAt ?? null,
     trailerUrl: entry.trailerUrl,
   });
   const updatedEntry = apiContentToCatalogEntry({

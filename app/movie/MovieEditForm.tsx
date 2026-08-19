@@ -32,7 +32,23 @@ import {
   youtubeEmbedUrl,
 } from "./movieDetailUi";
 
-const statuses: Status[] = ["Published", "Draft", "Scheduled", "Review"];
+const statuses: Status[] = ["Published", "Draft", "Coming soon", "Scheduled", "Review"];
+
+function toDatetimeLocalValue(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function fromDatetimeLocalValue(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const date = new Date(trimmed);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+}
 
 function EditRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -297,6 +313,20 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                       options={statuses.map((s) => ({ value: s, label: s }))}
                       aria-label="Status"
                     />
+                  </EditRow>
+                  <EditRow label="Release date">
+                    <input
+                      className={movieEditInputClass}
+                      type="datetime-local"
+                      value={toDatetimeLocalValue(editDraft.releaseAt)}
+                      onChange={(e) =>
+                        patchDraft({ releaseAt: fromDatetimeLocalValue(e.target.value) })
+                      }
+                    />
+                    <p className="mt-1.5 text-2xs text-text-disabled">
+                      Only used by Coming soon: once this passes and the video is ready, the movie
+                      auto-publishes. Leave blank for no announced date (TBA).
+                    </p>
                   </EditRow>
                   <EditRow label="Type">
                     <span className="font-semibold text-text">{editDraft.type}</span>

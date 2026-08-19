@@ -1,4 +1,4 @@
-export type Status = "Published" | "Draft" | "Scheduled" | "Review";
+export type Status = "Published" | "Draft" | "Scheduled" | "Review" | "Coming soon";
 export type RevenueKind = "Rental" | "Subscription" | "Ownership";
 
 export type Episode = {
@@ -49,6 +49,8 @@ export type CatalogEntry = {
   /** Editable runtime in minutes (movies). */
   runtimeMinutes?: number | null;
   releaseYear?: number | null;
+  /** ISO datetime. Announced release date/time for a "Coming soon" movie; null = TBA. */
+  releaseAt?: string | null;
   posterKey?: string | null;
   posterUrl?: string | null;
   bannerKey?: string | null;
@@ -74,6 +76,7 @@ export function statusClasses(status: Status) {
     Draft: "bg-text-disabled/10 text-text-muted ring-text-disabled/25",
     Scheduled: "bg-brand/10 text-brand ring-brand/30",
     Review: "bg-warning/10 text-warning ring-warning/25",
+    "Coming soon": "bg-brand-soft text-brand ring-brand/30",
   };
 
   return `${base} ${tones[status]}`;
