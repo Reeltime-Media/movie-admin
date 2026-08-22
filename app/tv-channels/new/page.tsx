@@ -14,7 +14,7 @@ export default function NewTvChannelPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
-  const [isFree, setIsFree] = useState(false);
+  const [isFree, setIsFree] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
