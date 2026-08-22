@@ -1777,7 +1777,7 @@ export async function createAdminTvChannel(input: {
       name: input.name,
       description: input.description ?? null,
       source_url: input.sourceUrl,
-      is_free: input.isFree ?? false,
+      is_free: input.isFree ?? true,
     }),
   });
 }
