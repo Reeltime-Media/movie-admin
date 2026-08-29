@@ -38,6 +38,10 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "cdn.reeltime.fun",
+      },
+      {
+        protocol: "https",
         hostname: "pub-54c6a20fcd354e4d885b4ce83457064a.r2.dev",
       },
       {
