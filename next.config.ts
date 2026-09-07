@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { cspConnectSrc } from "./lib/csp-connect-src";
 
 // Use 127.0.0.1 instead of localhost so Next.js rewrites hit Docker on IPv4 (avoids ::1 ECONNREFUSED on macOS).
 const apiProxyTarget = process.env.API_PROXY_TARGET?.replace(/\/$/, "")?.replace(
@@ -6,7 +7,36 @@ const apiProxyTarget = process.env.API_PROXY_TARGET?.replace(/\/$/, "")?.replace
   "://127.0.0.1",
 );
 
+function securityHeaders(): { key: string; value: string }[] {
+  const scriptSrc =
+    process.env.NODE_ENV === "production"
+      ? "script-src 'self' 'unsafe-inline'"
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
+
+  return [
+    { key: "X-Frame-Options", value: "DENY" },
+    { key: "X-Content-Type-Options", value: "nosniff" },
+    { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+    {
+      key: "Content-Security-Policy",
+      value: [
+        "default-src 'self'",
+        scriptSrc,
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob: https:",
+        "media-src 'self' blob: data: https:",
+        "font-src 'self' data:",
+        `connect-src ${cspConnectSrc()}`,
+        "frame-src https://www.youtube.com https://www.youtube-nocookie.com",
+      ].join("; "),
+    },
+  ];
+}
+
 const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    "/*": ["./node_modules/@swc/helpers/**/*"],
+  },
   async headers() {
     // Skip custom Cache-Control in dev — Next already no-caches, and pinning
     // /_next/static (even briefly) caused stale JS vs SSR hydration mismatches.
@@ -15,6 +45,10 @@ const nextConfig: NextConfig = {
     }
 
     return [
+      {
+        source: "/:path*",
+        headers: securityHeaders(),
+      },
       {
         // Build-hashed — safe to cache forever.
         source: "/_next/static/:path*",
