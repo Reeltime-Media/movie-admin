@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fira_Code, Fira_Sans } from "next/font/google";
+import { DevToolsGuard } from "./components/DevToolsGuard";
 import { QueryProvider } from "./components/QueryProvider";
 import { ToastProvider } from "./components/ToastProvider";
 import { UploadProgressProvider } from "./components/UploadProgressContext";
@@ -35,6 +36,7 @@ export default function RootLayout({
       className={`${firaSans.variable} ${firaCode.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-bg text-text font-sans">
+        <DevToolsGuard />
         <QueryProvider>
           <UploadProgressProvider>{children}</UploadProgressProvider>
         </QueryProvider>
