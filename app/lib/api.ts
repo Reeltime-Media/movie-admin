@@ -163,6 +163,7 @@ export type ApiPaymentIntent = {
   user_email: string;
   user_full_name: string | null;
   kind: string;
+  method?: string;
   content_id: string | null;
   amount_usd: string;
   status: string;
@@ -1305,6 +1306,17 @@ export async function listAdminPayments(
   return apiFetch<PaginatedResponse<ApiPaymentIntent>>(
     `/admin/payments${paginationQuery(query)}`,
   );
+}
+
+export async function fulfillAdminPayment(intentId: string): Promise<{
+  intent_id: string;
+  order_id: string;
+  status: string;
+  resolved_at: string | null;
+}> {
+  return apiFetch(`/admin/payments/${encodeURIComponent(intentId)}/fulfill`, {
+    method: "POST",
+  });
 }
 
 export async function listAdminSubscriptionPlans(): Promise<ApiSubscriptionPlan[]> {

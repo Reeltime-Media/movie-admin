@@ -10,7 +10,7 @@ import { AdminShell } from "../components/AdminShell";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from "../components/AdminTable";
 import { usePayments } from "../hooks/adminQueries";
-import { type ApiPaymentIntent } from "../lib/api";
+import { fulfillAdminPayment, type ApiPaymentIntent } from "../lib/api";
 import {
   adminBadgeClass,
   adminFilterBarClass,
@@ -47,6 +47,7 @@ function paymentStatusTone(status: string): "success" | "warning" | "brand" | "m
 
 function paymentTypeLabel(kind: string) {
   if (kind === "sub") return "subscription-plan";
+  if (kind === "series") return "series-unlock";
   return "single-movie";
 }
 
@@ -69,6 +70,8 @@ export default function PaymentsPage() {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [fulfillingId, setFulfillingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const hasFilters = Boolean(debouncedSearch || status !== "all" || dateFrom || dateTo);
 
@@ -127,6 +130,24 @@ export default function PaymentsPage() {
     setStatus("all");
     setDateFrom("");
     setDateTo("");
+  };
+
+  const markPaid = async (payment: ApiPaymentIntent) => {
+    if (payment.status !== "pending") return;
+    const ok = window.confirm(
+      `Mark ${payment.order_id} ($${payment.amount_usd}) as paid?\nOnly do this after you verify the Bakong/bank receipt.`,
+    );
+    if (!ok) return;
+    setActionError(null);
+    setFulfillingId(payment.intent_id);
+    try {
+      await fulfillAdminPayment(payment.intent_id);
+      await refetch();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Could not mark payment as paid.");
+    } finally {
+      setFulfillingId(null);
+    }
   };
 
   return (
@@ -196,6 +217,8 @@ export default function PaymentsPage() {
           ) : null}
         </div>
 
+        {actionError ? <AdminErrorAlert message={actionError} /> : null}
+
         {isLoading && !payments.length ? (
           <InlineLoading label="Loading transactions" />
         ) : error ? (
@@ -224,7 +247,7 @@ export default function PaymentsPage() {
           <>
             <AdminTableWrap>
               <div className="-mx-5">
-                <AdminTable minWidth="900px">
+                <AdminTable minWidth="980px">
                   <AdminTableHead>
                     <AdminTh>User</AdminTh>
                     <AdminTh>Order</AdminTh>
@@ -232,6 +255,7 @@ export default function PaymentsPage() {
                     <AdminTh className="text-right">Amount</AdminTh>
                     <AdminTh>Status</AdminTh>
                     <AdminTh>Date</AdminTh>
+                    <AdminTh className="text-right">Actions</AdminTh>
                   </AdminTableHead>
                   <tbody className="divide-y divide-border">
                     {payments.map((p) => (
@@ -240,6 +264,9 @@ export default function PaymentsPage() {
                         <td className={`${adminTdClass} font-semibold text-text`}>{p.order_id}</td>
                         <td className={`${adminTdClass} text-text-muted`}>
                           {paymentTypeLabel(p.kind)}
+                          {p.method ? (
+                            <span className="mt-0.5 block text-xs text-text-muted">{p.method}</span>
+                          ) : null}
                         </td>
                         <td className={`${adminTdClass} text-right tabular-nums text-text-muted`}>
                           ${p.amount_usd}
@@ -251,6 +278,20 @@ export default function PaymentsPage() {
                         </td>
                         <td className={`${adminTdClass} text-text-muted`}>
                           {formatDate(p.created_at)}
+                        </td>
+                        <td className={`${adminTdClass} text-right`}>
+                          {p.status === "pending" ? (
+                            <button
+                              type="button"
+                              disabled={fulfillingId === p.intent_id}
+                              onClick={() => void markPaid(p)}
+                              className="rounded-md bg-brand px-2.5 py-1 text-xs font-bold text-white transition-colors hover:bg-brand-hover disabled:opacity-60"
+                            >
+                              {fulfillingId === p.intent_id ? "Saving…" : "Mark paid"}
+                            </button>
+                          ) : (
+                            <span className="text-xs text-text-muted">—</span>
+                          )}
                         </td>
                       </tr>
                     ))}
