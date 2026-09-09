@@ -346,6 +346,17 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
                     />
                     <p className="mt-1 text-2xs text-text-disabled">{ADMIN_PRICE_HINT}</p>
                   </EditRow>
+                  <EditRow label="Short movie">
+                    <label className="flex items-center gap-2 text-sm text-text-muted">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(editDraft.isShortMovie)}
+                        onChange={(e) => patchDraft({ isShortMovie: e.target.checked })}
+                        className="rounded border-border"
+                      />
+                      Also list this series on /short-movies
+                    </label>
+                  </EditRow>
                   <EditRow label="Rating">
                     <input
                       className={movieEditInputClass}

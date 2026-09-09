@@ -117,6 +117,7 @@ export function apiSeriesToCatalogEntry(series: ApiSeries, apiSeasons: ApiSeason
     status: series.is_published ? "Published" : "Draft",
     genre: formatGenres(series.genres),
     owner: "API",
+    isShortMovie: series.is_short_movie,
     runtime: null,
     releaseYear: series.release_year,
     posterKey: series.poster_key,
@@ -168,6 +169,7 @@ export async function updateCatalogEntry(
       description: entry.description ?? null,
       genres: parseGenresFromStored(entry.genre),
       is_published: entry.status === "Published",
+      is_short_movie: Boolean(entry.isShortMovie),
       trailer_url: entry.trailerUrl ?? null,
       release_year: entry.releaseYear ?? null,
     };

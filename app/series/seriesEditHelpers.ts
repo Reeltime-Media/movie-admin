@@ -15,6 +15,7 @@ export function toSeriesDraft(entry: CatalogEntry): Omit<CatalogEntry, "id"> {
     status: entry.status,
     genre: entry.genre,
     owner: entry.owner,
+    isShortMovie: entry.isShortMovie ?? false,
     posterKey: entry.posterKey,
     posterUrl: entry.posterUrl,
     bannerKey: entry.bannerKey,

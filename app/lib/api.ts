@@ -27,6 +27,7 @@ export type ApiSeries = {
   banner_key: string | null;
   trailer_url: string | null;
   is_published: boolean;
+  is_short_movie: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -983,6 +984,7 @@ export async function updateSeriesApi(
     rating: string | null;
     monthly_price_usd: string;
     is_published: boolean;
+    is_short_movie: boolean;
     poster_key: string | null;
     banner_key: string | null;
     trailer_url: string | null;

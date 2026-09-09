@@ -45,6 +45,8 @@ export type CatalogEntry = {
   status: Status;
   genre: string;
   owner: string;
+  /** Series only — shows up on /short-movies in addition to /series. */
+  isShortMovie?: boolean;
   runtime?: string | null;
   /** Editable runtime in minutes (movies). */
   runtimeMinutes?: number | null;
