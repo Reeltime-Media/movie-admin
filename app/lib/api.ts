@@ -185,6 +185,18 @@ export type ApiSubscriptionPlan = {
   updated_at: string;
 };
 
+export type ApiTvAccessCode = {
+  id: string;
+  code: string;
+  label: string | null;
+  user_id: string;
+  expires_at: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  is_expired: boolean;
+};
+
 export type ApiPromotionBanner = {
   id: string;
   title: string;
@@ -1378,6 +1390,51 @@ export async function updateAdminSubscriptionPlan(
 
 export async function deleteAdminSubscriptionPlan(id: string): Promise<void> {
   await apiFetch<void>(`/admin/subscription-plans/${id}`, { method: "DELETE" });
+}
+
+export async function listAdminTvAccessCodes(): Promise<ApiTvAccessCode[]> {
+  return apiFetch<ApiTvAccessCode[]>("/admin/tv-access-codes");
+}
+
+export async function createAdminTvAccessCode(input: {
+  label?: string | null;
+  expiresAt: string;
+  code?: string | null;
+  isActive?: boolean;
+}): Promise<ApiTvAccessCode> {
+  return apiFetch<ApiTvAccessCode>("/admin/tv-access-codes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      label: input.label ?? null,
+      expires_at: input.expiresAt,
+      code: input.code?.trim() ? input.code.trim() : null,
+      is_active: input.isActive ?? true,
+    }),
+  });
+}
+
+export async function updateAdminTvAccessCode(
+  id: string,
+  input: Partial<{
+    label: string | null;
+    expiresAt: string;
+    isActive: boolean;
+  }>,
+): Promise<ApiTvAccessCode> {
+  return apiFetch<ApiTvAccessCode>(`/admin/tv-access-codes/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...(input.label !== undefined ? { label: input.label } : {}),
+      ...(input.expiresAt !== undefined ? { expires_at: input.expiresAt } : {}),
+      ...(input.isActive !== undefined ? { is_active: input.isActive } : {}),
+    }),
+  });
+}
+
+export async function deleteAdminTvAccessCode(id: string): Promise<void> {
+  await apiFetch<void>(`/admin/tv-access-codes/${id}`, { method: "DELETE" });
 }
 
 export async function getAdminDashboardSummary(): Promise<ApiDashboardSummary> {

@@ -14,6 +14,7 @@ import {
   listAdminPayments,
   listAdminSubscriptionPlans,
   listAdminTopTitles,
+  listAdminTvAccessCodes,
   listAdminTvChannels,
   listGenres,
   listSeriesEpisodesApi,
@@ -232,6 +233,24 @@ export function useSubscriptionPlans() {
   };
 
   return { plansQuery, invalidate, isAuthReady };
+}
+
+export function useTvAccessCodes() {
+  const queryClient = useQueryClient();
+  const isAuthReady = useClientAuthReady();
+
+  const codesQuery = useQuery({
+    queryKey: queryKeys.tvAccessCodes,
+    queryFn: listAdminTvAccessCodes,
+    enabled: isAuthReady && Boolean(getAdminToken()),
+    staleTime: 30_000,
+  });
+
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.tvAccessCodes });
+  };
+
+  return { codesQuery, invalidate, isAuthReady };
 }
 
 export function useGenres() {

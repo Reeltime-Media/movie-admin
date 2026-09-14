@@ -20,6 +20,7 @@ export const queryKeys = {
     ["transcode", "jobs", params] as const,
   transcodeCounts: ["transcode", "counts"] as const,
   subscriptionPlans: ["plans", "subscription"] as const,
+  tvAccessCodes: ["tv-access-codes"] as const,
   promotionBanners: ["promotion-banners"] as const,
   heroFeatured: ["hero-featured"] as const,
   freeToday: ["free-today"] as const,

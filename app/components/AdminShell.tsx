@@ -45,6 +45,7 @@ const navGroups: NavGroup[] = [
       { label: "Revenue", href: "/revenue", icon: Wallet },
       { label: "Payments", href: "/payments", icon: CreditCard },
       { label: "Plans", href: "/plans", icon: BarChart3 },
+      { label: "TV access IDs", href: "/tv-access", icon: Tv },
       { label: "Users", href: "/users", icon: Users },
     ],
   },
