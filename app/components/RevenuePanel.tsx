@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AdminCard } from "./AdminCard";
 import { AdminErrorAlert } from "./AdminErrorAlert";
 import { InlineLoading } from "./InlineLoading";
-import { type ApiRevenueTimeline } from "../lib/api";
+import { type ApiRevenueTimeline, type ApiRevenueTimelinePoint } from "../lib/api";
 import { useRevenueTimelineQuery } from "../hooks/adminQueries";
 import { adminInputClass, adminLabelClass, adminTabClass } from "../lib/adminUi";
 import { formatUsdDisplay } from "../lib/money";
@@ -14,6 +14,40 @@ const PAD_LEFT = 48;
 const PAD_RIGHT = 16;
 const PAD_TOP = 20;
 const PAD_BOTTOM = 36;
+
+type ChartStyle = "line" | "candle";
+
+type CandlePoint = {
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  payment_count: number;
+  up: boolean;
+};
+
+/** Day-over-day candles from daily totals (no intraday OHLC from the API). */
+function toCandles(points: ApiRevenueTimelinePoint[]): CandlePoint[] {
+  return points.map((point, index) => {
+    const close = Number.parseFloat(point.revenue_usd) || 0;
+    const open =
+      index === 0
+        ? close
+        : Number.parseFloat(points[index - 1]?.revenue_usd ?? "0") || 0;
+    const high = Math.max(open, close);
+    const low = Math.min(open, close);
+    return {
+      date: point.date,
+      open,
+      high,
+      low,
+      close,
+      payment_count: point.payment_count,
+      up: close >= open,
+    };
+  });
+}
 
 function shortDateLabel(isoDate: string) {
   const d = new Date(`${isoDate}T12:00:00`);
@@ -100,6 +134,7 @@ export function RevenuePanel({
   cardAction,
   bare = false,
 }: RevenuePanelProps) {
+  const [chartStyle, setChartStyle] = useState<ChartStyle>("line");
   const hasCustomRange = Boolean(dateFrom || dateTo);
   const showDateFilters = Boolean(onDateFromChange && onDateToChange);
   const plotHeight = chartHeight - PAD_TOP - PAD_BOTTOM;
@@ -107,9 +142,17 @@ export function RevenuePanel({
 
   const chart = useMemo(() => {
     const points = timeline?.points ?? [];
-    const values = points.map((p) => Number.parseFloat(p.revenue_usd) || 0);
-    const maxValue = Math.max(...values, 0);
+    const candles = toCandles(points);
+    const lineValues = points.map((p) => Number.parseFloat(p.revenue_usd) || 0);
+    const candleValues = candles.flatMap((c) => [c.high, c.low]);
+    const maxValue = Math.max(
+      ...(chartStyle === "candle" ? candleValues : lineValues),
+      0,
+    );
     const yMax = maxValue > 0 ? maxValue * 1.12 : 1;
+
+    const yFor = (value: number) =>
+      PAD_TOP + plotHeight - (value / yMax) * plotHeight;
 
     const coords = points.map((point, index) => {
       const x =
@@ -117,8 +160,34 @@ export function RevenuePanel({
           ? PAD_LEFT + plotWidth / 2
           : PAD_LEFT + (index / (points.length - 1)) * plotWidth;
       const value = Number.parseFloat(point.revenue_usd) || 0;
-      const y = PAD_TOP + plotHeight - (value / yMax) * plotHeight;
-      return { x, y, point, value };
+      return { x, y: yFor(value), point, value };
+    });
+
+    const candleSlots = candles.map((candle, index) => {
+      const x =
+        candles.length <= 1
+          ? PAD_LEFT + plotWidth / 2
+          : PAD_LEFT + (index / (candles.length - 1)) * plotWidth;
+      const gap =
+        candles.length <= 1
+          ? plotWidth * 0.35
+          : plotWidth / (candles.length - 1);
+      const bodyWidth = Math.max(4, Math.min(18, gap * 0.55));
+      const openY = yFor(candle.open);
+      const closeY = yFor(candle.close);
+      const highY = yFor(candle.high);
+      const lowY = yFor(candle.low);
+      const bodyTop = Math.min(openY, closeY);
+      const bodyHeight = Math.max(2, Math.abs(closeY - openY));
+      return {
+        candle,
+        x,
+        bodyWidth,
+        bodyTop,
+        bodyHeight,
+        highY,
+        lowY,
+      };
     });
 
     const linePath =
@@ -147,8 +216,15 @@ export function RevenuePanel({
           ? [0, points.length - 1]
           : [0, Math.floor((points.length - 1) / 2), points.length - 1];
 
-    return { coords, linePath, areaPath, yTicks, xLabelIndexes };
-  }, [timeline, plotHeight, plotWidth]);
+    return {
+      coords,
+      candleSlots,
+      linePath,
+      areaPath,
+      yTicks,
+      xLabelIndexes,
+    };
+  }, [timeline, plotHeight, plotWidth, chartStyle]);
 
   const body = loading ? (
     <InlineLoading label="Loading revenue" minHeight="md" />
@@ -237,9 +313,33 @@ export function RevenuePanel({
       </div>
 
       <div className="rounded-lg border border-border bg-bg p-3 sm:p-4">
-        <p className="mb-3 text-2xs font-semibold uppercase tracking-wide text-text-muted">
-          Daily revenue ({periodDescription(timeline, days, hasCustomRange)})
-        </p>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-2xs font-semibold uppercase tracking-wide text-text-muted">
+            Daily revenue ({periodDescription(timeline, days, hasCustomRange)})
+          </p>
+          <div className="flex gap-1 rounded-lg border border-border bg-surface p-0.5">
+            {(
+              [
+                { id: "line", label: "Line" },
+                { id: "candle", label: "Candlestick" },
+              ] as const
+            ).map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setChartStyle(option.id)}
+                className={[
+                  "rounded-md px-2.5 py-1 text-2xs font-semibold transition-colors",
+                  chartStyle === option.id
+                    ? "bg-brand text-white"
+                    : "text-text-muted hover:text-text",
+                ].join(" ")}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
         {(timeline?.points.length ?? 0) === 0 ? (
           <p className="py-12 text-center text-sm text-text-muted">No payments yet.</p>
         ) : (
@@ -247,7 +347,7 @@ export function RevenuePanel({
             viewBox={`0 0 ${CHART_WIDTH} ${chartHeight}`}
             className="h-auto w-full"
             role="img"
-            aria-label={`Revenue trend for ${periodDescription(timeline, days, hasCustomRange)}`}
+            aria-label={`Revenue ${chartStyle === "candle" ? "candlestick" : "trend"} for ${periodDescription(timeline, days, hasCustomRange)}`}
           >
             {chart.yTicks.map((tick) => (
               <g key={tick.amount}>
@@ -270,37 +370,82 @@ export function RevenuePanel({
               </g>
             ))}
 
-            {chart.areaPath ? (
-              <path
-                d={chart.areaPath}
-                fill="color-mix(in srgb, var(--rt-brand) 22%, transparent)"
-              />
-            ) : null}
-            {chart.linePath ? (
-              <path
-                d={chart.linePath}
-                fill="none"
-                stroke="var(--rt-brand)"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            ) : null}
-
-            {chart.coords.map(({ x, y, point }) => (
-              <circle key={point.date} cx={x} cy={y} r={3} fill="var(--rt-brand)">
-                <title>
-                  {shortDateLabel(point.date)}: ${formatUsdDisplay(point.revenue_usd)}
-                  {point.payment_count > 0
-                    ? ` (${point.payment_count} payment${point.payment_count === 1 ? "" : "s"})`
-                    : ""}
-                </title>
-              </circle>
-            ))}
+            {chartStyle === "line" ? (
+              <>
+                {chart.areaPath ? (
+                  <path
+                    d={chart.areaPath}
+                    fill="color-mix(in srgb, var(--rt-brand) 22%, transparent)"
+                  />
+                ) : null}
+                {chart.linePath ? (
+                  <path
+                    d={chart.linePath}
+                    fill="none"
+                    stroke="var(--rt-brand)"
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                ) : null}
+                {chart.coords.map(({ x, y, point }) => (
+                  <circle key={point.date} cx={x} cy={y} r={3} fill="var(--rt-brand)">
+                    <title>
+                      {shortDateLabel(point.date)}: ${formatUsdDisplay(point.revenue_usd)}
+                      {point.payment_count > 0
+                        ? ` (${point.payment_count} payment${point.payment_count === 1 ? "" : "s"})`
+                        : ""}
+                    </title>
+                  </circle>
+                ))}
+              </>
+            ) : (
+              chart.candleSlots.map(
+                ({ candle, x, bodyWidth, bodyTop, bodyHeight, highY, lowY }) => {
+                  const color = candle.up
+                    ? "var(--rt-success, #16a34a)"
+                    : "var(--rt-danger, #dc2626)";
+                  return (
+                    <g key={candle.date}>
+                      <line
+                        x1={x}
+                        y1={highY}
+                        x2={x}
+                        y2={lowY}
+                        stroke={color}
+                        strokeWidth={1.5}
+                      />
+                      <rect
+                        x={x - bodyWidth / 2}
+                        y={bodyTop}
+                        width={bodyWidth}
+                        height={bodyHeight}
+                        fill={color}
+                        rx={1}
+                      >
+                        <title>
+                          {shortDateLabel(candle.date)}
+                          {` · O $${formatUsdDisplay(candle.open)}`}
+                          {` · H $${formatUsdDisplay(candle.high)}`}
+                          {` · L $${formatUsdDisplay(candle.low)}`}
+                          {` · C $${formatUsdDisplay(candle.close)}`}
+                          {candle.payment_count > 0
+                            ? ` (${candle.payment_count} payment${candle.payment_count === 1 ? "" : "s"})`
+                            : ""}
+                        </title>
+                      </rect>
+                    </g>
+                  );
+                },
+              )
+            )}
 
             {chart.xLabelIndexes.map((index) => {
               const item = timeline?.points[index];
-              const coord = chart.coords[index];
+              const coord =
+                chartStyle === "candle"
+                  ? chart.candleSlots[index]
+                  : chart.coords[index];
               if (!item || !coord) return null;
               return (
                 <text
@@ -316,6 +461,12 @@ export function RevenuePanel({
             })}
           </svg>
         )}
+        {chartStyle === "candle" && (timeline?.points.length ?? 0) > 0 ? (
+          <p className="mt-2 text-2xs text-text-muted">
+            Candles compare each day to the previous day (open → close). Green =
+            up, red = down.
+          </p>
+        ) : null}
       </div>
     </div>
   );
