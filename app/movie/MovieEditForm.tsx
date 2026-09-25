@@ -60,6 +60,8 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
   const [editVideoFile, setEditVideoFile] = useState<File | null>(null);
   const [editUploadProgress, setEditUploadProgress] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingPoster, setIsUploadingPoster] = useState(false);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [tab, setTab] = useState<"overview" | "media">("overview");
   const [prevMovieId, setPrevMovieId] = useState<string | null>(null);
   const [prevMovieUpdatedAt, setPrevMovieUpdatedAt] = useState<string | null>(null);
@@ -115,6 +117,50 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
     setEditDraft((prev) => (prev ? { ...prev, ...patch } : prev));
   };
 
+  // Poster/banner upload immediately on file selection rather than waiting
+  // for the form's Save button — a separate upload-then-save round trip left
+  // a window where "upload succeeded" but the page hadn't refreshed yet,
+  // which read as "it didn't work" even once the underlying data was correct.
+  const handlePosterFileChange = async (file: File | null) => {
+    if (!movie || !file) {
+      setEditPosterFile(null);
+      return;
+    }
+    setEditPosterFile(file);
+    setIsUploadingPoster(true);
+    try {
+      await uploadAdminMovieAssets(movie.id, { poster: file });
+      await refreshMovies();
+      setEditPosterFile(null);
+      toast.success("Poster updated");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not upload poster.";
+      toast.error(message, { toastId: "movie-poster-upload" });
+    } finally {
+      setIsUploadingPoster(false);
+    }
+  };
+
+  const handleBannerFileChange = async (file: File | null) => {
+    if (!movie || !file) {
+      setEditBannerFile(null);
+      return;
+    }
+    setEditBannerFile(file);
+    setIsUploadingBanner(true);
+    try {
+      await uploadAdminMovieAssets(movie.id, { banner: file });
+      await refreshMovies();
+      setEditBannerFile(null);
+      toast.success("Banner updated");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not upload banner.";
+      toast.error(message, { toastId: "movie-banner-upload" });
+    } finally {
+      setIsUploadingBanner(false);
+    }
+  };
+
   useEffect(() => {
     return () => {
       if (editPosterPreviewUrl) URL.revokeObjectURL(editPosterPreviewUrl);
@@ -156,7 +202,6 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
           transcodeStatus: movie.transcodeStatus ?? editDraft.transcodeStatus,
         },
         {
-          posterFile: pickAssetFile(editPosterFile),
           videoFile: pickAssetFile(editVideoFile),
         },
       );
@@ -167,25 +212,21 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
       }
     }
 
-    const posterFile = pickAssetFile(editPosterFile);
-    const bannerFile = pickAssetFile(editBannerFile);
+    // Poster/banner already upload (and save) themselves on file selection —
+    // only video is still staged here for an explicit save, since it queues
+    // a full re-transcode.
     const videoFile = pickAssetFile(editVideoFile);
 
     setEditSaveError(null);
     setIsSaving(true);
     try {
-      const hasNewAssets = Boolean(posterFile || bannerFile || videoFile);
-      if (hasNewAssets) {
-        setEditUploadProgress(videoFile ? 0 : null);
-        await uploadAdminMovieAssets(
-          movie.id,
-          { poster: posterFile, banner: bannerFile, video: videoFile },
-          setEditUploadProgress,
-        );
+      if (videoFile) {
+        setEditUploadProgress(0);
+        await uploadAdminMovieAssets(movie.id, { video: videoFile }, setEditUploadProgress);
       }
 
       await updateMovie(movie.id, editDraft);
-      if (hasNewAssets) {
+      if (videoFile) {
         await refreshMovies();
       }
       toast.success("Movie updated successfully");
@@ -405,9 +446,12 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                     type="file"
                     accept="image/*"
                     className={movieFileInputClass}
-                    onChange={(e) => setEditPosterFile(pickFileFromInput(e.target.files))}
+                    disabled={isUploadingPoster}
+                    onChange={(e) => handlePosterFileChange(pickFileFromInput(e.target.files))}
                   />
-                  {editPosterFile ? (
+                  {isUploadingPoster ? (
+                    <p className="mt-2 text-2xs text-text-muted">Uploading…</p>
+                  ) : editPosterFile ? (
                     <p className="mt-2 break-all text-2xs text-text-muted">
                       New file: {editPosterFile.name}
                     </p>
@@ -435,9 +479,12 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                     type="file"
                     accept="image/*"
                     className={movieFileInputClass}
-                    onChange={(e) => setEditBannerFile(pickFileFromInput(e.target.files))}
+                    disabled={isUploadingBanner}
+                    onChange={(e) => handleBannerFileChange(pickFileFromInput(e.target.files))}
                   />
-                  {editBannerFile ? (
+                  {isUploadingBanner ? (
+                    <p className="mt-2 text-2xs text-text-muted">Uploading…</p>
+                  ) : editBannerFile ? (
                     <p className="mt-2 break-all text-2xs text-text-muted">
                       New file: {editBannerFile.name}
                     </p>
