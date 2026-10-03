@@ -1,11 +1,12 @@
 export type RegionOption = { value: string; label: string };
 
+/** Values are the region codes stored in content.region — the client nav filters on them. */
 export const REGION_OPTIONS: RegionOption[] = [
-  { value: "us", label: "US" },
-  { value: "india", label: "India" },
-  { value: "indo", label: "Indonesia" },
-  { value: "china", label: "China" },
-  { value: "korea", label: "Korea" },
+  { value: "US", label: "US" },
+  { value: "Hindi", label: "India" },
+  { value: "INDO", label: "Indonesia" },
+  { value: "CH", label: "China" },
+  { value: "KR", label: "Korea" },
 ];
 
 export function regionLabel(value: string | null | undefined): string {
