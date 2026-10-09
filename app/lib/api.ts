@@ -439,24 +439,95 @@ export async function getAdminPlaybackUrl(contentId: string): Promise<string> {
   return `${resolveApiUrl()}${auth.master_url}`;
 }
 
-export async function getAdminSourceVideoDownload(contentId: string): Promise<{
+export class SourceVideoMissingError extends Error {
+  readonly canRebuildFromHls: boolean;
+
+  constructor(message: string, canRebuildFromHls: boolean) {
+    super(message);
+    this.name = "SourceVideoMissingError";
+    this.canRebuildFromHls = canRebuildFromHls;
+  }
+}
+
+export type AdminSourceVideoDownload = {
   url: string;
   source_key: string;
   filename: string;
   expires_in: number;
-}> {
-  const result = await apiFetch<{
-    url: string;
-    source_key: string;
-    filename?: string;
-    expires_in: number;
-  }>(`/admin/content/${contentId}/source-url`);
-  return {
+};
+
+export type HlsRebuildStart = {
+  export_id: string | null;
+  status: string;
+  dest_source_key: string;
+  detail?: string;
+};
+
+export type HlsRebuildStatus = {
+  export_id: string;
+  status: string;
+  progress: number;
+  error: string | null;
+  dest_source_key: string;
+};
+
+export async function getAdminSourceVideoDownload(
+  contentId: string,
+): Promise<AdminSourceVideoDownload> {
+  const token = getAdminToken();
+  const headers = new Headers({ Accept: "application/json" });
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+
+  let res: Response;
+  try {
+    res = await fetch(apiUrl(`/admin/content/${contentId}/source-url`), { headers });
+  } catch (err) {
+    const target = resolveApiUrl();
+    const message = err instanceof Error ? err.message : "Network request failed";
+    throw new Error(
+      `Could not reach the API (${message}). Check that the API is running and ${target} is proxied correctly.`,
+    );
+  }
+
+  if (res.status === 409) {
+    let detail = "Original source video was not found in storage";
+    let canRebuild = false;
+    try {
+      const body = (await res.json()) as {
+        detail?: unknown;
+        can_rebuild_from_hls?: unknown;
+      };
+      if (typeof body.detail === "string") detail = body.detail;
+      canRebuild = body.can_rebuild_from_hls === true;
+    } catch {
+      // keep defaults
+    }
+    throw new SourceVideoMissingError(detail, canRebuild);
+  }
+
+  return parseApiResponse<AdminSourceVideoDownload>(res).then((result) => ({
     url: result.url,
     source_key: result.source_key,
     filename: result.filename || "source.mp4",
     expires_in: result.expires_in,
-  };
+  }));
+}
+
+export async function startAdminRebuildSourceFromHls(
+  contentId: string,
+): Promise<HlsRebuildStart> {
+  return apiFetch<HlsRebuildStart>(`/admin/content/${contentId}/rebuild-source-from-hls`, {
+    method: "POST",
+  });
+}
+
+export async function getAdminRebuildSourceFromHlsStatus(
+  contentId: string,
+  exportId: string,
+): Promise<HlsRebuildStatus> {
+  return apiFetch<HlsRebuildStatus>(
+    `/admin/content/${contentId}/rebuild-source-from-hls/${encodeURIComponent(exportId)}`,
+  );
 }
 
 export async function getAdminSourceVideoUrl(contentId: string): Promise<string> {
