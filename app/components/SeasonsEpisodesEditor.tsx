@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Episode, Season } from "../lib/adminData";
+import { AdminDownloadSourceButton } from "./AdminDownloadSourceButton";
 import { Button } from "./ui/Button";
 import { newEpisodeId, newSeasonId, renumberSeasons } from "../lib/seriesHelpers";
 
@@ -304,6 +305,9 @@ export function SeasonsEpisodesEditor({
                       </div>
                     </div>
                     <div className="ml-auto flex shrink-0 flex-wrap gap-2">
+                      {ep.slug ? (
+                        <AdminDownloadSourceButton contentId={ep.id} label={ep.title} />
+                      ) : null}
                       <Button
                         type="button"
                         variant={isEditing ? "primary" : "secondary"}

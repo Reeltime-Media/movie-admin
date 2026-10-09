@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { AdminCard } from "../../components/AdminCard";
 import { Button } from "../../components/ui/Button";
 import { AdminContentHlsPlayer } from "../../components/AdminContentHlsPlayer";
+import { AdminDownloadSourceButton } from "../../components/AdminDownloadSourceButton";
 import { AdminSourceVideoPlayer } from "../../components/AdminSourceVideoPlayer";
 import { AdminSectionTabs } from "../../components/AdminSectionTabs";
 import { InlineLoading } from "../../components/InlineLoading";
@@ -255,8 +256,14 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
                     </p>
                     <div className="grid gap-6 lg:grid-cols-2">
                       <div>
-                        <div className="mb-2 text-xs font-semibold text-text-muted">
-                          Original video (source.mp4)
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                          <div className="text-xs font-semibold text-text-muted">
+                            Original video (source.mp4)
+                          </div>
+                          <AdminDownloadSourceButton
+                            contentId={selected.ep.id}
+                            label={selected.ep.title}
+                          />
                         </div>
                         <AdminSourceVideoPlayer
                           key={`${selected.ep.id}-source`}
@@ -325,43 +332,52 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
                               const isSelected = ep.id === selectedEpisodeId;
                               return (
                                 <li key={ep.id}>
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedEpisodeId(ep.id)}
+                                  <div
                                     className={[
-                                      "flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors",
+                                      "flex w-full items-center gap-2 px-4 py-2.5 transition-colors",
                                       isSelected ? "bg-brand/10" : "hover:bg-surface-elevated",
                                     ].join(" ")}
                                   >
-                                    <span className="w-5 shrink-0 text-center text-sm font-bold tabular-nums text-brand">
-                                      {ep.number}
-                                    </span>
-                                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                                      {ep.title}
-                                    </span>
-                                    {ep.runtime ? (
-                                      <span className="shrink-0 text-2xs text-text-disabled">
-                                        {ep.runtime}
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedEpisodeId(ep.id)}
+                                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                                    >
+                                      <span className="w-5 shrink-0 text-center text-sm font-bold tabular-nums text-brand">
+                                        {ep.number}
                                       </span>
-                                    ) : null}
-                                    {ep.isFree ? (
-                                      <span className="shrink-0 rounded-full bg-success/15 px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-success">
-                                        Free
+                                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                                        {ep.title}
                                       </span>
-                                    ) : null}
-                                    <span className="shrink-0">
-                                      {hasHls ? (
-                                        <span className="inline-flex items-center gap-1 text-2xs font-semibold text-success">
-                                          <PlayCircle size={12} />
-                                          {isSelected ? "playing" : "HLS ready"}
+                                      {ep.runtime ? (
+                                        <span className="shrink-0 text-2xs text-text-disabled">
+                                          {ep.runtime}
                                         </span>
-                                      ) : (
-                                        <span className="inline-flex items-center gap-1 text-2xs font-medium text-text-muted">
-                                          source only
+                                      ) : null}
+                                      {ep.isFree ? (
+                                        <span className="shrink-0 rounded-full bg-success/15 px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-success">
+                                          Free
                                         </span>
-                                      )}
-                                    </span>
-                                  </button>
+                                      ) : null}
+                                      <span className="shrink-0">
+                                        {hasHls ? (
+                                          <span className="inline-flex items-center gap-1 text-2xs font-semibold text-success">
+                                            <PlayCircle size={12} />
+                                            {isSelected ? "playing" : "HLS ready"}
+                                          </span>
+                                        ) : (
+                                          <span className="inline-flex items-center gap-1 text-2xs font-medium text-text-muted">
+                                            source only
+                                          </span>
+                                        )}
+                                      </span>
+                                    </button>
+                                    <AdminDownloadSourceButton
+                                      contentId={ep.id}
+                                      label={ep.title}
+                                      variant="ghost"
+                                    />
+                                  </div>
                                 </li>
                               );
                             })}

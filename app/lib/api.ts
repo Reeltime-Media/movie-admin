@@ -439,10 +439,28 @@ export async function getAdminPlaybackUrl(contentId: string): Promise<string> {
   return `${resolveApiUrl()}${auth.master_url}`;
 }
 
+export async function getAdminSourceVideoDownload(contentId: string): Promise<{
+  url: string;
+  source_key: string;
+  filename: string;
+  expires_in: number;
+}> {
+  const result = await apiFetch<{
+    url: string;
+    source_key: string;
+    filename?: string;
+    expires_in: number;
+  }>(`/admin/content/${contentId}/source-url`);
+  return {
+    url: result.url,
+    source_key: result.source_key,
+    filename: result.filename || "source.mp4",
+    expires_in: result.expires_in,
+  };
+}
+
 export async function getAdminSourceVideoUrl(contentId: string): Promise<string> {
-  const result = await apiFetch<{ url: string; source_key: string; expires_in: number }>(
-    `/admin/content/${contentId}/source-url`,
-  );
+  const result = await getAdminSourceVideoDownload(contentId);
   return result.url;
 }
 

@@ -8,6 +8,7 @@ import { InlineLoading } from "../../components/InlineLoading";
 import { statusClasses } from "../../lib/adminData";
 import { regionLabel } from "../../lib/regions";
 import { AdminContentHlsPlayer } from "../../components/AdminContentHlsPlayer";
+import { AdminDownloadSourceButton } from "../../components/AdminDownloadSourceButton";
 import { AdminSourceVideoPlayer } from "../../components/AdminSourceVideoPlayer";
 import { MovieCommentsAdmin } from "../MovieCommentsAdmin";
 import { formatMovieDate, youtubeEmbedUrl } from "../movieDetailUi";
@@ -184,8 +185,11 @@ export function MovieDetail({ movieId }: { movieId: string }) {
                 </div>
 
                 <div>
-                  <div className="mb-2 text-xs font-semibold text-text-muted">
-                    Original video (source.mp4)
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <div className="text-xs font-semibold text-text-muted">
+                      Original video (source.mp4)
+                    </div>
+                    <AdminDownloadSourceButton contentId={movie.id} label={movie.title} />
                   </div>
                   <AdminSourceVideoPlayer contentId={movie.id} title={movie.title} />
                 </div>

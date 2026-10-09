@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
 import { AdminContentHlsPlayer } from "../components/AdminContentHlsPlayer";
+import { AdminDownloadSourceButton } from "../components/AdminDownloadSourceButton";
 import { AdminSectionTabs } from "../components/AdminSectionTabs";
 import { AdminSourceVideoPlayer } from "../components/AdminSourceVideoPlayer";
 import { AdminSelect } from "../components/AdminSelect";
@@ -496,8 +497,13 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                 </div>
 
                 <div>
-                  <div className="mb-2 text-xs font-semibold text-text-muted">
-                    Original video (source.mp4)
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <div className="text-xs font-semibold text-text-muted">
+                      Original video (source.mp4)
+                    </div>
+                    {!editVideoFile ? (
+                      <AdminDownloadSourceButton contentId={movie.id} label={movie.title} />
+                    ) : null}
                   </div>
                   {editVideoFile ? (
                     <video
