@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { AdminCard } from "./AdminCard";
 import { AdminCatalogSearchBar } from "./AdminCatalogSearchBar";
+import { AdminMediaThumb } from "./AdminMediaThumb";
 import { InlineLoading } from "./InlineLoading";
 import { HeroVideoField } from "./HeroSlideMediaFields";
 import { SortableList, persistReorderedSort } from "./SortableList";
@@ -23,7 +23,6 @@ import {
 } from "../lib/api";
 import { Button } from "./ui/Button";
 import { adminBadgeClass } from "../lib/adminUi";
-import { mediaUrl } from "../lib/media";
 import { queryKeys } from "../lib/queryKeys";
 
 type ContentType = "movie" | "series";
@@ -399,18 +398,13 @@ export function HeroFeaturedManager() {
             disabled={isSaving}
             onReorder={handleReorder}
             renderItem={(item, index) => {
-              const thumb = mediaUrl(item.poster_key);
               return (
                 <div className="flex flex-wrap items-center gap-4">
-                  <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-elevated">
-                    {thumb ? (
-                      <Image src={thumb} alt="" fill className="object-cover" sizes="56px" />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-2xs text-text-disabled">
-                        No poster
-                      </div>
-                    )}
-                  </div>
+                  <AdminMediaThumb
+                    objectKey={item.poster_key}
+                    fallbackKeys={[item.banner_key]}
+                    alt={item.content_title ?? ""}
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-md bg-surface-elevated px-1.5 py-0.5 font-mono text-2xs font-semibold tabular-nums text-text-muted">
@@ -563,17 +557,12 @@ export function HeroFeaturedManager() {
                   {/* Selected entry preview */}
                   {selectedEntry ? (
                     <div className="mb-5 flex items-center gap-3 rounded-xl border border-brand/25 bg-gradient-to-r from-brand/[0.04] to-transparent p-3.5">
-                      <div className="relative h-16 w-11 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-elevated shadow-sm">
-                        {mediaUrl(selectedEntry.posterKey) ? (
-                          <Image
-                            src={mediaUrl(selectedEntry.posterKey)!}
-                            alt=""
-                            fill
-                            className="object-cover"
-                            sizes="44px"
-                          />
-                        ) : null}
-                      </div>
+                      <AdminMediaThumb
+                        objectKey={selectedEntry.posterKey}
+                        alt={selectedEntry.title}
+                        className="h-16 w-11 shadow-sm"
+                        emptyLabel=""
+                      />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold">{selectedEntry.title}</p>
                         <p className="text-2xs text-text-muted">
