@@ -20,12 +20,15 @@ import {
 } from "../../lib/api";
 import { parseRuntimeMinutesInput } from "../../lib/runtime";
 import {
+  PODCAST_ACCESS_OPTIONS,
+  isFreeFromPodcastAccess,
   podcastFileInputClass,
   podcastSelectClass,
   podcastTextInputClass,
   toApiStatus,
   toUiStatus,
   validatePodcastPublishReady,
+  type PodcastAccess,
 } from "../podcastUi";
 
 const stepLabels = ["Details", "Assets"] as const;
@@ -61,7 +64,7 @@ export default function NewPodcastPage() {
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState("Published");
   const [genres, setGenres] = useState<string[]>(["Horror"]);
-  const [isFree, setIsFree] = useState(false);
+  const [access, setAccess] = useState<PodcastAccess>("plan");
   const [showNewGenre, setShowNewGenre] = useState(false);
   const [newGenreName, setNewGenreName] = useState("");
   const { data: genreData } = useGenres();
@@ -131,7 +134,7 @@ export default function NewPodcastPage() {
       title,
       titleKm: String(fd.get("titleKm") || "").trim(),
       genres,
-      isFree,
+      isFree: isFreeFromPodcastAccess(access),
       runtimeMinutes: runtimeResult.value,
       description: String(fd.get("description") || "").trim(),
       releaseYear: parseOptionalNumber(fd.get("releaseYear")),
@@ -367,39 +370,22 @@ export default function NewPodcastPage() {
                 <input type="hidden" name="status" value={status} />
               </Field>
 
-              <div className="md:col-span-2">
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={isFree}
-                  onClick={() => setIsFree((v) => !v)}
-                  className="group flex items-center gap-3"
-                >
-                  <span
-                    className={[
-                      "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200",
-                      isFree ? "bg-success" : "bg-text-disabled/30",
-                    ].join(" ")}
-                  >
-                    <span
-                      className={[
-                        "pointer-events-none inline-block size-5 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200",
-                        isFree ? "translate-x-5" : "translate-x-0",
-                      ].join(" ")}
-                    />
-                  </span>
-                  <span className="text-left">
-                    <span className="block text-xs font-semibold text-text">
-                      {isFree ? "Free podcast" : "Included with Plan"}
-                    </span>
-                    <span className="mt-0.5 block text-2xs text-text-disabled">
-                      {isFree
-                        ? "Anyone can listen without a subscription."
-                        : "Unlocks with any active subscription plan."}
-                    </span>
-                  </span>
-                </button>
-              </div>
+              <Field
+                label="Access"
+                hint={
+                  access === "free"
+                    ? "Anyone can listen without a subscription."
+                    : "Unlocks with any active subscription plan."
+                }
+              >
+                <AdminSelect
+                  value={access}
+                  onChange={(v) => setAccess(v as PodcastAccess)}
+                  options={[...PODCAST_ACCESS_OPTIONS]}
+                  className={podcastSelectClass}
+                  aria-label="Access"
+                />
+              </Field>
 
               <div className="md:col-span-2">
                 <Field label="Description">

@@ -16,12 +16,16 @@ import { updateAdminPodcast, uploadAdminPodcastAssets } from "../lib/api";
 import { mediaUrl } from "../lib/media";
 import { runtimeMinutesFromApi } from "../lib/runtime";
 import {
+  PODCAST_ACCESS_OPTIONS,
+  isFreeFromPodcastAccess,
+  podcastAccessFromIsFree,
   podcastFileInputClass,
   podcastSelectClass,
   podcastTextInputClass,
   toApiStatus,
   toUiStatus,
   validatePodcastPublishReady,
+  type PodcastAccess,
 } from "./podcastUi";
 
 const statuses: Status[] = ["Published", "Draft", "Scheduled", "Review"];
@@ -49,7 +53,7 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
   const [titleKm, setTitleKm] = useState("");
   const [description, setDescription] = useState("");
   const [genres, setGenres] = useState<string[]>([]);
-  const [isFree, setIsFree] = useState(false);
+  const [access, setAccess] = useState<PodcastAccess>("plan");
   const [status, setStatus] = useState<Status>("Draft");
   const [releaseYear, setReleaseYear] = useState("");
   const [runtimeMinutes, setRuntimeMinutes] = useState("");
@@ -71,7 +75,7 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
     setTitleKm(podcast.title_km ?? "");
     setDescription(podcast.description ?? "");
     setGenres(podcast.genres ?? []);
-    setIsFree(Boolean(podcast.is_free));
+    setAccess(podcastAccessFromIsFree(Boolean(podcast.is_free)));
     setStatus(toUiStatus(podcast.status));
     setReleaseYear(podcast.release_year != null ? String(podcast.release_year) : "");
     const minutes = runtimeMinutesFromApi(podcast);
@@ -181,7 +185,7 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
         runtimeMinutes: runtime != null && Number.isFinite(runtime) && runtime > 0 ? Math.round(runtime) : null,
         releaseYear: year != null && Number.isFinite(year) ? year : null,
         status: toApiStatus(status),
-        isFree,
+        isFree: isFreeFromPodcastAccess(access),
       });
 
       void queryClient.invalidateQueries({ queryKey: ["podcasts"] });
@@ -291,37 +295,18 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
                   />
                 </EditRow>
                 <EditRow label="Access">
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={isFree}
-                    onClick={() => setIsFree((v) => !v)}
-                    className="group flex items-center gap-3"
-                  >
-                    <span
-                      className={[
-                        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200",
-                        isFree ? "bg-success" : "bg-text-disabled/30",
-                      ].join(" ")}
-                    >
-                      <span
-                        className={[
-                          "pointer-events-none inline-block size-5 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200",
-                          isFree ? "translate-x-5" : "translate-x-0",
-                        ].join(" ")}
-                      />
-                    </span>
-                    <span className="text-left">
-                      <span className="block text-xs font-semibold text-text">
-                        {isFree ? "Free podcast" : "Included with Plan"}
-                      </span>
-                      <span className="mt-0.5 block text-2xs text-text-disabled">
-                        {isFree
-                          ? "Anyone can listen without a subscription."
-                          : "Unlocks with any active subscription plan."}
-                      </span>
-                    </span>
-                  </button>
+                  <AdminSelect
+                    value={access}
+                    onChange={(v) => setAccess(v as PodcastAccess)}
+                    options={[...PODCAST_ACCESS_OPTIONS]}
+                    className={podcastSelectClass}
+                    aria-label="Access"
+                  />
+                  <span className="mt-1.5 block text-2xs text-text-disabled">
+                    {access === "free"
+                      ? "Anyone can listen without a subscription."
+                      : "Unlocks with any active subscription plan."}
+                  </span>
                 </EditRow>
                 <EditRow label="Release year">
                   <input

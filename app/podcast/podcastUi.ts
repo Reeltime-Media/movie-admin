@@ -1,5 +1,20 @@
 import type { Status } from "../lib/adminData";
 
+export const PODCAST_ACCESS_OPTIONS = [
+  { value: "plan", label: "Included with Plan" },
+  { value: "free", label: "Free" },
+] as const;
+
+export type PodcastAccess = (typeof PODCAST_ACCESS_OPTIONS)[number]["value"];
+
+export function podcastAccessFromIsFree(isFree: boolean): PodcastAccess {
+  return isFree ? "free" : "plan";
+}
+
+export function isFreeFromPodcastAccess(access: PodcastAccess): boolean {
+  return access === "free";
+}
+
 export const podcastTextInputClass =
   "w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-text outline-none transition-colors placeholder:text-white focus:border-border-hover focus:bg-surface-elevated";
 
