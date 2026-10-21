@@ -18,7 +18,6 @@ import {
   updateAdminPodcast,
   uploadAdminPodcastAssets,
 } from "../../lib/api";
-import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../../lib/money";
 import { parseRuntimeMinutesInput } from "../../lib/runtime";
 import {
   podcastFileInputClass,
@@ -122,11 +121,6 @@ export default function NewPodcastPage() {
       return { ok: false as const, message: "Enter a title to save." };
     }
 
-    const priceResult = validateAdminPriceUsd(String(fd.get("price") || "0"));
-    if (!priceResult.ok) {
-      return { ok: false as const, message: priceResult.message };
-    }
-
     const runtimeResult = parseRuntimeMinutesInput(fd.get("runtimeMinutes"));
     if (!runtimeResult.ok) {
       return { ok: false as const, message: runtimeResult.message };
@@ -137,7 +131,6 @@ export default function NewPodcastPage() {
       title,
       titleKm: String(fd.get("titleKm") || "").trim(),
       genres,
-      priceUsd: isFree ? "0" : priceResult.value,
       isFree,
       runtimeMinutes: runtimeResult.value,
       description: String(fd.get("description") || "").trim(),
@@ -204,7 +197,6 @@ export default function NewPodcastPage() {
           genres: fields.genres,
           releaseYear: fields.releaseYear,
           runtimeMinutes: fields.runtimeMinutes,
-          priceUsd: fields.priceUsd,
           isFree: fields.isFree,
         });
 
@@ -224,7 +216,6 @@ export default function NewPodcastPage() {
             titleKm: fields.titleKm || null,
             description: fields.description || null,
             genres: fields.genres,
-            priceUsd: fields.priceUsd,
             runtimeMinutes: fields.runtimeMinutes ?? null,
             releaseYear: fields.releaseYear ?? null,
             status: toApiStatus(targetStatus),
@@ -376,16 +367,7 @@ export default function NewPodcastPage() {
                 <input type="hidden" name="status" value={status} />
               </Field>
 
-              <Field label="Price (USD)" hint={ADMIN_PRICE_HINT}>
-                <input
-                  name="price"
-                  placeholder="0 or 2.99"
-                  disabled={isFree}
-                  className={podcastTextInputClass}
-                />
-              </Field>
-
-              <div className="flex items-end pb-1">
+              <div className="md:col-span-2">
                 <button
                   type="button"
                   role="switch"
@@ -406,8 +388,15 @@ export default function NewPodcastPage() {
                       ].join(" ")}
                     />
                   </span>
-                  <span className="text-xs font-semibold text-text">
-                    {isFree ? "Free podcast" : "Paid podcast"}
+                  <span className="text-left">
+                    <span className="block text-xs font-semibold text-text">
+                      {isFree ? "Free podcast" : "Included with Plan"}
+                    </span>
+                    <span className="mt-0.5 block text-2xs text-text-disabled">
+                      {isFree
+                        ? "Anyone can listen without a subscription."
+                        : "Unlocks with any active subscription plan."}
+                    </span>
                   </span>
                 </button>
               </div>

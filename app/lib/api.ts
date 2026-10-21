@@ -593,7 +593,6 @@ export async function createAdminPodcastDraft(input: {
   genres: string[];
   releaseYear?: number;
   runtimeMinutes?: number;
-  priceUsd: string;
   isFree?: boolean;
 }) {
   return apiFetch<ApiContent>("/admin/podcasts", {
@@ -606,7 +605,8 @@ export async function createAdminPodcastDraft(input: {
       genres: input.genres,
       release_year: input.releaseYear ?? null,
       runtime_minutes: input.runtimeMinutes ?? null,
-      price_usd: input.priceUsd,
+      // Plan-included (or free) — API ignores à-la-carte pricing.
+      price_usd: "0",
       is_free: Boolean(input.isFree),
     }),
   });
@@ -619,7 +619,6 @@ export async function updateAdminPodcast(
     titleKm?: string | null;
     description?: string | null;
     genres: string[];
-    priceUsd?: string | null;
     runtimeMinutes?: number | null;
     releaseYear?: number | null;
     status: string;
@@ -634,7 +633,7 @@ export async function updateAdminPodcast(
       title_km: input.titleKm?.trim() || null,
       description: input.description ?? null,
       genres: input.genres,
-      price_usd: input.priceUsd || null,
+      price_usd: "0",
       runtime_minutes: input.runtimeMinutes ?? null,
       release_year: input.releaseYear ?? null,
       status: input.status,

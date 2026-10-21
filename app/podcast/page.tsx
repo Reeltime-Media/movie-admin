@@ -17,7 +17,6 @@ import { statusClasses } from "../lib/adminData";
 import { deleteAdminPodcast, type ApiContent } from "../lib/api";
 import { formatGenres } from "../lib/genres";
 import { mediaUrl } from "../lib/media";
-import { formatUsdDisplay } from "../lib/money";
 import { formatPodcastDate, toUiStatus } from "./podcastUi";
 
 const PAGE_SIZE = 20;
@@ -92,7 +91,7 @@ export default function PodcastsPage() {
                     <th className="px-5 pb-2.5 font-semibold">Cover</th>
                     <th className="px-5 pb-2.5 font-semibold">Title</th>
                     <th className="px-5 pb-2.5 font-semibold">Genre</th>
-                    <th className="px-5 pb-2.5 text-right font-semibold">Price</th>
+                    <th className="px-5 pb-2.5 font-semibold">Access</th>
                     <th className="px-5 pb-2.5 font-semibold">Audio</th>
                     <th className="px-5 pb-2.5 font-semibold">Status</th>
                     <th className="px-5 pb-2.5 font-semibold">Updated</th>
@@ -137,8 +136,8 @@ export default function PodcastsPage() {
                           ) : null}
                         </td>
                         <td className="px-5 py-3 text-text-muted">{formatGenres(item.genres)}</td>
-                        <td className="px-5 py-3 text-right font-mono tabular-nums text-text-muted">
-                          {item.is_free ? "Free" : `$${formatUsdDisplay(item.price_usd ?? "0")}`}
+                        <td className="px-5 py-3 text-text-muted">
+                          {item.is_free ? "Free" : "Included with Plan"}
                         </td>
                         <td className="px-5 py-3 text-text-muted">{item.audio_key ? "Ready" : "Missing"}</td>
                         <td className="px-5 py-3">

@@ -13,7 +13,6 @@ import { Button } from "../components/ui/Button";
 import { useAdminPodcast, useDeleteGenre, useGenres } from "../hooks/adminQueries";
 import type { Status } from "../lib/adminData";
 import { updateAdminPodcast, uploadAdminPodcastAssets } from "../lib/api";
-import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../lib/money";
 import { mediaUrl } from "../lib/media";
 import { runtimeMinutesFromApi } from "../lib/runtime";
 import {
@@ -50,7 +49,6 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
   const [titleKm, setTitleKm] = useState("");
   const [description, setDescription] = useState("");
   const [genres, setGenres] = useState<string[]>([]);
-  const [price, setPrice] = useState("0");
   const [isFree, setIsFree] = useState(false);
   const [status, setStatus] = useState<Status>("Draft");
   const [releaseYear, setReleaseYear] = useState("");
@@ -73,7 +71,6 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
     setTitleKm(podcast.title_km ?? "");
     setDescription(podcast.description ?? "");
     setGenres(podcast.genres ?? []);
-    setPrice(podcast.price_usd ?? "0");
     setIsFree(Boolean(podcast.is_free));
     setStatus(toUiStatus(podcast.status));
     setReleaseYear(podcast.release_year != null ? String(podcast.release_year) : "");
@@ -150,13 +147,6 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
       return;
     }
 
-    const priceResult = validateAdminPriceUsd(isFree ? "0" : price);
-    if (!priceResult.ok) {
-      setSaveError(priceResult.message);
-      toast.error(priceResult.message);
-      return;
-    }
-
     const isNewlyPublishing = status === "Published" && toUiStatus(podcast.status) !== "Published";
     if (isNewlyPublishing) {
       const publishCheck = validatePodcastPublishReady(
@@ -188,7 +178,6 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
         titleKm: titleKm.trim() || null,
         description: description.trim() || null,
         genres,
-        priceUsd: priceResult.value,
         runtimeMinutes: runtime != null && Number.isFinite(runtime) && runtime > 0 ? Math.round(runtime) : null,
         releaseYear: year != null && Number.isFinite(year) ? year : null,
         status: toApiStatus(status),
@@ -301,16 +290,7 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
                     aria-label="Status"
                   />
                 </EditRow>
-                <EditRow label="Price (USD)">
-                  <input
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    disabled={isFree}
-                    className={podcastTextInputClass}
-                  />
-                  <span className="mt-1.5 block text-2xs text-text-disabled">{ADMIN_PRICE_HINT}</span>
-                </EditRow>
-                <EditRow label="Free">
+                <EditRow label="Access">
                   <button
                     type="button"
                     role="switch"
@@ -331,8 +311,15 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
                         ].join(" ")}
                       />
                     </span>
-                    <span className="text-xs font-semibold text-text">
-                      {isFree ? "Free podcast" : "Paid podcast"}
+                    <span className="text-left">
+                      <span className="block text-xs font-semibold text-text">
+                        {isFree ? "Free podcast" : "Included with Plan"}
+                      </span>
+                      <span className="mt-0.5 block text-2xs text-text-disabled">
+                        {isFree
+                          ? "Anyone can listen without a subscription."
+                          : "Unlocks with any active subscription plan."}
+                      </span>
                     </span>
                   </button>
                 </EditRow>

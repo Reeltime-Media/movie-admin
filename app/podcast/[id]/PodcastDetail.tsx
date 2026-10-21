@@ -8,7 +8,6 @@ import { useAdminPodcast } from "../../hooks/adminQueries";
 import { statusClasses } from "../../lib/adminData";
 import { formatGenres } from "../../lib/genres";
 import { mediaUrl } from "../../lib/media";
-import { formatUsdDisplay } from "../../lib/money";
 import { formatPodcastDate, toUiStatus } from "../podcastUi";
 
 function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
@@ -100,8 +99,8 @@ export function PodcastDetail({ podcastId }: { podcastId: string }) {
                 <InfoRow label="Slug" value={podcast.slug} />
                 <InfoRow label="Genres" value={formatGenres(podcast.genres)} />
                 <InfoRow
-                  label="Price"
-                  value={podcast.is_free ? "Free" : `$${formatUsdDisplay(podcast.price_usd ?? "0")}`}
+                  label="Access"
+                  value={podcast.is_free ? "Free" : "Included with Plan"}
                 />
                 <InfoRow label="Runtime" value={podcast.runtime} />
                 <InfoRow label="Release year" value={podcast.release_year} />
