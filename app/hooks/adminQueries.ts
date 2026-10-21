@@ -7,11 +7,13 @@ import {
   deleteGenre,
   getAdminDashboardSummary,
   getAdminMovie,
+  getAdminPodcast,
   getAdminRevenueTimeline,
   getAdminSeriesById,
   getAdminToken,
   getAdminTvChannel,
   listAdminPayments,
+  listAdminPodcasts,
   listAdminSubscriptionPlans,
   listAdminTopTitles,
   listAdminTvAccessCodes,
@@ -303,6 +305,33 @@ export function useTvChannel(id: string) {
   const query = useQuery({
     queryKey: queryKeys.tvChannel(id),
     queryFn: () => getAdminTvChannel(id),
+    enabled: isAuthReady && Boolean(getAdminToken()) && Boolean(id),
+    staleTime: 30_000,
+  });
+
+  return { ...query, isAuthReady };
+}
+
+export function useAdminPodcasts(page: number, pageSize: number) {
+  const isAuthReady = useClientAuthReady();
+
+  const query = useQuery({
+    queryKey: queryKeys.podcasts({ page, pageSize }),
+    queryFn: () => listAdminPodcasts({ page, pageSize }),
+    enabled: isAuthReady && Boolean(getAdminToken()),
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
+  });
+
+  return { ...query, isAuthReady };
+}
+
+export function useAdminPodcast(id: string) {
+  const isAuthReady = useClientAuthReady();
+
+  const query = useQuery({
+    queryKey: queryKeys.podcast(id),
+    queryFn: () => getAdminPodcast(id),
     enabled: isAuthReady && Boolean(getAdminToken()) && Boolean(id),
     staleTime: 30_000,
   });

@@ -30,4 +30,6 @@ export const queryKeys = {
     ["comments", params] as const,
   tvChannels: (params: { page: number; pageSize: number }) => ["tv-channels", params] as const,
   tvChannel: (id: string) => ["tv-channel", id] as const,
+  podcasts: (params: { page: number; pageSize: number }) => ["podcasts", params] as const,
+  podcast: (id: string) => ["podcast", id] as const,
 };

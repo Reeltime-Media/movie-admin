@@ -7,6 +7,7 @@ import {
   BarChart3,
   CreditCard,
   Film,
+  Headphones,
   Home,
   LayoutDashboard,
   LogOut,
@@ -35,6 +36,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Movies", href: "/movie", icon: Film },
       { label: "Series", href: "/series", icon: Tv },
+      { label: "Podcasts", href: "/podcast", icon: Headphones },
       { label: "TV channels", href: "/tv-channels", icon: Radio },
       { label: "Home page", href: "/promotions", icon: Home },
     ],

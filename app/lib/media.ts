@@ -32,10 +32,28 @@ export function videoContentType(file: File): string {
   }
 }
 
+export function audioContentType(file: File): string {
+  if (file.type) return file.type;
+  switch (extensionFromFilename(file.name)) {
+    case "m4a":
+      return "audio/mp4";
+    case "wav":
+      return "audio/wav";
+    case "aac":
+      return "audio/aac";
+    case "mp3":
+    default:
+      return "audio/mpeg";
+  }
+}
+
 export function inferFileContentType(file: File): string {
   const ext = extensionFromFilename(file.name);
   if (["mp4", "mov", "webm", "m3u8"].includes(ext)) {
     return videoContentType(file);
+  }
+  if (["mp3", "m4a", "wav", "aac"].includes(ext)) {
+    return audioContentType(file);
   }
   return imageContentType(file);
 }

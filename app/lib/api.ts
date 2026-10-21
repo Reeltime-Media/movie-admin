@@ -5,7 +5,7 @@ import {
   type PaginationQuery,
 } from "./pagination";
 
-import { imageContentType, inferFileContentType, videoContentType } from "./media";
+import { audioContentType, imageContentType, inferFileContentType, videoContentType } from "./media";
 import { resolveApiUrl } from "./resolve-api-url";
 
 const TOKEN_KEY = "reeltime_admin_token";
@@ -121,9 +121,11 @@ export type ApiContent = {
   banner_key: string | null;
   trailer_url: string | null;
   hls_master_key: string | null;
+  audio_key?: string | null;
   price_usd: string | null;
   status: string;
   is_published: boolean;
+  is_free?: boolean;
   transcode_status: string;
   watch_count: number;
   /** Optional: only present once movie-api ships purchase_count on AdminContentRead. */
@@ -565,6 +567,145 @@ export async function createAdminMovieDraft(input: {
   });
 }
 
+export type PodcastAssetUploadStartResponse = {
+  audio_key: string | null;
+  audio_upload_url: string | null;
+  poster_key: string | null;
+  poster_upload_url: string | null;
+};
+
+export async function listAdminPodcasts(query: PaginationQuery = {}) {
+  return apiFetch<PaginatedResponse<ApiContent>>(`/admin/podcasts${paginationQuery(query)}`);
+}
+
+export async function listAllAdminPodcasts() {
+  return fetchAllPages((page, pageSize) => listAdminPodcasts({ page, pageSize }));
+}
+
+export async function getAdminPodcast(id: string): Promise<ApiContent> {
+  return apiFetch<ApiContent>(`/admin/podcasts/${id}`);
+}
+
+export async function createAdminPodcastDraft(input: {
+  title: string;
+  titleKm?: string | null;
+  description?: string;
+  genres: string[];
+  releaseYear?: number;
+  runtimeMinutes?: number;
+  priceUsd: string;
+  isFree?: boolean;
+}) {
+  return apiFetch<ApiContent>("/admin/podcasts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: input.title,
+      title_km: input.titleKm?.trim() || null,
+      description: input.description || null,
+      genres: input.genres,
+      release_year: input.releaseYear ?? null,
+      runtime_minutes: input.runtimeMinutes ?? null,
+      price_usd: input.priceUsd,
+      is_free: Boolean(input.isFree),
+    }),
+  });
+}
+
+export async function updateAdminPodcast(
+  id: string,
+  input: {
+    title: string;
+    titleKm?: string | null;
+    description?: string | null;
+    genres: string[];
+    priceUsd?: string | null;
+    runtimeMinutes?: number | null;
+    releaseYear?: number | null;
+    status: string;
+    isFree?: boolean;
+  },
+) {
+  return apiFetch<ApiContent>(`/admin/podcasts/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: input.title,
+      title_km: input.titleKm?.trim() || null,
+      description: input.description ?? null,
+      genres: input.genres,
+      price_usd: input.priceUsd || null,
+      runtime_minutes: input.runtimeMinutes ?? null,
+      release_year: input.releaseYear ?? null,
+      status: input.status,
+      is_free: Boolean(input.isFree),
+    }),
+  });
+}
+
+export async function deleteAdminPodcast(id: string) {
+  await apiFetch<void>(`/admin/podcasts/${id}`, { method: "DELETE" });
+}
+
+export async function startAdminPodcastAssetUpload(
+  id: string,
+  input: {
+    audioContentType?: string | null;
+    posterContentType?: string | null;
+  },
+) {
+  return apiFetch<PodcastAssetUploadStartResponse>(`/admin/podcasts/${id}/assets/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      audio_content_type: normalizeAssetContentType(input.audioContentType),
+      poster_content_type: normalizeAssetContentType(input.posterContentType),
+    }),
+  });
+}
+
+export async function completeAdminPodcastAssetUpload(
+  id: string,
+  input: {
+    audioKey?: string | null;
+    posterKey?: string | null;
+  },
+) {
+  return apiFetch<ApiContent>(`/admin/podcasts/${id}/assets/complete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      audio_key: input.audioKey ?? null,
+      poster_key: input.posterKey ?? null,
+    }),
+  });
+}
+
+export async function uploadAdminPodcastAsset(
+  id: string,
+  kind: "poster" | "audio",
+  file: File,
+  onProgress?: (percent: number) => void,
+) {
+  const contentType = kind === "audio" ? audioContentType(file) : imageContentType(file);
+  const startInput =
+    kind === "poster"
+      ? { posterContentType: contentType }
+      : { audioContentType: contentType };
+
+  const upload = await startAdminPodcastAssetUpload(id, startInput);
+  const uploadUrl = kind === "poster" ? upload.poster_upload_url : upload.audio_upload_url;
+  const assetKey = kind === "poster" ? upload.poster_key : upload.audio_key;
+  if (!uploadUrl || !assetKey) {
+    throw new Error(`Could not start ${kind} upload`);
+  }
+  await uploadFileToPresignedUrl(uploadUrl, file, onProgress, contentType);
+  return completeAdminPodcastAssetUpload(id, {
+    audioKey: kind === "audio" ? assetKey : null,
+    posterKey: kind === "poster" ? assetKey : null,
+  });
+}
+
 export async function updateAdminMovie(
   id: string,
   input: {
@@ -673,6 +814,18 @@ export async function uploadAdminMovieAsset(
 
 function hasUploadFile(file: File | null | undefined): file is File {
   return Boolean(file && file.size > 0);
+}
+
+export async function uploadAdminPodcastAssets(
+  id: string,
+  assets: { poster?: File | null; audio?: File | null },
+  onAudioProgress?: (percent: number) => void,
+) {
+  const poster = hasUploadFile(assets.poster) ? assets.poster : null;
+  const audio = hasUploadFile(assets.audio) ? assets.audio : null;
+  if (!poster && !audio) return;
+  if (poster) await uploadAdminPodcastAsset(id, "poster", poster);
+  if (audio) await uploadAdminPodcastAsset(id, "audio", audio, onAudioProgress);
 }
 
 export async function uploadAdminMovieAssets(
