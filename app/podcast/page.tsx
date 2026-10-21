@@ -15,7 +15,6 @@ import { Button } from "../components/ui/Button";
 import { useAdminPodcasts } from "../hooks/adminQueries";
 import { statusClasses } from "../lib/adminData";
 import { deleteAdminPodcast, type ApiContent } from "../lib/api";
-import { formatGenres } from "../lib/genres";
 import { mediaUrl } from "../lib/media";
 import { formatPodcastDate, toUiStatus } from "./podcastUi";
 
@@ -90,7 +89,6 @@ export default function PodcastsPage() {
                   <tr className="border-b border-border text-2xs font-semibold uppercase tracking-[0.16em] text-text-disabled">
                     <th className="px-5 pb-2.5 font-semibold">Cover</th>
                     <th className="px-5 pb-2.5 font-semibold">Title</th>
-                    <th className="px-5 pb-2.5 font-semibold">Genre</th>
                     <th className="px-5 pb-2.5 font-semibold">Access</th>
                     <th className="px-5 pb-2.5 font-semibold">Audio</th>
                     <th className="px-5 pb-2.5 font-semibold">Status</th>
@@ -135,7 +133,6 @@ export default function PodcastsPage() {
                             <div className="max-w-56 truncate text-2xs text-text-muted">{item.title_km}</div>
                           ) : null}
                         </td>
-                        <td className="px-5 py-3 text-text-muted">{formatGenres(item.genres)}</td>
                         <td className="px-5 py-3 text-text-muted">
                           {item.is_free ? "Free" : "Included with Plan"}
                         </td>

@@ -7,16 +7,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
 import { AdminSelect } from "../components/AdminSelect";
-import { GenreMultiSelect } from "../components/GenreMultiSelect";
 import { InlineLoading } from "../components/InlineLoading";
 import { Button } from "../components/ui/Button";
-import { useAdminPodcast, useDeleteGenre, useGenres } from "../hooks/adminQueries";
+import { useAdminPodcast } from "../hooks/adminQueries";
 import type { Status } from "../lib/adminData";
 import { updateAdminPodcast, uploadAdminPodcastAssets } from "../lib/api";
 import { mediaUrl } from "../lib/media";
 import { runtimeMinutesFromApi } from "../lib/runtime";
 import {
   PODCAST_ACCESS_OPTIONS,
+  detectAudioDurationMinutes,
+  formatRuntimeMinutes,
   isFreeFromPodcastAccess,
   podcastAccessFromIsFree,
   podcastFileInputClass,
@@ -52,11 +53,9 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
   const [title, setTitle] = useState("");
   const [titleKm, setTitleKm] = useState("");
   const [description, setDescription] = useState("");
-  const [genres, setGenres] = useState<string[]>([]);
   const [access, setAccess] = useState<PodcastAccess>("plan");
   const [status, setStatus] = useState<Status>("Draft");
-  const [releaseYear, setReleaseYear] = useState("");
-  const [runtimeMinutes, setRuntimeMinutes] = useState("");
+  const [detectedRuntime, setDetectedRuntime] = useState<number | null>(null);
   const [posterFile, setPosterFile] = useState<File | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -65,21 +64,14 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
   const [isUploadingPoster, setIsUploadingPoster] = useState(false);
   const [hydratedId, setHydratedId] = useState<string | null>(null);
 
-  const { data: genreData } = useGenres();
-  const deleteGenreMutation = useDeleteGenre();
-  const genreOptions = genreData?.map((g) => g.name);
-
   if (podcast && podcast.id !== hydratedId) {
     setHydratedId(podcast.id);
     setTitle(podcast.title);
     setTitleKm(podcast.title_km ?? "");
     setDescription(podcast.description ?? "");
-    setGenres(podcast.genres ?? []);
     setAccess(podcastAccessFromIsFree(Boolean(podcast.is_free)));
     setStatus(toUiStatus(podcast.status));
-    setReleaseYear(podcast.release_year != null ? String(podcast.release_year) : "");
-    const minutes = runtimeMinutesFromApi(podcast);
-    setRuntimeMinutes(minutes != null ? String(minutes) : "");
+    setDetectedRuntime(null);
     setPosterFile(null);
     setAudioFile(null);
     setUploadProgress(null);
@@ -109,15 +101,8 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
 
   const coverUrl = posterPreviewUrl ?? mediaUrl(podcast?.poster_key, podcast?.updated_at);
   const audioUrl = audioPreviewUrl ?? mediaUrl(podcast?.audio_key, podcast?.updated_at);
-
-  const handleDeleteGenre = (name: string) => {
-    const genre = genreData?.find((g) => g.name === name);
-    if (!genre) return;
-    deleteGenreMutation.mutate(genre.id, {
-      onSuccess: () => setGenres((prev) => prev.filter((g) => g !== name)),
-      onError: () => toast.error("Could not delete genre"),
-    });
-  };
+  const storedRuntime = podcast ? runtimeMinutesFromApi(podcast) : null;
+  const runtimeLabel = formatRuntimeMinutes(detectedRuntime ?? storedRuntime);
 
   const handlePosterChange = async (file: File | null) => {
     if (!podcast || !file) {
@@ -139,15 +124,21 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
     }
   };
 
+  const handleAudioChange = async (file: File | null) => {
+    setAudioFile(file);
+    if (!file || file.size === 0) {
+      setDetectedRuntime(null);
+      return;
+    }
+    const minutes = await detectAudioDurationMinutes(file);
+    setDetectedRuntime(minutes ?? null);
+  };
+
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!podcast) return;
     if (!title.trim()) {
       setSaveError("Enter a title.");
-      return;
-    }
-    if (genres.length === 0) {
-      setSaveError("Select at least one genre.");
       return;
     }
 
@@ -167,23 +158,19 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
     setIsSaving(true);
     setSaveError(null);
     try {
+      let runtimeMinutes: number | null | undefined = undefined;
       if (audioFile) {
         setUploadProgress(0);
         await uploadAdminPodcastAssets(podcast.id, { audio: audioFile }, setUploadProgress);
+        runtimeMinutes =
+          detectedRuntime ?? (await detectAudioDurationMinutes(audioFile)) ?? null;
       }
-
-      const yearRaw = releaseYear.trim();
-      const year = yearRaw ? Number(yearRaw) : null;
-      const runtimeRaw = runtimeMinutes.trim();
-      const runtime = runtimeRaw ? Number(runtimeRaw) : null;
 
       await updateAdminPodcast(podcast.id, {
         title: title.trim(),
         titleKm: titleKm.trim() || null,
         description: description.trim() || null,
-        genres,
-        runtimeMinutes: runtime != null && Number.isFinite(runtime) && runtime > 0 ? Math.round(runtime) : null,
-        releaseYear: year != null && Number.isFinite(year) ? year : null,
+        ...(runtimeMinutes !== undefined ? { runtimeMinutes } : {}),
         status: toApiStatus(status),
         isFree: isFreeFromPodcastAccess(access),
       });
@@ -277,14 +264,6 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
                     className={podcastTextInputClass}
                   />
                 </EditRow>
-                <EditRow label="Genres">
-                  <GenreMultiSelect
-                    selected={genres}
-                    onChange={setGenres}
-                    options={genreOptions}
-                    onDeleteGenre={handleDeleteGenre}
-                  />
-                </EditRow>
                 <EditRow label="Status">
                   <AdminSelect
                     value={status}
@@ -308,25 +287,10 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
                       : "Unlocks with any active subscription plan."}
                   </span>
                 </EditRow>
-                <EditRow label="Release year">
-                  <input
-                    value={releaseYear}
-                    onChange={(e) => setReleaseYear(e.target.value)}
-                    type="number"
-                    min={1900}
-                    max={2100}
-                    className={podcastTextInputClass}
-                  />
-                </EditRow>
-                <EditRow label="Runtime (minutes)">
-                  <input
-                    value={runtimeMinutes}
-                    onChange={(e) => setRuntimeMinutes(e.target.value)}
-                    type="number"
-                    min={0}
-                    step={1}
-                    className={podcastTextInputClass}
-                  />
+                <EditRow label="Runtime">
+                  <span className="text-sm text-text">
+                    {runtimeLabel ?? "Detected from audio when uploaded"}
+                  </span>
                 </EditRow>
                 <EditRow label="Description">
                   <textarea
@@ -357,8 +321,13 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
             accept="audio/mpeg,audio/mp4,audio/wav,audio/x-m4a,audio/aac,audio/*"
             className={podcastFileInputClass}
             disabled={isSaving}
-            onChange={(e) => setAudioFile(e.target.files?.[0] ?? null)}
+            onChange={(e) => void handleAudioChange(e.target.files?.[0] ?? null)}
           />
+          {detectedRuntime != null ? (
+            <span className="mt-1.5 block text-2xs text-text-disabled">
+              Detected runtime: {formatRuntimeMinutes(detectedRuntime)}
+            </span>
+          ) : null}
         </label>
         {uploadProgress != null ? (
           <div className="mt-4">

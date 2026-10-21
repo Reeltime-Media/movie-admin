@@ -7,20 +7,19 @@ import { toast } from "react-toastify";
 import { AdminCard } from "../../components/AdminCard";
 import { AdminSelect } from "../../components/AdminSelect";
 import { AdminShell } from "../../components/AdminShell";
-import { GenreMultiSelect } from "../../components/GenreMultiSelect";
 import { WizardSteps } from "../../components/WizardSteps";
 import { Button } from "../../components/ui/Button";
 import { useUploadProgress } from "../../components/UploadProgressContext";
-import { useCreateGenre, useDeleteGenre, useGenres } from "../../hooks/adminQueries";
 import type { Status } from "../../lib/adminData";
 import {
   createAdminPodcastDraft,
   updateAdminPodcast,
   uploadAdminPodcastAssets,
 } from "../../lib/api";
-import { parseRuntimeMinutesInput } from "../../lib/runtime";
 import {
   PODCAST_ACCESS_OPTIONS,
+  detectAudioDurationMinutes,
+  formatRuntimeMinutes,
   isFreeFromPodcastAccess,
   podcastFileInputClass,
   podcastSelectClass,
@@ -51,54 +50,19 @@ function Field({
   );
 }
 
-function parseOptionalNumber(value: FormDataEntryValue | null) {
-  const raw = String(value || "").trim();
-  if (!raw) return undefined;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : undefined;
-}
-
 export default function NewPodcastPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState("Published");
-  const [genres, setGenres] = useState<string[]>(["Horror"]);
   const [access, setAccess] = useState<PodcastAccess>("plan");
-  const [showNewGenre, setShowNewGenre] = useState(false);
-  const [newGenreName, setNewGenreName] = useState("");
-  const { data: genreData } = useGenres();
-  const createGenreMutation = useCreateGenre();
-  const deleteGenreMutation = useDeleteGenre();
-  const genreOptions = genreData?.map((g) => g.name);
+  const [detectedRuntime, setDetectedRuntime] = useState<number | null>(null);
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [detailsError, setDetailsError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { jobs, startJob, updateJob, setJobLabel, finishJob, failJob } = useUploadProgress();
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
-
-  const handleDeleteGenre = (name: string) => {
-    const genre = genreData?.find((g) => g.name === name);
-    if (!genre) return;
-    deleteGenreMutation.mutate(genre.id, {
-      onSuccess: () => setGenres((prev) => prev.filter((g) => g !== name)),
-      onError: () => toast.error("Could not delete genre"),
-    });
-  };
-
-  const handleAddGenre = async () => {
-    const name = newGenreName.trim();
-    if (!name) return;
-    try {
-      const created = await createGenreMutation.mutateAsync(name);
-      setGenres((prev) => [...prev, created.name]);
-      setNewGenreName("");
-      setShowNewGenre(false);
-    } catch {
-      toast.error("Could not create genre");
-    }
-  };
 
   const goToStep = (next: number) => {
     setDetailsError(null);
@@ -124,21 +88,22 @@ export default function NewPodcastPage() {
       return { ok: false as const, message: "Enter a title to save." };
     }
 
-    const runtimeResult = parseRuntimeMinutesInput(fd.get("runtimeMinutes"));
-    if (!runtimeResult.ok) {
-      return { ok: false as const, message: runtimeResult.message };
-    }
-
     return {
       ok: true as const,
       title,
       titleKm: String(fd.get("titleKm") || "").trim(),
-      genres,
       isFree: isFreeFromPodcastAccess(access),
-      runtimeMinutes: runtimeResult.value,
       description: String(fd.get("description") || "").trim(),
-      releaseYear: parseOptionalNumber(fd.get("releaseYear")),
     };
+  };
+
+  const onAudioSelected = async (file: File | null) => {
+    if (!file || file.size === 0) {
+      setDetectedRuntime(null);
+      return;
+    }
+    const minutes = await detectAudioDurationMinutes(file);
+    setDetectedRuntime(minutes ?? null);
   };
 
   const getWizardForm = () =>
@@ -164,10 +129,6 @@ export default function NewPodcastPage() {
       intent === "draft" ? "Draft" : toUiStatus(String(fd.get("status") || status));
 
     if (intent === "upload") {
-      if (genres.length === 0) {
-        failValidation("Select at least one genre.", 0);
-        return;
-      }
       if (targetStatus === "Published") {
         const publishCheck = validatePodcastPublishReady(
           { poster_key: null, audio_key: null },
@@ -181,6 +142,11 @@ export default function NewPodcastPage() {
         failValidation("Choose an audio file before uploading.", 1);
         return;
       }
+    }
+
+    let runtimeMinutes = detectedRuntime ?? undefined;
+    if (audio && runtimeMinutes == null) {
+      runtimeMinutes = await detectAudioDurationMinutes(audio);
     }
 
     const jobId = `podcast-${fields.title}-${Date.now()}`;
@@ -197,14 +163,19 @@ export default function NewPodcastPage() {
           title: fields.title,
           titleKm: fields.titleKm || null,
           description: fields.description || undefined,
-          genres: fields.genres,
-          releaseYear: fields.releaseYear,
-          runtimeMinutes: fields.runtimeMinutes,
+          runtimeMinutes,
           isFree: fields.isFree,
         });
 
         if (poster || audio) {
-          setJobLabel(jobId, poster && audio ? "Uploading cover & audio…" : poster ? "Uploading cover…" : "Uploading audio…");
+          setJobLabel(
+            jobId,
+            poster && audio
+              ? "Uploading cover & audio…"
+              : poster
+                ? "Uploading cover…"
+                : "Uploading audio…",
+          );
           await uploadAdminPodcastAssets(
             created.id,
             { poster, audio },
@@ -212,15 +183,13 @@ export default function NewPodcastPage() {
           );
         }
 
-        if (targetStatus !== "Draft") {
-          setJobLabel(jobId, "Saving status…");
+        if (targetStatus !== "Draft" || runtimeMinutes != null) {
+          setJobLabel(jobId, "Saving…");
           await updateAdminPodcast(created.id, {
             title: fields.title,
             titleKm: fields.titleKm || null,
             description: fields.description || null,
-            genres: fields.genres,
-            runtimeMinutes: fields.runtimeMinutes ?? null,
-            releaseYear: fields.releaseYear ?? null,
+            runtimeMinutes: runtimeMinutes ?? null,
             status: toApiStatus(targetStatus),
             isFree: fields.isFree,
           });
@@ -253,6 +222,7 @@ export default function NewPodcastPage() {
   };
 
   const currentJob = activeJobId ? (jobs.find((j) => j.id === activeJobId) ?? null) : null;
+  const runtimeLabel = formatRuntimeMinutes(detectedRuntime);
 
   return (
     <AdminShell
@@ -274,81 +244,6 @@ export default function NewPodcastPage() {
               </Field>
               <Field label="Khmer title">
                 <input name="titleKm" placeholder="Optional" className={podcastTextInputClass} />
-              </Field>
-
-              <div>
-                <div className="mb-1.5 flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-text-muted">Genres</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowNewGenre((v) => !v);
-                      setNewGenreName("");
-                    }}
-                    className="flex items-center gap-1 rounded-lg border border-border bg-surface-elevated px-2 py-1 text-2xs font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-                  >
-                    New genre
-                  </button>
-                </div>
-                {showNewGenre ? (
-                  <div className="mb-2 flex gap-2">
-                    <input
-                      type="text"
-                      value={newGenreName}
-                      onChange={(e) => setNewGenreName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          void handleAddGenre();
-                        }
-                      }}
-                      placeholder="Genre name"
-                      className={podcastTextInputClass}
-                      autoFocus
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="shrink-0"
-                      onClick={() => void handleAddGenre()}
-                      disabled={createGenreMutation.isPending || !newGenreName.trim()}
-                    >
-                      {createGenreMutation.isPending ? "Adding…" : "Add"}
-                    </Button>
-                  </div>
-                ) : null}
-                <GenreMultiSelect
-                  selected={genres}
-                  onChange={setGenres}
-                  options={genreOptions}
-                  onDeleteGenre={handleDeleteGenre}
-                />
-                <p className="mt-1.5 text-2xs text-text-disabled">
-                  Defaults to Horror. Required for upload.
-                </p>
-              </div>
-
-              <Field label="Release year">
-                <input
-                  name="releaseYear"
-                  type="number"
-                  min={1900}
-                  max={2100}
-                  placeholder="2026"
-                  className={podcastTextInputClass}
-                />
-              </Field>
-
-              <Field label="Runtime (minutes)" hint="Optional episode length in whole minutes.">
-                <input
-                  name="runtimeMinutes"
-                  type="number"
-                  min={0}
-                  step={1}
-                  inputMode="numeric"
-                  placeholder="45"
-                  className={podcastTextInputClass}
-                />
               </Field>
 
               <Field
@@ -420,7 +315,7 @@ export default function NewPodcastPage() {
         <div className={step === 1 ? "block" : "hidden"} aria-hidden={step !== 1}>
           <AdminCard title="Upload assets">
             <p className="mb-5 text-sm text-text-muted">
-              Attach cover art and the audio file. Audio is stored on R2 as-is — no transcoder.
+              Attach cover art and the audio file. Runtime is detected from the audio automatically.
             </p>
             <div className="space-y-4">
               <Field label="Cover image" hint="Required for Published. Optional when saving a draft.">
@@ -428,13 +323,18 @@ export default function NewPodcastPage() {
               </Field>
               <Field
                 label="Audio file"
-                hint="mp3, m4a, wav, or aac. Required for Published."
+                hint={
+                  runtimeLabel
+                    ? `Detected runtime: ${runtimeLabel}`
+                    : "mp3, m4a, wav, or aac. Runtime is read from the file."
+                }
               >
                 <input
                   name="audio"
                   type="file"
                   accept="audio/mpeg,audio/mp4,audio/wav,audio/x-m4a,audio/aac,audio/*"
                   className={podcastFileInputClass}
+                  onChange={(e) => void onAudioSelected(e.target.files?.[0] ?? null)}
                 />
               </Field>
             </div>

@@ -6,7 +6,6 @@ import { InlineLoading } from "../../components/InlineLoading";
 import { Button } from "../../components/ui/Button";
 import { useAdminPodcast } from "../../hooks/adminQueries";
 import { statusClasses } from "../../lib/adminData";
-import { formatGenres } from "../../lib/genres";
 import { mediaUrl } from "../../lib/media";
 import { formatPodcastDate, toUiStatus } from "../podcastUi";
 
@@ -97,13 +96,11 @@ export function PodcastDetail({ podcastId }: { podcastId: string }) {
                 <InfoRow label="English title" value={podcast.title} />
                 <InfoRow label="Khmer title" value={podcast.title_km} />
                 <InfoRow label="Slug" value={podcast.slug} />
-                <InfoRow label="Genres" value={formatGenres(podcast.genres)} />
                 <InfoRow
                   label="Access"
                   value={podcast.is_free ? "Free" : "Included with Plan"}
                 />
                 <InfoRow label="Runtime" value={podcast.runtime} />
-                <InfoRow label="Release year" value={podcast.release_year} />
                 <tr>
                   <th
                     scope="row"

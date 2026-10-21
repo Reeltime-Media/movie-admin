@@ -45,6 +45,37 @@ export function formatPodcastDate(value?: string | null) {
   }).format(new Date(value));
 }
 
+/** Read audio duration from a local file via HTMLAudioElement metadata. */
+export function detectAudioDurationMinutes(file: File): Promise<number | undefined> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const audio = new Audio();
+    audio.preload = "metadata";
+    const finish = (minutes: number | undefined) => {
+      URL.revokeObjectURL(url);
+      resolve(minutes);
+    };
+    audio.onloadedmetadata = () => {
+      const seconds = audio.duration;
+      if (!Number.isFinite(seconds) || seconds <= 0) {
+        finish(undefined);
+        return;
+      }
+      finish(Math.max(1, Math.round(seconds / 60)));
+    };
+    audio.onerror = () => finish(undefined);
+    audio.src = url;
+  });
+}
+
+export function formatRuntimeMinutes(minutes?: number | null) {
+  if (minutes == null || !Number.isFinite(minutes) || minutes <= 0) return null;
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rem = minutes % 60;
+  return rem === 0 ? `${hours}h` : `${hours}h ${rem}m`;
+}
+
 export function validatePodcastPublishReady(
   podcast: { poster_key?: string | null; audio_key?: string | null },
   files?: { posterFile?: File | null; audioFile?: File | null },
