@@ -1,7 +1,7 @@
 "use client";
 
 import { AdminShell } from "./components/AdminShell";
-import { AdminStatCard, AdminStatGrid } from "./components/AdminStatCard";
+import { AdminStatCard } from "./components/AdminStatCard";
 import { AdminErrorAlert } from "./components/AdminErrorAlert";
 import { DashboardRevenue } from "./components/DashboardRevenue";
 import { DashboardTopMovies } from "./components/DashboardTopMovies";
@@ -30,7 +30,7 @@ export default function Home() {
     {
       label: "Total users",
       value: summary?.users.total != null ? num(summary.users.total) : "--",
-      hint: `${num(summary?.users.active ?? 0)} active accounts`,
+      hint: `${num(summary?.users.active ?? 0)} active`,
       hintClassName: "text-text-muted",
       attention: false,
     },
@@ -53,7 +53,7 @@ export default function Home() {
       value: summaryLoading ? "--" : num(pendingTranscodes),
       hint: needsTranscodeAttention
         ? processing > 0
-          ? `${num(processing)} processing now`
+          ? `${num(processing)} processing`
           : "Needs attention"
         : "Queue clear",
       hintClassName: needsTranscodeAttention ? "text-warning" : "text-success",
@@ -62,10 +62,14 @@ export default function Home() {
   ];
 
   return (
-    <AdminShell title="Dashboard">
-      {summaryError ? <AdminErrorAlert message={summaryError} /> : null}
+    <AdminShell title="Dashboard" lockViewport>
+      {summaryError ? (
+        <div className="shrink-0">
+          <AdminErrorAlert message={summaryError} />
+        </div>
+      ) : null}
 
-      <AdminStatGrid>
+      <div className="grid shrink-0 gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
           <AdminStatCard
             key={stat.label}
@@ -74,13 +78,18 @@ export default function Home() {
             hint={stat.hint}
             hintClassName={stat.hintClassName}
             attention={stat.attention}
+            compact
           />
         ))}
-      </AdminStatGrid>
+      </div>
 
-      <div className="grid w-full gap-6">
-        <DashboardRevenue />
-        <DashboardTopMovies />
+      <div className="grid min-h-0 flex-1 gap-3 overflow-hidden lg:grid-cols-5">
+        <div className="min-h-0 overflow-hidden lg:col-span-3">
+          <DashboardRevenue compact />
+        </div>
+        <div className="min-h-0 overflow-hidden lg:col-span-2">
+          <DashboardTopMovies compact />
+        </div>
       </div>
     </AdminShell>
   );

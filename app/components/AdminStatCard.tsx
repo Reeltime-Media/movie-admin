@@ -4,6 +4,7 @@ export function AdminStatCard({
   hint,
   hintClassName = "text-text-muted",
   attention = false,
+  compact = false,
 }: {
   label: string;
   value: string;
@@ -11,11 +12,13 @@ export function AdminStatCard({
   hintClassName?: string;
   /** Soft warning accent for queues that need attention. */
   attention?: boolean;
+  compact?: boolean;
 }) {
   return (
     <div
       className={[
-        "group relative overflow-hidden rounded-xl border bg-surface p-5 transition-colors",
+        "group relative overflow-hidden rounded-xl border bg-surface transition-colors",
+        compact ? "p-3" : "p-5",
         attention
           ? "border-warning/35 hover:border-warning/50"
           : "border-border hover:border-border-hover",
@@ -25,10 +28,17 @@ export function AdminStatCard({
       <div className="text-2xs font-semibold uppercase tracking-[0.14em] text-text-disabled">
         {label}
       </div>
-      <div className="mt-3 text-stat font-semibold tracking-[-0.02em] text-text tabular-nums">
+      <div
+        className={[
+          "font-semibold tracking-[-0.02em] text-text tabular-nums",
+          compact ? "mt-1.5 text-xl" : "mt-3 text-stat",
+        ].join(" ")}
+      >
         {value}
       </div>
-      {hint ? <div className={`mt-1.5 text-xs font-medium ${hintClassName}`}>{hint}</div> : null}
+      {hint ? (
+        <div className={`mt-1 text-xs font-medium ${hintClassName}`}>{hint}</div>
+      ) : null}
     </div>
   );
 }

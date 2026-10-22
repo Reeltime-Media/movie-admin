@@ -131,11 +131,14 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 export function AdminShell({
   title = "Content dashboard",
   headerAction,
+  lockViewport = false,
   children,
 }: {
   title?: string;
   /** Optional control shown on the right of the page title (e.g. Back button). */
   headerAction?: React.ReactNode;
+  /** Fit content to one screen with no page scroll (dashboard). */
+  lockViewport?: boolean;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -207,8 +210,8 @@ export function AdminShell({
   );
 
   return (
-    <div className="min-h-screen bg-bg text-text">
-      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-60 flex-col overflow-hidden border-r border-border bg-sidebar lg:flex">
+    <div className={lockViewport ? "h-dvh overflow-hidden bg-bg text-text" : "min-h-screen bg-bg text-text"}>
+      <aside className="fixed left-0 top-0 z-30 hidden h-dvh w-60 flex-col overflow-hidden border-r border-border bg-sidebar lg:flex">
         <div className="h-1 w-full bg-brand" />
         {sidebarInner}
       </aside>
@@ -247,9 +250,24 @@ export function AdminShell({
         </div>
       ) : null}
 
-      <div className="flex min-h-screen min-w-0 flex-col lg:ml-60">
-        <header className="sticky top-0 z-20 border-b border-border bg-bg/90 backdrop-blur-xl">
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
+      <div
+        className={[
+          "flex min-w-0 flex-col lg:ml-60",
+          lockViewport ? "h-dvh overflow-hidden" : "min-h-screen",
+        ].join(" ")}
+      >
+        <header
+          className={[
+            "z-20 shrink-0 border-b border-border bg-bg/90 backdrop-blur-xl",
+            lockViewport ? "" : "sticky top-0",
+          ].join(" ")}
+        >
+          <div
+            className={[
+              "flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 lg:px-8",
+              lockViewport ? "py-2.5" : "py-4",
+            ].join(" ")}
+          >
             <div className="flex min-w-0 items-center gap-3">
               <button
                 type="button"
@@ -261,10 +279,17 @@ export function AdminShell({
                 <Menu size={17} aria-hidden />
               </button>
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text-disabled">
-                  Reeltime admin
-                </p>
-                <h1 className="truncate text-xl font-semibold tracking-[-0.03em] text-text sm:text-2xl">
+                {lockViewport ? null : (
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text-disabled">
+                    Reeltime admin
+                  </p>
+                )}
+                <h1
+                  className={[
+                    "truncate font-semibold tracking-[-0.03em] text-text",
+                    lockViewport ? "text-lg" : "text-xl sm:text-2xl",
+                  ].join(" ")}
+                >
                   {title}
                 </h1>
               </div>
@@ -390,8 +415,20 @@ export function AdminShell({
           </div>
         </header>
 
-        <main className="flex w-full min-w-0 flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8">
-          <div className="w-full min-w-0 flex-1 space-y-6">{children}</div>
+        <main
+          className={[
+            "flex w-full min-w-0 flex-1 flex-col px-4 sm:px-6 lg:px-8",
+            lockViewport ? "min-h-0 overflow-hidden py-3" : "py-6",
+          ].join(" ")}
+        >
+          <div
+            className={[
+              "w-full min-w-0 flex-1",
+              lockViewport ? "flex min-h-0 flex-col gap-3 overflow-hidden" : "space-y-6",
+            ].join(" ")}
+          >
+            {children}
+          </div>
         </main>
       </div>
     </div>

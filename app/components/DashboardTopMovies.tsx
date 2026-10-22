@@ -4,13 +4,12 @@ import { useRouter } from "next/navigation";
 import { AdminCard } from "./AdminCard";
 import { useQueryLoadingBeforeAuth, useTopTitles } from "../hooks/adminQueries";
 
-const TOP_COUNT = 10;
-
-export function DashboardTopMovies() {
+export function DashboardTopMovies({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
+  const topCount = compact ? 6 : 10;
   const { data, isLoading, isFetching, isAuthReady, error, refetch } = useTopTitles({
     page: 1,
-    pageSize: TOP_COUNT,
+    pageSize: topCount,
     contentType: "single",
   });
 
@@ -20,14 +19,22 @@ export function DashboardTopMovies() {
     isFetching,
   });
 
+  const cellPad = compact ? "px-4 py-1.5" : "px-5 py-2.5";
+
   return (
-    <AdminCard title="Top movies" action="Full report" actionHref="/reports" flush>
+    <AdminCard
+      title="Top movies"
+      action="Full report"
+      actionHref="/reports"
+      flush
+      fillHeight={compact}
+    >
       {showLoading && !movies.length ? (
-        <div className="flex h-40 items-center justify-center">
+        <div className={`flex items-center justify-center ${compact ? "h-full" : "h-40"}`}>
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-brand" />
         </div>
       ) : error ? (
-        <div className="rounded-lg border border-dashed border-border bg-bg px-4 py-8 text-center">
+        <div className="rounded-lg border border-dashed border-border bg-bg px-4 py-6 text-center">
           <p className="text-sm font-semibold text-text">Could not load rankings</p>
           <p className="mt-1 text-xs text-text-muted">
             {error instanceof Error ? error.message : "Could not load rankings"}
@@ -41,20 +48,22 @@ export function DashboardTopMovies() {
           </button>
         </div>
       ) : movies.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border bg-bg px-4 py-8 text-center">
+        <div className="rounded-lg border border-dashed border-border bg-bg px-4 py-6 text-center">
           <p className="text-sm font-semibold text-text">No purchase data yet</p>
           <p className="mt-1 text-xs text-text-muted">
             Rankings appear once customers buy or watch movies.
           </p>
         </div>
       ) : (
-        <div className="-mx-5 overflow-x-auto">
+        <div className={compact ? "h-full overflow-hidden" : "-mx-5 overflow-x-auto"}>
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-border text-2xs uppercase tracking-[0.12em] text-text-disabled">
-                <th className="w-10 px-5 pb-2 font-bold">#</th>
-                <th className="px-5 pb-2 font-bold">Title</th>
-                <th className="px-5 pb-2 text-right font-bold">Purchases</th>
+                <th className={`w-10 font-bold ${compact ? "px-4 pb-1.5" : "px-5 pb-2"}`}>#</th>
+                <th className={`font-bold ${compact ? "px-4 pb-1.5" : "px-5 pb-2"}`}>Title</th>
+                <th className={`text-right font-bold ${compact ? "px-4 pb-1.5" : "px-5 pb-2"}`}>
+                  Buys
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -75,9 +84,11 @@ export function DashboardTopMovies() {
                     }}
                     className="cursor-pointer transition-colors hover:bg-surface-elevated"
                   >
-                    <td className="px-5 py-2.5 font-bold tabular-nums text-brand">{rank}</td>
-                    <td className="px-5 py-2.5 font-semibold text-text">{movie.title}</td>
-                    <td className="px-5 py-2.5 text-right font-mono tabular-nums text-text-muted">
+                    <td className={`${cellPad} font-bold tabular-nums text-brand`}>{rank}</td>
+                    <td className={`${cellPad} max-w-0 truncate font-semibold text-text`}>
+                      {movie.title}
+                    </td>
+                    <td className={`${cellPad} text-right font-mono tabular-nums text-text-muted`}>
                       {movie.purchase_count.toLocaleString()}
                     </td>
                   </tr>

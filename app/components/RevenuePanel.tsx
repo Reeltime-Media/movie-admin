@@ -114,6 +114,7 @@ type RevenuePanelProps = {
   cardTitle?: string;
   cardAction?: { label: string; href?: string; onClick?: () => void };
   bare?: boolean;
+  fillHeight?: boolean;
 };
 
 export function RevenuePanel({
@@ -133,6 +134,7 @@ export function RevenuePanel({
   cardTitle = "Revenue",
   cardAction,
   bare = false,
+  fillHeight = false,
 }: RevenuePanelProps) {
   const [chartStyle, setChartStyle] = useState<ChartStyle>("line");
   const hasCustomRange = Boolean(dateFrom || dateTo);
@@ -481,6 +483,7 @@ export function RevenuePanel({
       action={cardAction?.label}
       actionHref={cardAction?.href}
       actionOnClick={cardAction?.onClick}
+      fillHeight={fillHeight}
     >
       {body}
     </AdminCard>
