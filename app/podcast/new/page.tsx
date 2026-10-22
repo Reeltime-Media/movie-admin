@@ -43,9 +43,11 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold text-white">{label}</span>
+      <span className="mb-1.5 block text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
+        {label}
+      </span>
       {children}
-      {hint ? <span className="mt-1.5 block text-2xs font-medium text-white">{hint}</span> : null}
+      {hint ? <span className="mt-1.5 block text-xs text-text-muted">{hint}</span> : null}
     </label>
   );
 }

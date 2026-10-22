@@ -17,17 +17,16 @@ const sizeClass: Record<Size, string> = {
 
 const variantClass: Record<Variant, string> = {
   primary:
-    "bg-brand font-semibold text-white shadow-[0_0_0_1px_rgba(229,9,20,0.5),0_1px_12px_-2px_rgba(229,9,20,0.5)] hover:bg-brand-hover hover:shadow-[0_0_0_1px_rgba(255,31,45,0.6),0_2px_18px_-2px_rgba(229,9,20,0.7)] active:translate-y-px disabled:shadow-none",
+    "bg-brand font-semibold text-white hover:bg-brand-hover active:translate-y-px",
   secondary:
-    "border border-border bg-surface-elevated text-text hover:border-border-hover hover:bg-border/60",
+    "border border-border bg-surface-elevated text-text-muted hover:border-border-hover hover:bg-surface hover:text-text",
   ghost:
-    "border border-border bg-surface-elevated text-text-muted hover:border-border-hover hover:bg-border/60 hover:text-text",
+    "text-text-muted hover:bg-surface-elevated hover:text-text",
   danger: "bg-danger font-semibold text-white hover:brightness-110 active:translate-y-px",
-  // Soft destructive: tinted surface so the action still reads as a button.
   "danger-soft":
-    "border border-danger/40 bg-danger/15 text-danger hover:border-danger/55 hover:bg-danger/25",
+    "border border-danger/35 bg-danger/10 text-danger hover:border-danger/50 hover:bg-danger/20",
   success:
-    "bg-success font-semibold text-black shadow-[0_0_0_1px_rgba(46,224,106,0.45),0_1px_12px_-2px_rgba(46,224,106,0.35)] hover:brightness-110 active:translate-y-px disabled:shadow-none",
+    "bg-success font-semibold text-black hover:brightness-110 active:translate-y-px",
 };
 
 function content(loading: boolean, icon: ReactNode | undefined, children: ReactNode) {

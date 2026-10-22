@@ -63,9 +63,16 @@ const navGroups: NavGroup[] = [
 function Wordmark({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <Link href="/" onClick={onNavigate} className="group block leading-none">
-      <div className="text-sm font-bold tracking-[0.14em] text-text">REELTIME</div>
-      <div className="mt-1 text-2xs font-medium tracking-wide text-text-disabled">
-        Admin console
+      <div className="flex items-center gap-2">
+        <span className="grid h-7 w-7 place-items-center rounded-md bg-brand text-2xs font-black text-white">
+          R
+        </span>
+        <div>
+          <div className="text-sm font-bold tracking-[0.12em] text-text">REELTIME</div>
+          <div className="mt-0.5 text-2xs font-medium tracking-wide text-text-disabled">
+            Admin
+          </div>
+        </div>
       </div>
     </Link>
   );
@@ -75,10 +82,10 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <nav className="space-y-6">
+    <nav className="space-y-5">
       {navGroups.map((group) => (
         <div key={group.heading}>
-          <div className="mb-1.5 px-3 text-2xs font-semibold uppercase tracking-[0.18em] text-text-disabled">
+          <div className="mb-1.5 px-2.5 text-2xs font-semibold uppercase tracking-[0.14em] text-text-disabled">
             {group.heading}
           </div>
           <div className="space-y-0.5">
@@ -95,23 +102,24 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                   onClick={onNavigate}
                   aria-current={active ? "page" : undefined}
                   className={[
-                    "group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
+                    "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
                     active
                       ? "bg-brand-soft text-text"
                       : "text-text-muted hover:bg-surface-elevated hover:text-text",
                   ].join(" ")}
                 >
-                  {/* Active rail — reads faster than a filled block at a glance. */}
                   <span
                     className={[
-                      "absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full transition-all",
+                      "absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full transition-opacity",
                       active ? "bg-brand opacity-100" : "opacity-0",
                     ].join(" ")}
                   />
                   <Icon
                     size={15}
                     strokeWidth={2}
-                    className={active ? "text-brand" : "text-text-disabled group-hover:text-text-muted"}
+                    className={
+                      active ? "text-brand" : "text-text-disabled group-hover:text-text-muted"
+                    }
                     aria-hidden
                   />
                   {item.label}
@@ -182,7 +190,7 @@ export function AdminShell({
     <button
       type="button"
       onClick={handleSignOut}
-      className="flex w-full items-center gap-2.5 rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:border-border-hover hover:bg-border/60 hover:text-text"
+      className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-elevated hover:text-text"
     >
       <LogOut size={15} strokeWidth={2} className="text-text-disabled" aria-hidden />
       Sign out
@@ -191,9 +199,11 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-60 flex-col overflow-y-auto border-r border-border bg-surface-soft px-4 py-5 lg:flex">
-        <Wordmark />
-        <div className="mt-8 flex-1">
+      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-56 flex-col overflow-y-auto border-r border-border bg-surface-soft px-3 py-5 lg:flex">
+        <div className="px-1">
+          <Wordmark />
+        </div>
+        <div className="mt-7 flex-1">
           <NavList />
         </div>
         <div className="mt-4 border-t border-border pt-3">{signOutButton}</div>
@@ -229,33 +239,32 @@ export function AdminShell({
         </div>
       ) : null}
 
-      <div className="flex min-h-screen min-w-0 flex-col lg:ml-60">
-        <header className="sticky top-0 z-20 border-b border-border bg-bg/80 backdrop-blur-xl">
-          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 md:px-8">
+      <div className="flex min-h-screen min-w-0 flex-col lg:ml-56">
+        <header className="sticky top-0 z-20 border-b border-border bg-bg/85 backdrop-blur-xl">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <button
                 type="button"
                 aria-label="Open menu"
                 aria-expanded={mobileNavOpen}
                 onClick={() => setMobileNavOpen(true)}
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border bg-surface-elevated text-text-muted transition-colors hover:border-border-hover hover:bg-border/60 hover:text-text lg:hidden"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border bg-surface-elevated text-text-muted transition-colors hover:border-border-hover hover:text-text lg:hidden"
               >
                 <Menu size={17} aria-hidden />
               </button>
-              <h1 className="truncate text-xl font-semibold tracking-[-0.02em] text-text">
+              <h1 className="truncate text-lg font-semibold tracking-[-0.02em] text-text sm:text-xl">
                 {title}
               </h1>
             </div>
 
             <div className="flex items-center gap-2">
               {headerAction}
-              {/* Upload progress dropdown */}
               {jobs.length > 0 ? (
                 <div ref={dropdownRef} className="relative">
                   <button
                     type="button"
                     onClick={() => setUploadsOpen((o) => !o)}
-                    className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-muted transition-colors hover:border-border-hover hover:text-text"
+                    className="flex items-center gap-2 rounded-lg border border-border bg-surface-elevated px-3 py-1.5 text-xs font-medium text-text-muted transition-colors hover:border-border-hover hover:text-text"
                   >
                     {activeJobs.length > 0 ? (
                       <span className="relative flex h-1.5 w-1.5">

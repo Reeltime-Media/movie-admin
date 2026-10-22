@@ -7,10 +7,10 @@ import { Button } from "./ui/Button";
 import { newEpisodeId, newSeasonId, renumberSeasons } from "../lib/seriesHelpers";
 
 const inputClass =
-  "w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text outline-none transition-colors placeholder:text-white focus:border-border-hover focus:bg-surface-elevated";
+  "w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-text outline-none transition-colors placeholder:text-text-disabled hover:border-border-hover focus:border-brand/50 focus:bg-surface";
 
 const fileInputClass =
-  "mt-1 w-full rounded-lg border border-dashed border-border bg-bg px-3 py-2.5 text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-white hover:border-border-hover";
+  "mt-1 w-full rounded-lg border border-dashed border-border bg-surface-elevated px-3 py-2.5 text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-white hover:border-border-hover";
 
 type SeasonsEpisodesEditorProps = {
   seasons: Season[];
@@ -383,34 +383,34 @@ export function SeasonsEpisodesEditor({
             if (e.target === e.currentTarget) closeEditor();
           }}
         >
-          <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-md sm:p-6">
-            <div className="flex items-start justify-between gap-3 border-b border-border pb-4">
+          <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-xl border border-border bg-surface shadow-md">
+            <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4 sm:px-6">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-brand">
-                  E{editingContext.episode.number}
+                <p className="text-2xs font-semibold uppercase tracking-[0.14em] text-text-disabled">
+                  Episode {editingContext.episode.number}
                 </p>
                 <h2
                   id="episode-edit-title"
-                  className="mt-1 text-lg font-bold tracking-[-0.02em] text-text"
+                  className="mt-1 text-lg font-semibold tracking-[-0.02em] text-text"
                 >
                   {editingContext.episode.title || `Episode ${editingContext.episode.number}`}
                 </h2>
-                <p className="mt-1 text-2xs text-text-muted">
+                <p className="mt-1 text-xs text-text-muted">
                   {editingContext.season.title} ·{" "}
                   {editingContext.episode.slug
                     ? "Update details or replace assets"
                     : "New episode — attach a video, then Save changes on the series"}
                 </p>
               </div>
-              <Button type="button" variant="secondary" size="sm" onClick={closeEditor}>
+              <Button type="button" variant="ghost" size="sm" onClick={closeEditor}>
                 Close
               </Button>
             </div>
 
-            <div className="mt-5 space-y-4">
+            <div className="space-y-4 px-5 py-5 sm:px-6">
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block">
-                  <span className="mb-1 block text-2xs font-semibold text-text-disabled">
+                  <span className="mb-1.5 block text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
                     Title
                   </span>
                   <input
@@ -426,7 +426,7 @@ export function SeasonsEpisodesEditor({
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1 block text-2xs font-semibold text-text-disabled">
+                  <span className="mb-1.5 block text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
                     Runtime
                   </span>
                   <input
@@ -530,7 +530,7 @@ export function SeasonsEpisodesEditor({
               </div>
             </div>
 
-            <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-border pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-5 py-4 sm:px-6">
               <Button
                 type="button"
                 variant="danger-soft"
@@ -542,9 +542,14 @@ export function SeasonsEpisodesEditor({
               >
                 Remove episode
               </Button>
-              <Button type="button" variant="primary" size="sm" onClick={closeEditor}>
-                Done
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="secondary" size="sm" onClick={closeEditor}>
+                  Cancel
+                </Button>
+                <Button type="button" variant="primary" size="sm" onClick={closeEditor}>
+                  Done
+                </Button>
+              </div>
             </div>
           </div>
         </div>

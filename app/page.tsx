@@ -23,35 +23,46 @@ export default function Home() {
   const pendingTranscodes = summary?.transcodes.pending ?? 0;
   const num = (n: number) => n.toLocaleString();
 
+  const processing = summary?.transcodes.processing ?? 0;
+  const needsTranscodeAttention = pendingTranscodes > 0;
+
   const stats = [
     {
       label: "Total users",
       value: summary?.users.total != null ? num(summary.users.total) : "--",
       hint: `${num(summary?.users.active ?? 0)} active accounts`,
       hintClassName: "text-text-muted",
+      attention: false,
     },
     {
       label: "Movies",
       value: summaryLoading ? "--" : num(summary?.content.movies ?? 0),
       hint: `${num(summary?.content.published ?? 0)} published`,
       hintClassName: "text-text-muted",
+      attention: false,
     },
     {
       label: "Series",
       value: summaryLoading ? "--" : num(summary?.content.series ?? 0),
       hint: "All series",
       hintClassName: "text-text-muted",
+      attention: false,
     },
     {
       label: "Pending transcodes",
       value: summaryLoading ? "--" : num(pendingTranscodes),
-      hint: (summary?.transcodes.processing ?? 0) > 0 ? "Processing now" : "Queue clear",
-      hintClassName: pendingTranscodes > 0 ? "text-warning" : "text-success",
+      hint: needsTranscodeAttention
+        ? processing > 0
+          ? `${num(processing)} processing now`
+          : "Needs attention"
+        : "Queue clear",
+      hintClassName: needsTranscodeAttention ? "text-warning" : "text-success",
+      attention: needsTranscodeAttention,
     },
   ];
 
   return (
-    <AdminShell>
+    <AdminShell title="Dashboard">
       {summaryError ? <AdminErrorAlert message={summaryError} /> : null}
 
       <AdminStatGrid>
@@ -62,6 +73,7 @@ export default function Home() {
             value={stat.value}
             hint={stat.hint}
             hintClassName={stat.hintClassName}
+            attention={stat.attention}
           />
         ))}
       </AdminStatGrid>

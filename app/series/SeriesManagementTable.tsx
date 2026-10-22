@@ -55,21 +55,21 @@ export function SeriesManagementTable({
 
   return (
     <>
-      <section className="rounded-xl border border-border bg-surface shadow-sm">
+      <section className="border border-border bg-surface">
         <div className="px-5 pb-5 pt-5">
         <div className="-mx-5 overflow-x-auto">
           <table className="w-full min-w-200 text-left text-sm">
             <thead>
-              <tr className="border-b border-border text-2xs uppercase tracking-widest text-text-disabled">
-                <th className="px-5 pb-3 font-bold">Khmer title</th>
-                <th className="px-5 pb-3 font-bold">English title</th>
-                <th className="px-5 pb-3 font-bold">Structure</th>
-                <th className="px-5 pb-3 font-bold">Genre</th>
-                <th className="px-5 pb-3 font-bold">Status</th>
-                <th className="px-5 pb-3 text-right font-bold">Actions</th>
+              <tr className="border-b border-border text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
+                <th className="px-5 pb-2.5 font-semibold">Khmer title</th>
+                <th className="px-5 pb-2.5 font-semibold">English title</th>
+                <th className="px-5 pb-2.5 font-semibold">Structure</th>
+                <th className="px-5 pb-2.5 font-semibold">Genre</th>
+                <th className="px-5 pb-2.5 font-semibold">Status</th>
+                <th className="px-5 pb-2.5 text-right font-semibold">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-border/60">
               {entries.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-5 py-10 text-center text-sm text-text-muted">
@@ -82,7 +82,7 @@ export function SeriesManagementTable({
                     key={item.id}
                     role="link"
                     tabIndex={0}
-                    className="cursor-pointer transition-colors hover:bg-surface-elevated"
+                    className="group cursor-pointer transition-colors hover:bg-surface-elevated"
                     onClick={() => router.push(`/series/${item.id}`)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
@@ -91,26 +91,34 @@ export function SeriesManagementTable({
                       }
                     }}
                   >
-                    <td className="p-0 font-bold">
-                      <div className="max-w-56 truncate px-5 py-4 transition-colors hover:text-brand">
+                    <td className="p-0">
+                      <div className="max-w-56 truncate px-5 py-3 font-medium text-text transition-colors group-hover:text-brand">
                         {item.titleKm?.trim() || "—"}
                       </div>
                     </td>
-                    <td className="p-0 font-bold">
-                      <div className="max-w-56 truncate px-5 py-4 transition-colors hover:text-brand">
+                    <td className="p-0">
+                      <div className="max-w-56 truncate px-5 py-3 font-medium text-text transition-colors group-hover:text-brand">
                         {item.title}
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-text-muted">{seriesStructureSummary(item)}</td>
-                    <td className="px-5 py-4 text-text-muted">{item.genre}</td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-3 text-text-muted">{seriesStructureSummary(item)}</td>
+                    <td className="px-5 py-3 text-text-muted">{item.genre}</td>
+                    <td className="px-5 py-3">
                       <span className={statusClasses(item.status)}>{item.status}</span>
                     </td>
-                    <td className="px-5 py-4 text-right">
-                      <div className="flex flex-wrap justify-end gap-2">
+                    <td className="px-5 py-3 text-right">
+                      <div className="flex flex-wrap justify-end gap-1.5">
+                        <Button
+                          href={`/series/${item.id}`}
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          View
+                        </Button>
                         <Button
                           href={`/series/${item.id}/edit`}
-                          variant="ghost"
+                          variant="secondary"
                           size="sm"
                           onClick={(e) => e.stopPropagation()}
                         >

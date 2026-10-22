@@ -59,7 +59,7 @@ export function MovieManagementTable({
         <div className="-mx-5 overflow-x-auto">
           <table className="w-full min-w-230 text-left text-sm">
             <thead>
-              <tr className="border-b border-border text-2xs font-semibold uppercase tracking-[0.16em] text-text-disabled">
+              <tr className="border-b border-border text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
                 <th className="px-5 pb-2.5 font-semibold">Khmer title</th>
                 <th className="px-5 pb-2.5 font-semibold">English title</th>
                 <th className="px-5 pb-2.5 font-semibold">Genre</th>
@@ -112,10 +112,18 @@ export function MovieManagementTable({
                       <span className={statusClasses(item.status)}>{item.status}</span>
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <div className="flex flex-wrap justify-end gap-2">
+                      <div className="flex flex-wrap justify-end gap-1.5">
+                        <Button
+                          href={`/movie/${item.id}`}
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          View
+                        </Button>
                         <Button
                           href={`/movie/${item.id}/edit`}
-                          variant="ghost"
+                          variant="secondary"
                           size="sm"
                           onClick={(e) => e.stopPropagation()}
                         >

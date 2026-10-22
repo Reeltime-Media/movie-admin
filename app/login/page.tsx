@@ -32,70 +32,71 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-bg text-text">
-      <section className="flex flex-1 items-center justify-center px-6 py-12">
-        <div className="w-full max-w-[410px]">
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <div>
-              <div className="text-2xs font-bold uppercase tracking-[0.16em] text-text-muted text-center">
-                Admin sign in
-              </div>
-              <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.03em] text-center">Welcome back</h2>
+    <main className="flex min-h-screen items-center justify-center bg-bg px-6 text-text">
+      <div className="w-full max-w-[400px]">
+        <div className="mb-8 text-center">
+          <div className="mx-auto grid h-10 w-10 place-items-center rounded-lg bg-brand text-sm font-black text-white">
+            R
+          </div>
+          <p className="mt-4 text-2xs font-semibold uppercase tracking-[0.16em] text-text-disabled">
+            Admin console
+          </p>
+          <h1 className="mt-2 text-2xl font-bold tracking-[-0.03em] text-text">Sign in</h1>
+        </div>
+
+        <div className="rounded-xl border border-border bg-surface p-6">
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <Field label="Work email" htmlFor="login-email">
+              <Input
+                id="login-email"
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+                placeholder="admin@reeltime.com"
+              />
+            </Field>
+
+            <Field label="Password" htmlFor="login-password">
+              <Input
+                id="login-password"
+                name="password"
+                type="password"
+                required
+                autoComplete="current-password"
+                placeholder="Enter your password"
+              />
+            </Field>
+
+            <div className="flex items-center justify-between gap-3">
+              <label className="flex items-center gap-2 text-xs font-medium text-text-muted">
+                <input
+                  type="checkbox"
+                  name="remember"
+                  className="h-3.5 w-3.5 rounded border-border bg-bg accent-brand"
+                />
+                Keep me signed in
+              </label>
+              <Link
+                href="/forgot-password"
+                className="text-xs font-semibold text-text-muted transition-colors hover:text-text"
+              >
+                Forgot password?
+              </Link>
             </div>
 
-            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-              <Field label="Work email" htmlFor="login-email">
-                <Input
-                  id="login-email"
-                  name="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  placeholder="admin@reeltime.com"
-                />
-              </Field>
+            <Button type="submit" loading={isSubmitting} className="w-full">
+              {isSubmitting ? "Signing in..." : "Sign in"}
+            </Button>
+          </form>
 
-              <Field label="Password" htmlFor="login-password">
-                <Input
-                  id="login-password"
-                  name="password"
-                  type="password"
-                  required
-                  autoComplete="current-password"
-                  placeholder="Enter your password"
-                />
-              </Field>
-
-              <div className="flex items-center justify-between gap-3">
-                <label className="flex items-center gap-2 text-xs font-medium text-text-muted">
-                  <input
-                    type="checkbox"
-                    name="remember"
-                    className="h-3.5 w-3.5 rounded border-border bg-bg accent-brand"
-                  />
-                  Keep me signed in
-                </label>
-                <Link
-                  href="/forgot-password"
-                  className="text-xs font-semibold text-text-muted transition-colors hover:text-text"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-
-              <Button type="submit" loading={isSubmitting} className="w-full">
-                {isSubmitting ? "Signing in..." : "Sign in"}
-              </Button>
-            </form>
-
-            {error ? (
-              <div className="mt-5 rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs leading-relaxed text-warning">
-                {error}
-              </div>
-            ) : null}
-          </div>
+          {error ? (
+            <div className="mt-5 rounded-lg border border-warning/30 bg-warning/10 p-3 text-xs leading-relaxed text-warning">
+              {error}
+            </div>
+          ) : null}
         </div>
-      </section>
+      </div>
     </main>
   );
 }

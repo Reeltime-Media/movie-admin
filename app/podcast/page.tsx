@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
+import { AdminCatalogSearchBar } from "../components/AdminCatalogSearchBar";
 import { AdminEmptyState } from "../components/AdminEmptyState";
 import { AdminErrorAlert } from "../components/AdminErrorAlert";
 import { AdminPagination } from "../components/AdminPagination";
@@ -24,6 +25,7 @@ export default function PodcastsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
   const { data, isLoading, isFetching, error: queryError, refetch } = useAdminPodcasts(page, PAGE_SIZE);
 
   const items = data?.items ?? [];
@@ -34,6 +36,18 @@ export default function PodcastsPage() {
       ? queryError.message
       : "Could not load podcasts."
     : null;
+
+  const filteredItems = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((item) => {
+      const haystack = [item.title, item.title_km, item.slug, item.description]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [items, search]);
 
   const [confirmDelete, setConfirmDelete] = useState<ApiContent | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -56,9 +70,15 @@ export default function PodcastsPage() {
   return (
     <AdminShell title="Podcast management">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <p className="max-w-xl text-sm text-text-muted">
-          Standalone horror podcasts with cover art and audio. Client playback stays Coming Soon.
-        </p>
+        <AdminCatalogSearchBar
+          className="flex-1"
+          maxWidthClassName=""
+          value={search}
+          onChange={setSearch}
+          placeholder="Search podcasts by title or description…"
+          resultCount={filteredItems.length}
+          totalCount={items.length}
+        />
         <Button href="/podcast/new" className="shrink-0">
           Add podcast
         </Button>
@@ -80,13 +100,18 @@ export default function PodcastsPage() {
             </Button>
           }
         />
+      ) : filteredItems.length === 0 ? (
+        <AdminEmptyState
+          title="No matching podcasts"
+          description="Try a different search, or clear the filter."
+        />
       ) : (
         <section className="border border-border bg-surface">
           <div className="px-5 pb-5 pt-5">
             <div className="-mx-5 overflow-x-auto">
               <table className="w-full min-w-200 text-left text-sm">
                 <thead>
-                  <tr className="border-b border-border text-2xs font-semibold uppercase tracking-[0.16em] text-text-disabled">
+                  <tr className="border-b border-border text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
                     <th className="px-5 pb-2.5 font-semibold">Cover</th>
                     <th className="px-5 pb-2.5 font-semibold">Title</th>
                     <th className="px-5 pb-2.5 font-semibold">Access</th>
@@ -97,7 +122,7 @@ export default function PodcastsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
-                  {items.map((item) => {
+                  {filteredItems.map((item) => {
                     const poster = mediaUrl(item.poster_key, item.updated_at);
                     const uiStatus = toUiStatus(item.status);
                     return (
@@ -142,10 +167,18 @@ export default function PodcastsPage() {
                         </td>
                         <td className="px-5 py-3 text-text-muted">{formatPodcastDate(item.updated_at)}</td>
                         <td className="px-5 py-3 text-right">
-                          <div className="flex flex-wrap justify-end gap-2">
+                          <div className="flex flex-wrap justify-end gap-1.5">
+                            <Button
+                              href={`/podcast/${item.id}`}
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              View
+                            </Button>
                             <Button
                               href={`/podcast/${item.id}/edit`}
-                              variant="ghost"
+                              variant="secondary"
                               size="sm"
                               onClick={(e) => e.stopPropagation()}
                             >

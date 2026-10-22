@@ -5,33 +5,34 @@ export const adminStatGridClass = "grid gap-4 sm:grid-cols-2 xl:grid-cols-4";
 export const adminStatCardClass = "rounded-xl border border-border bg-surface p-5";
 
 export const adminLabelClass =
-  "mb-1.5 block text-2xs font-semibold uppercase tracking-[0.16em] text-text-disabled";
+  "mb-1.5 block text-2xs font-semibold uppercase tracking-[0.14em] text-text-disabled";
 
 export const adminInputClass =
-  "w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-text outline-none transition-colors placeholder:text-white hover:border-border-hover focus:border-brand/60 focus:bg-surface";
+  "w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-text outline-none transition-colors placeholder:text-text-disabled hover:border-border-hover focus:border-brand/50 focus:bg-surface";
 
 export const adminFilterBarClass =
-  "mb-5 flex flex-col gap-3 border-b border-border pb-5";
+  "mb-5 flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between";
 
 export const adminTableWrapClass = "overflow-x-auto";
 
 export const adminTableClass = "w-full min-w-[720px] text-left text-sm";
 
 export const adminTableHeadRowClass =
-  "border-b border-border text-2xs font-semibold uppercase tracking-[0.16em] text-text-disabled";
+  "border-b border-border text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled";
 
-export const adminThClass = "px-5 pb-2.5 pt-1 font-semibold";
+export const adminThClass = "px-4 pb-2.5 pt-1 font-semibold sm:px-5";
 
-export const adminTdClass = "px-5 py-3";
+export const adminTdClass = "px-4 py-2.5 sm:px-5 sm:py-3";
 
 /** Table body row: subtle divider + hover for scannability. */
-export const adminTrClass = "border-b border-border/60 transition-colors hover:bg-surface-elevated";
+export const adminTrClass =
+  "border-b border-border/50 transition-colors hover:bg-surface-elevated/80";
 
 /** Numeric/amount table cell: right-aligned, mono figures line up. */
-export const adminTdNumClass = "px-5 py-3 text-right font-mono tabular-nums";
+export const adminTdNumClass = "px-4 py-2.5 text-right font-mono tabular-nums sm:px-5 sm:py-3";
 
 export const adminBadgeBase =
-  "inline-flex items-center rounded-lg px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-[0.1em]";
+  "inline-flex items-center rounded-md px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-[0.08em]";
 
 export type AdminBadgeTone = "success" | "warning" | "danger" | "brand" | "muted";
 
@@ -40,7 +41,7 @@ const badgeToneClass: Record<AdminBadgeTone, string> = {
   warning: "bg-warning/10 text-warning ring-1 ring-inset ring-warning/25",
   danger: "bg-danger/10 text-danger ring-1 ring-inset ring-danger/25",
   brand: "bg-brand/10 text-brand ring-1 ring-inset ring-brand/30",
-  muted: "bg-text-disabled/10 text-text-muted ring-1 ring-inset ring-text-disabled/25",
+  muted: "bg-surface-elevated text-text-muted ring-1 ring-inset ring-border",
 };
 
 export function adminBadgeClass(tone: AdminBadgeTone) {
@@ -52,7 +53,7 @@ export function adminTabClass(active: boolean) {
     "rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
     active
       ? "border border-brand/40 bg-brand-soft text-text"
-      : "border border-border bg-surface-elevated text-white hover:border-border-hover hover:bg-border/60",
+      : "border border-border bg-surface-elevated text-text-muted hover:border-border-hover hover:bg-surface hover:text-text",
   ].join(" ");
 }
 

@@ -29,13 +29,13 @@ import {
 } from "../../lib/seriesHelpers";
 
 const textInputClass =
-  "w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-text outline-none transition-colors placeholder:text-white focus:border-border-hover focus:bg-surface-elevated";
+  "w-full rounded-lg border border-border bg-surface-elevated px-3 py-2.5 text-sm text-text outline-none transition-colors placeholder:text-text-disabled hover:border-border-hover focus:border-brand/50 focus:bg-surface";
 
 const selectClass =
-  "w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-text outline-none transition-colors focus:border-border-hover focus:bg-surface-elevated";
+  "w-full rounded-lg border border-border bg-surface-elevated px-3 py-2.5 text-sm text-text outline-none transition-colors hover:border-border-hover focus:border-brand/50 focus:bg-surface";
 
 const fileInputClass =
-  "w-full rounded-lg border border-dashed border-border bg-bg px-3 py-4 text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:border-border-hover";
+  "w-full rounded-lg border border-dashed border-border bg-surface-elevated px-3 py-4 text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:border-border-hover";
 
 const stepLabels = ["Details", "Seasons", "Episode media"] as const;
 
@@ -66,9 +66,11 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold text-white">{label}</span>
+      <span className="mb-1.5 block text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
+        {label}
+      </span>
       {children}
-      {hint ? <span className="mt-1.5 block text-2xs font-medium text-white">{hint}</span> : null}
+      {hint ? <span className="mt-1.5 block text-xs text-text-muted">{hint}</span> : null}
     </label>
   );
 }
