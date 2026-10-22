@@ -106,12 +106,12 @@ export default function PodcastsPage() {
           description="Try a different search, or clear the filter."
         />
       ) : (
-        <section className="overflow-hidden rounded-xl border border-white/8 bg-surface">
+        <section className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
           <div className="px-5 pb-5 pt-5">
             <div className="-mx-5 overflow-x-auto">
               <table className="w-full min-w-200 text-left text-sm">
                 <thead>
-                  <tr className="border-b border-white/8 bg-white/[0.03] text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
+                  <tr className="border-b border-border bg-surface-elevated text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
                     <th className="px-5 py-3 font-semibold">Cover</th>
                     <th className="px-5 py-3 font-semibold">Title</th>
                     <th className="px-5 py-3 font-semibold">Access</th>
@@ -218,7 +218,7 @@ export default function PodcastsPage() {
       )}
 
       {confirmDelete ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4">
           <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-xl">
             <h2 className="text-sm font-bold text-text">Delete podcast?</h2>
             <p className="mt-2 text-sm text-text-muted">

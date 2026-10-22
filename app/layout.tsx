@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fira_Code, Fira_Sans } from "next/font/google";
 import { DevToolsGuard } from "./components/DevToolsGuard";
 import { QueryProvider } from "./components/QueryProvider";
+import { ThemeProvider } from "./components/ThemeProvider";
 import { ToastProvider } from "./components/ToastProvider";
 import { UploadProgressProvider } from "./components/UploadProgressContext";
 import "./globals.css";
@@ -13,7 +14,6 @@ const firaSans = Fira_Sans({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-// Used for IDs, counts, and money — figures line up in tables.
 const firaCode = Fira_Code({
   variable: "--font-fira-code",
   subsets: ["latin"],
@@ -25,6 +25,21 @@ export const metadata: Metadata = {
   description: "Admin console for managing Reeltime content, users, and revenue.",
 };
 
+const themeBootScript = `
+(function(){
+  try {
+    var t = localStorage.getItem('reeltime-admin-theme');
+    if (t === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.documentElement.style.colorScheme = 'light';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      document.documentElement.style.colorScheme = 'dark';
+    }
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,13 +49,19 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${firaSans.variable} ${firaCode.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full bg-bg text-text font-sans">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
+      <body className="min-h-full bg-bg font-sans text-text">
         <DevToolsGuard />
-        <QueryProvider>
-          <UploadProgressProvider>{children}</UploadProgressProvider>
-        </QueryProvider>
-        <ToastProvider />
+        <ThemeProvider>
+          <QueryProvider>
+            <UploadProgressProvider>{children}</UploadProgressProvider>
+          </QueryProvider>
+          <ToastProvider />
+        </ThemeProvider>
       </body>
     </html>
   );

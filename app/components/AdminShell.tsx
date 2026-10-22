@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { clearAdminToken, getAdminToken } from "../lib/api";
+import { ThemeToggle } from "./ThemeToggle";
 import { useUploadProgress } from "./UploadProgressContext";
 
 type NavItem = { label: string; href: string; icon: LucideIcon };
@@ -105,7 +106,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                     "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     active
                       ? "bg-brand/15 text-text shadow-[inset_3px_0_0_0_var(--rt-brand)]"
-                      : "text-text-muted hover:bg-white/4 hover:text-text",
+                      : "text-text-muted hover:bg-surface-elevated hover:text-text",
                   ].join(" ")}
                 >
                   <Icon
@@ -183,7 +184,7 @@ export function AdminShell({
     <button
       type="button"
       onClick={handleSignOut}
-      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-text-muted transition-colors hover:bg-white/4 hover:text-text"
+      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-text-muted transition-colors hover:bg-surface-elevated hover:text-text"
     >
       <LogOut size={16} strokeWidth={2} className="text-text-disabled" aria-hidden />
       Sign out
@@ -192,20 +193,23 @@ export function AdminShell({
 
   const sidebarInner = (
     <>
-      <div className="border-b border-white/6 px-4 pb-5 pt-1">
+      <div className="border-b border-border px-4 pb-5 pt-1">
         <Wordmark onNavigate={mobileNavOpen ? () => setMobileNavOpen(false) : undefined} />
       </div>
       <div className="flex-1 overflow-y-auto px-3 py-5">
         <NavList onNavigate={mobileNavOpen ? () => setMobileNavOpen(false) : undefined} />
       </div>
-      <div className="border-t border-white/6 px-3 py-3">{signOutButton}</div>
+      <div className="space-y-2 border-t border-border px-3 py-3">
+        <ThemeToggle className="w-full justify-center" />
+        {signOutButton}
+      </div>
     </>
   );
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-60 flex-col overflow-hidden border-r border-white/8 bg-[#070709] lg:flex">
-        <div className="h-1 w-full bg-linear-to-r from-brand via-brand/80 to-transparent" />
+      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-60 flex-col overflow-hidden border-r border-border bg-sidebar lg:flex">
+        <div className="h-1 w-full bg-brand" />
         {sidebarInner}
       </aside>
 
@@ -215,11 +219,11 @@ export function AdminShell({
             type="button"
             aria-label="Close menu"
             onClick={() => setMobileNavOpen(false)}
-            className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+            className="absolute inset-0 bg-overlay backdrop-blur-sm"
           />
-          <aside className="absolute left-0 top-0 flex h-full w-72 max-w-[84%] flex-col overflow-hidden border-r border-white/8 bg-[#070709]">
-            <div className="h-1 w-full bg-linear-to-r from-brand via-brand/80 to-transparent" />
-            <div className="flex items-center justify-between gap-2 border-b border-white/6 px-4 py-4">
+          <aside className="absolute left-0 top-0 flex h-full w-72 max-w-[84%] flex-col overflow-hidden border-r border-border bg-sidebar shadow-xl">
+            <div className="h-1 w-full bg-brand" />
+            <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-4">
               <Wordmark onNavigate={() => setMobileNavOpen(false)} />
               <button
                 type="button"
@@ -230,16 +234,21 @@ export function AdminShell({
                 <X size={15} aria-hidden />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto px-3 py-5">
-              <NavList onNavigate={() => setMobileNavOpen(false)} />
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              <div className="flex-1 overflow-y-auto px-3 py-5">
+                <NavList onNavigate={() => setMobileNavOpen(false)} />
+              </div>
+              <div className="space-y-2 border-t border-border px-3 py-3">
+                <ThemeToggle className="w-full justify-center" />
+                {signOutButton}
+              </div>
             </div>
-            <div className="border-t border-white/6 px-3 py-3">{signOutButton}</div>
           </aside>
         </div>
       ) : null}
 
       <div className="flex min-h-screen min-w-0 flex-col lg:ml-60">
-        <header className="sticky top-0 z-20 border-b border-white/8 bg-[#0a0a0c]/90 backdrop-blur-xl">
+        <header className="sticky top-0 z-20 border-b border-border bg-bg/90 backdrop-blur-xl">
           <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <button
@@ -263,6 +272,9 @@ export function AdminShell({
 
             <div className="flex items-center gap-2">
               {headerAction}
+              <div className="lg:hidden">
+                <ThemeToggle />
+              </div>
               {jobs.length > 0 ? (
                 <div ref={dropdownRef} className="relative">
                   <button

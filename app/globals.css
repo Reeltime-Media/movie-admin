@@ -1,23 +1,15 @@
 @import "tailwindcss";
 
-/* Placeholders stay solid gray on dark (not Tailwind's 50% mix). */
 @layer base {
   ::placeholder {
     opacity: 1;
   }
-
-  @supports (color: color-mix(in lab, red, red)) {
-    :root:not([data-theme="light"]) ::placeholder {
-      color: #71717a;
-      -webkit-text-fill-color: #71717a;
-    }
-  }
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Reeltime Admin — cinema console
-   Near-black canvas, charcoal surfaces, gray hierarchy,
-   brand red as the single accent. Light theme = opt-in only.
+   Reeltime Admin — dual theme
+   Dark default (cinema). Light via data-theme="light".
+   Brand red is the only accent in both modes.
    ───────────────────────────────────────────────────────────── */
 
 :root {
@@ -27,6 +19,7 @@
   --rt-surface: #121214;
   --rt-surface-elevated: #1a1a1f;
   --rt-surface-soft: #0e0e10;
+  --rt-sidebar: #070709;
 
   --rt-border: #27272a;
   --rt-border-hover: #3f3f46;
@@ -43,78 +36,43 @@
   --rt-warning: #f5a524;
   --rt-danger: #ff4d4f;
 
+  --rt-overlay: rgba(0, 0, 0, 0.6);
+  --rt-glow: rgba(229, 9, 20, 0.12);
+
   --background: var(--rt-bg);
   --foreground: var(--rt-text);
-
   --toastify-toast-shadow: none;
-}
-
-:root:not([data-theme="light"]) {
-  --color-text: var(--rt-text);
-  --color-text-muted: var(--rt-text-muted);
-  --color-text-disabled: var(--rt-text-disabled);
-  --foreground: var(--rt-text);
-}
-
-:root:not([data-theme="light"]) body {
-  color: var(--rt-text);
-}
-
-:root:not([data-theme="light"]) ::placeholder,
-:root:not([data-theme="light"]) .placeholder\:text-text-muted::placeholder,
-:root:not([data-theme="light"]) .placeholder\:text-text-disabled::placeholder,
-:root:not([data-theme="light"]) .placeholder\:text-text::placeholder,
-:root:not([data-theme="light"]) .placeholder\:text-white::placeholder {
-  color: #71717a !important;
-  -webkit-text-fill-color: #71717a !important;
-  opacity: 1 !important;
-}
-
-@supports (color: color-mix(in lab, red, red)) {
-  :root:not([data-theme="light"]) ::placeholder {
-    color: #71717a !important;
-    -webkit-text-fill-color: #71717a !important;
-  }
-}
-
-:root:not([data-theme="light"]) input,
-:root:not([data-theme="light"]) textarea,
-:root:not([data-theme="light"]) select {
-  color: var(--rt-text);
-}
-
-:root:not([data-theme="light"]) button {
-  color: inherit;
-}
-
-:root:not([data-theme="light"]) input[type="file"] {
-  color: var(--rt-text-muted);
-}
-
-:root:not([data-theme="light"]) input[type="file"]::file-selector-button {
-  color: #ffffff;
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --rt-bg: #f3f6fb;
+  --rt-bg: #f1f5f9;
   --rt-surface: #ffffff;
   --rt-surface-elevated: #f8fafc;
-  --rt-surface-soft: #eef2f7;
-  --rt-border: #d7deea;
-  --rt-border-hover: #b9c5d8;
+  --rt-surface-soft: #e2e8f0;
+  --rt-sidebar: #ffffff;
+
+  --rt-border: #cbd5e1;
+  --rt-border-hover: #94a3b8;
+
   --rt-text: #0f172a;
   --rt-text-muted: #475569;
   --rt-text-disabled: #94a3b8;
+
+  --rt-brand: #e50914;
+  --rt-brand-hover: #c40812;
+  --rt-brand-soft: rgba(229, 9, 20, 0.1);
+
   --rt-success: #16a34a;
   --rt-warning: #d97706;
   --rt-danger: #dc2626;
-}
 
-@keyframes slide {
-  0%   { left: -40%; }
-  100% { left: 100%; }
+  --rt-overlay: rgba(15, 23, 42, 0.45);
+  --rt-glow: rgba(229, 9, 20, 0.06);
+
+  --background: var(--rt-bg);
+  --foreground: var(--rt-text);
 }
 
 @theme inline {
@@ -122,6 +80,7 @@
   --color-surface: var(--rt-surface);
   --color-surface-elevated: var(--rt-surface-elevated);
   --color-surface-soft: var(--rt-surface-soft);
+  --color-sidebar: var(--rt-sidebar);
   --color-border: var(--rt-border);
   --color-border-hover: var(--rt-border-hover);
   --color-text: var(--rt-text);
@@ -133,6 +92,7 @@
   --color-success: var(--rt-success);
   --color-warning: var(--rt-warning);
   --color-danger: var(--rt-danger);
+  --color-overlay: var(--rt-overlay);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -163,30 +123,33 @@ body {
   background: var(--background);
   color: var(--foreground);
   min-height: 100vh;
-  background-image:
-    radial-gradient(900px 480px at 12% -12%, rgba(229, 9, 20, 0.14), transparent 55%),
-    radial-gradient(700px 380px at 92% 8%, rgba(229, 9, 20, 0.05), transparent 50%),
-    linear-gradient(180deg, #0a0a0c 0%, #08080a 100%);
+  background-image: radial-gradient(900px 420px at 10% -12%, var(--rt-glow), transparent 55%);
   background-attachment: fixed;
 }
 
-:root[data-theme="light"] body {
-  background-image:
-    radial-gradient(1200px 600px at 15% -10%, rgba(59, 130, 246, 0.12), transparent 55%),
-    radial-gradient(900px 500px at 90% -15%, rgba(229, 9, 20, 0.1), transparent 58%);
+::placeholder {
+  color: var(--rt-text-disabled);
+  -webkit-text-fill-color: var(--rt-text-disabled);
+  opacity: 1;
+}
+
+input,
+textarea,
+select {
+  color: var(--rt-text);
+}
+
+input[type="file"] {
+  color: var(--rt-text-muted);
+}
+
+input[type="file"]::file-selector-button {
+  color: #ffffff;
 }
 
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--rt-border-hover) transparent;
-}
-
-button,
-a,
-input,
-select,
-textarea {
-  outline-color: var(--rt-brand);
 }
 
 button:focus-visible,

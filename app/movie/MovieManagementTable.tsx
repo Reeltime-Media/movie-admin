@@ -54,12 +54,12 @@ export function MovieManagementTable({
 
   return (
     <>
-      <section className="overflow-hidden rounded-xl border border-white/8 bg-surface">
+      <section className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
         <div className="px-5 pb-5 pt-5">
         <div className="-mx-5 overflow-x-auto">
           <table className="w-full min-w-230 text-left text-sm">
             <thead>
-              <tr className="border-b border-white/8 bg-white/[0.03] text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
+              <tr className="border-b border-border bg-surface-elevated text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
                 <th className="px-5 py-3 font-semibold">Khmer title</th>
                 <th className="px-5 py-3 font-semibold">English title</th>
                 <th className="px-5 py-3 font-semibold">Genre</th>
@@ -154,7 +154,7 @@ export function MovieManagementTable({
 
       {confirmDelete ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="delete-movie-title"

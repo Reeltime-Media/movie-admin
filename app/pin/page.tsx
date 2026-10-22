@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "react-toastify";
+import { ThemeToggle } from "../components/ThemeToggle";
 import { Button } from "../components/ui/Button";
 import { Field, Input } from "../components/ui/Field";
 
@@ -39,7 +40,10 @@ export default function PinPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-bg px-6 text-text">
+    <main className="relative flex min-h-screen items-center justify-center bg-bg px-6 text-text">
+      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-[380px]">
         <div className="mb-8 text-center">
           <div className="mx-auto grid h-10 w-10 place-items-center rounded-lg bg-brand text-sm font-black text-white">
