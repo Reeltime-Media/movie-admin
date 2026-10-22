@@ -75,21 +75,19 @@ export function SeasonsEpisodesEditor({
   const [editingEpisodeId, setEditingEpisodeId] = useState<string | null>(null);
   const emit = (next: Season[]) => onChange(renumberSeasons(next));
 
-  const editingContext = useMemo(() => {
-    if (!editingEpisodeId) return null;
+  let editingContext: { season: Season; episode: Episode } | null = null;
+  if (editingEpisodeId) {
     for (const season of seasons) {
       const episode = season.episodes.find((ep) => ep.id === editingEpisodeId);
-      if (episode) return { season, episode };
+      if (episode) {
+        editingContext = { season, episode };
+        break;
+      }
     }
-    return null;
-  }, [editingEpisodeId, seasons]);
+  }
 
   useEffect(() => {
     if (!editingEpisodeId) return;
-    if (!editingContext) {
-      setEditingEpisodeId(null);
-      return;
-    }
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setEditingEpisodeId(null);
@@ -101,7 +99,7 @@ export function SeasonsEpisodesEditor({
       document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [editingEpisodeId, editingContext]);
+  }, [editingEpisodeId]);
 
   const updateSeason = (seasonId: string, patch: Partial<Pick<Season, "title">>) => {
     emit(seasons.map((s) => (s.id === seasonId ? { ...s, ...patch } : s)));

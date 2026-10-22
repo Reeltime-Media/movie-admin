@@ -28,7 +28,7 @@ export default function PodcastsPage() {
   const [search, setSearch] = useState("");
   const { data, isLoading, isFetching, error: queryError, refetch } = useAdminPodcasts(page, PAGE_SIZE);
 
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.items ?? [], [data?.items]);
   const pages = data?.pages ?? 1;
   const total = data?.total ?? 0;
   const error = queryError
