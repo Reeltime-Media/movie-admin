@@ -221,7 +221,8 @@ export function SeasonsEpisodesEditor({
 
             {season.episodes.map((ep) => {
               const isEditing = allowAssetReplace && editingEpisodeId === ep.id;
-              const canReplaceAssets = allowAssetReplace && Boolean(ep.slug);
+              const isNewEpisode = !ep.slug;
+              const canEditAssets = allowAssetReplace;
               const hasPendingAssets = Boolean(ep.videoFile || ep.posterFile);
 
               if (!allowAssetReplace) {
@@ -297,7 +298,9 @@ export function SeasonsEpisodesEditor({
                         ) : ep.slug ? (
                           <span>No HLS yet</span>
                         ) : (
-                          <span className="text-warning">New · metadata only</span>
+                          <span className="text-warning">
+                            {ep.videoFile ? "New · video ready" : "New · needs video"}
+                          </span>
                         )}
                         {hasPendingAssets ? (
                           <span className="font-semibold text-brand">Changes pending save</span>
@@ -371,7 +374,7 @@ export function SeasonsEpisodesEditor({
                         Free episode
                       </label>
 
-                      {canReplaceAssets ? (
+                      {canEditAssets ? (
                         <div className="grid gap-3 border-t border-border/60 pt-4 sm:grid-cols-[80px_minmax(0,1fr)_minmax(0,1fr)] sm:items-start">
                           <div className="flex justify-center sm:justify-start">
                             <EpisodePosterThumb
@@ -382,7 +385,7 @@ export function SeasonsEpisodesEditor({
                           </div>
                           <div>
                             <span className="block text-2xs font-semibold text-text-muted">
-                              Replace video
+                              {isNewEpisode ? "Video (required)" : "Replace video"}
                             </span>
                             <input
                               type="file"
@@ -394,10 +397,14 @@ export function SeasonsEpisodesEditor({
                             />
                             {ep.videoFile ? (
                               <p className="mt-1 break-all text-2xs text-text-muted">
-                                New: {ep.videoFile.name}
+                                {isNewEpisode ? "Selected" : "New"}: {ep.videoFile.name}
                               </p>
                             ) : ep.hlsMasterKey ? (
                               <p className="mt-1 text-2xs text-text-disabled">Current: HLS ready</p>
+                            ) : isNewEpisode ? (
+                              <p className="mt-1 text-2xs text-warning">
+                                Required — attach a video, then Save changes.
+                              </p>
                             ) : (
                               <p className="mt-1 text-2xs text-text-disabled">
                                 Optional — leave empty to keep current
@@ -406,7 +413,7 @@ export function SeasonsEpisodesEditor({
                           </div>
                           <div>
                             <span className="block text-2xs font-semibold text-text-muted">
-                              Replace poster
+                              {isNewEpisode ? "Poster (optional)" : "Replace poster"}
                             </span>
                             <input
                               type="file"
@@ -418,7 +425,7 @@ export function SeasonsEpisodesEditor({
                             />
                             {ep.posterFile ? (
                               <p className="mt-1 break-all text-2xs text-text-muted">
-                                New: {ep.posterFile.name}
+                                {isNewEpisode ? "Selected" : "New"}: {ep.posterFile.name}
                               </p>
                             ) : (
                               <p className="mt-1 text-2xs text-text-disabled">
@@ -427,12 +434,7 @@ export function SeasonsEpisodesEditor({
                             )}
                           </div>
                         </div>
-                      ) : (
-                        <p className="text-2xs text-warning">
-                          New episode rows save metadata only. Upload video from Create series for
-                          now.
-                        </p>
-                      )}
+                      ) : null}
 
                       <div className="flex justify-end">
                         <Button

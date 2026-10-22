@@ -13,7 +13,11 @@ import { SeasonsEpisodesEditor } from "../components/SeasonsEpisodesEditor";
 import { TrailerPreview } from "../components/TrailerPreview";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
 import { useDeleteGenre, useGenres } from "../hooks/adminQueries";
-import { uploadEpisodeAssets, uploadSeriesAssets } from "../lib/api";
+import {
+  uploadEpisodeAssets,
+  uploadEpisodeWithAssets,
+  uploadSeriesAssets,
+} from "../lib/api";
 import type { CatalogEntry, Status } from "../lib/adminData";
 import { formatGenres, parseGenresFromStored } from "../lib/genres";
 import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../lib/money";
@@ -28,6 +32,10 @@ import {
 import { toSeriesDraft } from "./seriesEditHelpers";
 
 const statuses: Status[] = ["Published", "Draft", "Scheduled", "Review"];
+
+function toApiStatus(status: Status) {
+  return status.toLowerCase();
+}
 
 function EditRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -184,6 +192,25 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
       return;
     }
 
+    const newEpisodes = editDraft.seasons.flatMap((season) =>
+      season.episodes
+        .filter((ep) => !ep.slug)
+        .map((ep) => ({ seasonNumber: season.number, episode: ep })),
+    );
+    const newWithoutVideo = newEpisodes.filter(
+      ({ episode }) => !(episode.videoFile instanceof File && episode.videoFile.size > 0),
+    );
+    if (newWithoutVideo.length > 0) {
+      const labels = newWithoutVideo
+        .map(({ seasonNumber, episode }) => `S${seasonNumber}E${episode.number}`)
+        .join(", ");
+      const message = `New episodes need a video file before saving: ${labels}`;
+      setEditSaveError(message);
+      toast.warning(message);
+      setTab("episodes");
+      return;
+    }
+
     const posterFile = pickAssetFile(editPosterFile);
     const bannerFile = pickAssetFile(editBannerFile);
 
@@ -195,6 +222,26 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
       if (hasNewAssets) {
         setUploadProgressLabel("Uploading series artwork…");
         await uploadSeriesAssets(series.slug, { poster: posterFile, banner: bannerFile });
+      }
+
+      for (const { seasonNumber, episode } of newEpisodes) {
+        const label = `S${seasonNumber}E${episode.number}`;
+        setUploadProgressLabel(`Uploading new ${label} – ${episode.title}…`);
+        await uploadEpisodeWithAssets(
+          series.slug,
+          {
+            title: episode.title,
+            seasonNumber,
+            episodeNumber: episode.number,
+            runtime: episode.runtime || undefined,
+            status: toApiStatus(editDraft.status),
+            isFree: Boolean(episode.isFree),
+          },
+          episode.videoFile!,
+          episode.posterFile instanceof File && episode.posterFile.size > 0
+            ? episode.posterFile
+            : undefined,
+        );
       }
 
       const episodeAssetJobs = editDraft.seasons.flatMap((season) =>
@@ -229,10 +276,14 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
 
       setUploadProgressLabel("Saving series…");
       await updateMovie(series.id, editDraft);
-      if (hasNewAssets || episodeAssetJobs.length > 0) {
+      if (hasNewAssets || episodeAssetJobs.length > 0 || newEpisodes.length > 0) {
         await refreshMovies();
       }
-      toast.success("Series updated successfully");
+      toast.success(
+        newEpisodes.length > 0
+          ? `Series updated · ${newEpisodes.length} new episode${newEpisodes.length === 1 ? "" : "s"} uploaded`
+          : "Series updated successfully",
+      );
       router.push(`/series/${series.id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not save changes.";
