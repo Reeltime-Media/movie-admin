@@ -288,6 +288,13 @@ export type ApiRevenueTimelinePoint = {
   payment_count: number;
 };
 
+export type ApiRevenueKindSlice = {
+  kind: string;
+  label: string;
+  revenue_usd: string;
+  payment_count: number;
+};
+
 export type ApiRevenueTimeline = {
   days: number;
   date_from: string | null;
@@ -296,6 +303,8 @@ export type ApiRevenueTimeline = {
   all_time_revenue_usd: string;
   succeeded_payments: number;
   points: ApiRevenueTimelinePoint[];
+  /** Movies / series / subscriptions mix for the same period (requires API support). */
+  by_kind?: ApiRevenueKindSlice[];
 };
 
 export type AdminRevenueTimelineQuery = {
@@ -1149,6 +1158,7 @@ export async function createSeries(input: {
   releaseYear?: number;
   rating?: string;
   trailerUrl?: string;
+  isShortMovie?: boolean;
 }): Promise<ApiSeries> {
   return apiFetch<ApiSeries>("/series/", {
     method: "POST",
@@ -1162,6 +1172,7 @@ export async function createSeries(input: {
       release_year: input.releaseYear ?? null,
       rating: input.rating ?? null,
       trailer_url: input.trailerUrl ?? null,
+      is_short_movie: Boolean(input.isShortMovie),
     }),
   });
 }

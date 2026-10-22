@@ -1,10 +1,13 @@
 "use client";
 
+import { Film, ImageIcon, ImagePlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../../components/AdminCard";
 import { AdminShell } from "../../components/AdminShell";
+import { AssetPicker } from "../../components/AssetPicker";
+import { BackButton } from "../../components/BackButton";
 import { Button } from "../../components/ui/Button";
 import { AdminSelect } from "../../components/AdminSelect";
 import { GenreMultiSelect } from "../../components/GenreMultiSelect";
@@ -32,9 +35,6 @@ const textInputClass =
 
 const selectClass =
   "w-full rounded-lg border border-border bg-surface-elevated px-3 py-2.5 text-sm text-text outline-none transition-colors hover:border-border-hover focus:border-brand/50 focus:bg-surface";
-
-const fileInputClass =
-  "w-full rounded-lg border border-dashed border-border bg-surface-elevated px-3 py-4 text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:border-border-hover";
 
 const stepLabels = ["Details", "Assets"] as const;
 
@@ -101,6 +101,9 @@ export default function NewMoviePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { jobs, startJob, updateJob, setJobLabel, finishJob, failJob } = useUploadProgress();
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [posterFile, setPosterFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
 
   const handleAddGenre = async () => {
     const name = newGenreName.trim();
@@ -386,149 +389,200 @@ export default function NewMoviePage() {
   const currentJob = activeJobId ? (jobs.find((j) => j.id === activeJobId) ?? null) : null;
 
   return (
-    <AdminShell
-      title="Upload new movie"
-      headerAction={
-        <Button href="/movie" variant="secondary" size="sm" className="shrink-0">
-          Back to movies
-        </Button>
-      }
-    >
-      <WizardSteps labels={stepLabels} step={step} onStepChange={goToStep} />
+    <AdminShell title="Upload new movie">
+      <WizardSteps
+        labels={stepLabels}
+        step={step}
+        onStepChange={goToStep}
+        leading={<BackButton href="/movie" label="Back to movies" />}
+      />
 
       <form id="movie-wizard-form" onSubmit={handleUploadSubmit} noValidate className="w-full space-y-6">
         <div className={step === 0 ? "block" : "hidden"} aria-hidden={step !== 0}>
           <AdminCard title="Movie details">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="English title">
-                <input name="title" placeholder="The Last Drive" className={textInputClass} />
-              </Field>
-              <Field label="Khmer title">
-                <input name="titleKm" placeholder="Optional" className={textInputClass} />
-              </Field>
+            <p className="mb-5 text-sm text-text-muted">
+              Set the title, genres, and listing fields first. You can save a draft anytime, or
+              continue to attach poster, banner, and video.
+            </p>
 
-              <Field label="Region" hint="Optional.">
-                <AdminSelect
-                  value={region}
-                  onChange={setRegion}
-                  options={[{ value: "", label: "None" }, ...REGION_OPTIONS]}
-                  className={selectClass}
-                  aria-label="Region"
-                />
-                <input type="hidden" name="region" value={region} />
-              </Field>
-
-              <div>
-                <div className="mb-1.5 flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-text-muted">Genres</span>
-                  <button
-                    type="button"
-                    onClick={() => { setShowNewGenre((v) => !v); setNewGenreName(""); }}
-                    className="flex items-center gap-1 rounded-lg border border-border bg-surface-elevated px-2 py-1 text-2xs font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-                  >
-                    <svg className="h-3 w-3" viewBox="0 0 12 12" fill="currentColor" aria-hidden><path d="M6.5 1.5a.5.5 0 0 0-1 0V5.5H1.5a.5.5 0 0 0 0 1H5.5v4a.5.5 0 0 0 1 0V6.5h4a.5.5 0 0 0 0-1H6.5V1.5Z"/></svg>
-                    New genre
-                  </button>
+            <div className="space-y-6">
+              <section>
+                <h3 className="mb-3 text-2xs font-semibold uppercase tracking-[0.14em] text-text-muted">
+                  Titles
+                </h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="English title">
+                    <input name="title" placeholder="The Last Drive" className={textInputClass} />
+                  </Field>
+                  <Field label="Khmer title">
+                    <input name="titleKm" placeholder="Optional" className={textInputClass} />
+                  </Field>
                 </div>
-                {showNewGenre ? (
-                  <div className="mb-2 flex gap-2">
-                    <input
-                      type="text"
-                      value={newGenreName}
-                      onChange={(e) => setNewGenreName(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleAddGenre(); } }}
-                      placeholder="Genre name"
-                      className={textInputClass}
-                      autoFocus
+              </section>
+
+              <section>
+                <h3 className="mb-3 text-2xs font-semibold uppercase tracking-[0.14em] text-text-muted">
+                  Catalog
+                </h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="Region" hint="Optional.">
+                    <AdminSelect
+                      value={region}
+                      onChange={setRegion}
+                      options={[{ value: "", label: "None" }, ...REGION_OPTIONS]}
+                      className={selectClass}
+                      aria-label="Region"
                     />
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="shrink-0"
-                      onClick={() => void handleAddGenre()}
-                      disabled={createGenreMutation.isPending || !newGenreName.trim()}
-                    >
-                      {createGenreMutation.isPending ? "Adding…" : "Add"}
-                    </Button>
+                    <input type="hidden" name="region" value={region} />
+                  </Field>
+
+                  <div>
+                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                      <span className="text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
+                        Genres
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowNewGenre((v) => !v);
+                          setNewGenreName("");
+                        }}
+                        className="flex items-center gap-1 rounded-lg border border-border bg-surface-elevated px-2 py-1 text-2xs font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
+                      >
+                        New genre
+                      </button>
+                    </div>
+                    {showNewGenre ? (
+                      <div className="mb-2 flex gap-2">
+                        <input
+                          type="text"
+                          value={newGenreName}
+                          onChange={(e) => setNewGenreName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              void handleAddGenre();
+                            }
+                          }}
+                          placeholder="Genre name"
+                          className={textInputClass}
+                          autoFocus
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="shrink-0"
+                          onClick={() => void handleAddGenre()}
+                          disabled={createGenreMutation.isPending || !newGenreName.trim()}
+                        >
+                          {createGenreMutation.isPending ? "Adding…" : "Add"}
+                        </Button>
+                      </div>
+                    ) : null}
+                    <GenreMultiSelect
+                      selected={genres}
+                      onChange={setGenres}
+                      options={genreOptions}
+                      onDeleteGenre={handleDeleteGenre}
+                    />
+                    <p className="mt-1.5 text-2xs text-text-disabled">
+                      Required for upload. Optional when saving a draft.
+                    </p>
                   </div>
-                ) : null}
-                <GenreMultiSelect selected={genres} onChange={setGenres} options={genreOptions} onDeleteGenre={handleDeleteGenre} />
-                <p className="mt-1.5 text-2xs text-text-disabled">
-                  Required for upload. Optional when saving a draft.
-                </p>
-              </div>
 
-              <Field label="Release year">
-                <input name="releaseYear" type="number" min={1900} max={2100} placeholder="2026" className={textInputClass} />
-              </Field>
+                  <Field label="Release year">
+                    <input
+                      name="releaseYear"
+                      type="number"
+                      min={1900}
+                      max={2100}
+                      placeholder="2026"
+                      className={textInputClass}
+                    />
+                  </Field>
 
-              <Field label="Rating">
-                <input name="rating" inputMode="decimal" placeholder="8.7" className={textInputClass} />
-              </Field>
+                  <Field label="Rating">
+                    <input
+                      name="rating"
+                      inputMode="decimal"
+                      placeholder="8.7"
+                      className={textInputClass}
+                    />
+                  </Field>
 
-              <Field label="Runtime (minutes)" hint="Whole minutes only, e.g. 102 for 1h 42m.">
-                <input
-                  name="runtimeMinutes"
-                  type="number"
-                  min={0}
-                  step={1}
-                  inputMode="numeric"
-                  placeholder="102"
-                  className={textInputClass}
-                />
-              </Field>
+                  <Field
+                    label="Runtime (minutes)"
+                    hint="Whole minutes only, e.g. 102 for 1h 42m."
+                  >
+                    <input
+                      name="runtimeMinutes"
+                      type="number"
+                      min={0}
+                      step={1}
+                      inputMode="numeric"
+                      placeholder="102"
+                      className={textInputClass}
+                    />
+                  </Field>
 
-              <Field label="Status" hint="Published requires a poster and video on the Assets step. Save draft does not.">
-                <AdminSelect
-                  value={status}
-                  onChange={setStatus}
-                  options={[
-                    { value: "Draft", label: "Draft" },
-                    { value: "Review", label: "Review" },
-                    { value: "Scheduled", label: "Scheduled" },
-                    { value: "Published", label: "Published" },
-                  ]}
-                  className={selectClass}
-                  aria-label="Status"
-                />
-                <input type="hidden" name="status" value={status} />
-              </Field>
+                  <Field
+                    label="Status"
+                    hint="Published requires a poster and video on Assets. Save draft does not."
+                  >
+                    <AdminSelect
+                      value={status}
+                      onChange={setStatus}
+                      options={[
+                        { value: "Draft", label: "Draft" },
+                        { value: "Review", label: "Review" },
+                        { value: "Scheduled", label: "Scheduled" },
+                        { value: "Published", label: "Published" },
+                      ]}
+                      className={selectClass}
+                      aria-label="Status"
+                    />
+                    <input type="hidden" name="status" value={status} />
+                  </Field>
 
-              <Field label="Price (USD)" hint={ADMIN_PRICE_HINT}>
-                <input name="price" placeholder="0 or 2.99" className={textInputClass} />
-              </Field>
+                  <Field label="Price (USD)" hint={ADMIN_PRICE_HINT}>
+                    <input name="price" placeholder="0 or 2.99" className={textInputClass} />
+                  </Field>
+                </div>
+              </section>
 
-              <div className="md:col-span-2">
-                <Field label="Trailer URL" hint="Paste a YouTube URL. The trailer is linked, not uploaded.">
-                  <input
-                    name="trailerUrl"
-                    type="url"
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    className={textInputClass}
-                  />
-                </Field>
-              </div>
-
-              <div className="md:col-span-2">
-                <Field label="Description">
-                  <textarea
-                    name="description"
-                    rows={5}
-                    placeholder="Short synopsis shown on detail pages and promotional placements."
-                    className={`${textInputClass} resize-y`}
-                  />
-                </Field>
-              </div>
+              <section>
+                <h3 className="mb-3 text-2xs font-semibold uppercase tracking-[0.14em] text-text-muted">
+                  Story
+                </h3>
+                <div className="grid gap-4">
+                  <Field
+                    label="Trailer URL"
+                    hint="Paste a YouTube URL. The trailer is linked, not uploaded."
+                  >
+                    <input
+                      name="trailerUrl"
+                      type="url"
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      className={textInputClass}
+                    />
+                  </Field>
+                  <Field label="Description">
+                    <textarea
+                      name="description"
+                      rows={5}
+                      placeholder="Short synopsis shown on detail pages and promotional placements."
+                      className={`${textInputClass} resize-y`}
+                    />
+                  </Field>
+                </div>
+              </section>
             </div>
 
             {detailsError ? (
               <p className="mt-4 text-xs font-semibold text-warning">{detailsError}</p>
             ) : null}
 
-            <div className="mt-6 flex flex-wrap justify-end gap-2">
-              <Button href="/movie" variant="secondary">
-                Cancel
-              </Button>
+            <div className="mt-6 flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
               <Button
                 type="button"
                 variant="secondary"
@@ -538,7 +592,7 @@ export default function NewMoviePage() {
                 {isSubmitting ? "Saving…" : "Save draft"}
               </Button>
               <Button type="button" onClick={() => goToStep(1)}>
-                Continue
+                Continue to assets
               </Button>
             </div>
           </AdminCard>
@@ -547,29 +601,42 @@ export default function NewMoviePage() {
         <div className={step === 1 ? "block" : "hidden"} aria-hidden={step !== 1}>
           <AdminCard title="Upload assets">
             <p className="mb-5 text-sm text-text-muted">
-              Attach poster, banner, and main video. The video is sent directly to R2, then the API
-              queues transcoding. Save draft without a video to finish uploading later from the movie
-              list.
+              Attach poster, banner, and main video. Video uploads go straight to R2, then
+              transcoding starts. You can save a draft without a video and finish later.
             </p>
-            <div className="space-y-4">
-              <Field
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <AssetPicker
+                name="poster"
+                accept="image/*"
                 label="Poster image"
-                hint="Portrait key art. Required for Published. Optional when saving a draft."
-              >
-                <input name="poster" type="file" accept="image/*" className={fileInputClass} />
-              </Field>
-              <Field
+                hint="Portrait key art. Required for Published."
+                previewAspect="poster"
+                icon={<ImageIcon size={20} aria-hidden />}
+                file={posterFile}
+                onFileChange={setPosterFile}
+              />
+              <AssetPicker
+                name="banner"
+                accept="image/*"
                 label="Banner image"
-                hint="Wide cinematic image for the movie page hero. Optional."
-              >
-                <input name="banner" type="file" accept="image/*" className={fileInputClass} />
-              </Field>
-              <Field
-                label="Movie file"
-                hint="Required for Published. Optional when saving a draft."
-              >
-                <input name="video" type="file" accept="video/mp4,video/quicktime,video/*" className={fileInputClass} />
-              </Field>
+                hint="Wide cinematic hero image. Optional."
+                previewAspect="banner"
+                icon={<ImagePlus size={20} aria-hidden />}
+                file={bannerFile}
+                onFileChange={setBannerFile}
+              />
+              <div className="lg:col-span-2">
+                <AssetPicker
+                  name="video"
+                  accept="video/mp4,video/quicktime,video/*"
+                  label="Movie file"
+                  hint="Required for Published. Optional for draft."
+                  icon={<Film size={20} aria-hidden />}
+                  file={videoFile}
+                  onFileChange={setVideoFile}
+                />
+              </div>
             </div>
 
             {submitError ? (
@@ -593,21 +660,26 @@ export default function NewMoviePage() {
               </div>
             ) : null}
 
-            <div className="mt-6 flex flex-wrap justify-end gap-3">
-              <Button type="button" variant="secondary" onClick={() => goToStep(0)}>
-                Back
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleSaveDraftClick}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Saving…" : "Save draft"}
-              </Button>
-              <Button type="submit" variant="success" loading={isSubmitting} disabled={isSubmitting}>
-                {isSubmitting ? "Uploading…" : "Upload"}
-              </Button>
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+              <BackButton label="Back to details" onClick={() => goToStep(0)} />
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleSaveDraftClick}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Saving…" : "Save draft"}
+                </Button>
+                <Button
+                  type="submit"
+                  variant="success"
+                  loading={isSubmitting}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Uploading…" : "Upload movie"}
+                </Button>
+              </div>
             </div>
           </AdminCard>
         </div>

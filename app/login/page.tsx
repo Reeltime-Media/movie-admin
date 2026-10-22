@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { loginAdmin } from "../lib/api";
+import { BrandLogo } from "../components/BrandLogo";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { Button } from "../components/ui/Button";
 import { Field, Input } from "../components/ui/Field";
@@ -39,8 +40,8 @@ export default function LoginPage() {
       </div>
       <div className="w-full max-w-[400px]">
         <div className="mb-8 text-center">
-          <div className="mx-auto grid h-10 w-10 place-items-center rounded-lg bg-brand text-sm font-black text-white">
-            R
+          <div className="mx-auto flex justify-center">
+            <BrandLogo variant="mark" height={48} priority />
           </div>
           <p className="mt-4 text-2xs font-semibold uppercase tracking-[0.16em] text-text-disabled">
             Admin console

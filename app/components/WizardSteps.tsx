@@ -1,15 +1,23 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 type WizardStepsProps = {
   labels: readonly string[];
   step: number;
   onStepChange: (step: number) => void;
+  /** Optional control rendered before the steps (e.g. icon back button). */
+  leading?: ReactNode;
 };
 
-export function WizardSteps({ labels, step, onStepChange }: WizardStepsProps) {
+export function WizardSteps({ labels, step, onStepChange, leading }: WizardStepsProps) {
   return (
-    <nav aria-label="Upload steps" className="mb-6">
-      <ol className="flex flex-wrap items-center gap-2">
+    <nav
+      aria-label="Upload steps"
+      className="mb-6 flex flex-wrap items-center gap-3"
+    >
+      {leading ? <div className="shrink-0">{leading}</div> : null}
+      <ol className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         {labels.map((label, i) => {
           const active = i === step;
           const done = i < step;
@@ -29,7 +37,7 @@ export function WizardSteps({ labels, step, onStepChange }: WizardStepsProps) {
                 onClick={() => onStepChange(i)}
                 aria-current={active ? "step" : undefined}
                 className={[
-                  "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
+                  "inline-flex h-10 items-center gap-2 rounded-lg border px-3.5 text-sm font-semibold transition-colors",
                   active
                     ? "border-brand/45 bg-brand-soft text-text"
                     : done
@@ -39,7 +47,7 @@ export function WizardSteps({ labels, step, onStepChange }: WizardStepsProps) {
               >
                 <span
                   className={[
-                    "grid h-5 w-5 place-items-center rounded-full text-2xs font-bold",
+                    "grid h-6 w-6 place-items-center rounded-full text-2xs font-bold",
                     active
                       ? "bg-brand text-white"
                       : done
@@ -55,6 +63,9 @@ export function WizardSteps({ labels, step, onStepChange }: WizardStepsProps) {
           );
         })}
       </ol>
+      <p className="w-full text-2xs text-text-muted sm:ml-auto sm:w-auto">
+        Step {step + 1} of {labels.length}
+      </p>
     </nav>
   );
 }

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../../components/AdminCard";
 import { AdminShell } from "../../components/AdminShell";
+import { BackButton } from "../../components/BackButton";
 import { Button } from "../../components/ui/Button";
 import { adminInputClass, adminLabelClass } from "../../lib/adminUi";
 import { createAdminTvChannel } from "../../lib/api";
@@ -52,16 +53,16 @@ export default function NewTvChannelPage() {
   };
 
   return (
-    <AdminShell
-      title="New TV channel"
-      headerAction={
-        <Button href="/tv-channels" variant="secondary" size="sm" className="shrink-0">
-          Back to TV channels
-        </Button>
-      }
-    >
+    <AdminShell title="New TV channel">
+      <div className="mb-6">
+        <BackButton href="/tv-channels" label="Back to TV channels" />
+      </div>
       <form onSubmit={(e) => void handleSubmit(e)} noValidate className="w-full space-y-6">
         <AdminCard title="Channel details">
+          <p className="mb-5 text-sm text-text-muted">
+            Create a live TV channel with a stream URL. You can edit metadata and access after
+            saving.
+          </p>
           <div className="space-y-4">
             <label className="block">
               <span className={adminLabelClass}>Name</span>
@@ -129,10 +130,7 @@ export default function NewTvChannelPage() {
 
           {error ? <p className="mt-4 text-xs font-semibold text-warning">{error}</p> : null}
 
-          <div className="mt-6 flex flex-wrap justify-end gap-2">
-            <Button href="/tv-channels" variant="secondary">
-              Cancel
-            </Button>
+          <div className="mt-6 flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
             <Button type="submit" loading={isSubmitting}>
               {isSubmitting ? "Creating…" : "Create channel"}
             </Button>

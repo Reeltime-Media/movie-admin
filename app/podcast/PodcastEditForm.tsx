@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
 import { AdminSelect } from "../components/AdminSelect";
+import { BackButton } from "../components/BackButton";
 import { InlineLoading } from "../components/InlineLoading";
 import { Button } from "../components/ui/Button";
 import { useAdminPodcast } from "../hooks/adminQueries";
@@ -203,9 +204,7 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
         <p className="text-sm text-text-muted">
           {queryError instanceof Error ? queryError.message : "This podcast was not found."}
         </p>
-        <Button href="/podcast" variant="secondary" className="mt-4">
-          Back to podcasts
-        </Button>
+        <BackButton href="/podcast" label="Back to podcasts" className="mt-4" size="md" />
       </AdminCard>
     );
   }
@@ -213,9 +212,7 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
   return (
     <form onSubmit={(e) => void save(e)} className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button href={`/podcast/${podcast.id}`} variant="secondary" size="sm">
-          Back to detail
-        </Button>
+        <BackButton href={`/podcast/${podcast.id}`} label="Back to detail" />
         <Button type="submit" size="sm" loading={isSaving} disabled={isSaving || isUploadingPoster}>
           {isSaving ? "Saving…" : "Save changes"}
         </Button>

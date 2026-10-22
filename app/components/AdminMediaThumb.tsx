@@ -5,6 +5,8 @@ import { mediaUrl } from "../lib/media";
 
 type AdminMediaThumbProps = {
   objectKey?: string | null;
+  /** Direct CDN URL (used when key mapping already resolved a URL). */
+  srcUrl?: string | null;
   alt?: string;
   className?: string;
   /** Extra keys to try if the primary image fails or is missing. */
@@ -19,14 +21,17 @@ type AdminMediaThumbProps = {
  */
 export function AdminMediaThumb({
   objectKey,
+  srcUrl,
   alt = "",
   className = "h-20 w-14",
   fallbackKeys = [],
   emptyLabel = "No poster",
 }: AdminMediaThumbProps) {
-  const candidates = [objectKey, ...fallbackKeys]
-    .map((key) => mediaUrl(key))
-    .filter((url): url is string => Boolean(url));
+  const candidates = [
+    mediaUrl(objectKey),
+    srcUrl,
+    ...fallbackKeys.map((key) => mediaUrl(key)),
+  ].filter((url): url is string => Boolean(url));
 
   const [index, setIndex] = useState(0);
   const src = candidates[index] ?? null;

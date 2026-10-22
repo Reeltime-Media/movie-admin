@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardRevenueMix } from "./DashboardRevenueMix";
 import { RevenuePanel, useRevenueTimeline } from "./RevenuePanel";
 
 export function DashboardRevenue({ compact = false }: { compact?: boolean }) {
@@ -15,8 +16,13 @@ export function DashboardRevenue({ compact = false }: { compact?: boolean }) {
         onRetry={reload}
         cardTitle="Revenue"
         cardAction={{ label: "View all", href: "/revenue" }}
-        chartHeight={compact ? 160 : 280}
+        chartHeight={compact ? 168 : 280}
         fillHeight={compact}
+        splitSections={compact}
+        hideChartToggle={compact}
+        splitAside={
+          compact ? <DashboardRevenueMix timeline={timeline} loading={loading} /> : null
+        }
       />
     </div>
   );

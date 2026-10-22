@@ -5,10 +5,12 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
 import { AdminContentHlsPlayer } from "../components/AdminContentHlsPlayer";
+import { AdminDownloadImageButton } from "../components/AdminDownloadImageButton";
 import { AdminDownloadSourceButton } from "../components/AdminDownloadSourceButton";
 import { AdminSectionTabs } from "../components/AdminSectionTabs";
 import { AdminSourceVideoPlayer } from "../components/AdminSourceVideoPlayer";
 import { AdminSelect } from "../components/AdminSelect";
+import { BackButton } from "../components/BackButton";
 import { Button } from "../components/ui/Button";
 import { GenreMultiSelect } from "../components/GenreMultiSelect";
 import { InlineLoading } from "../components/InlineLoading";
@@ -25,27 +27,32 @@ import {
   pickFileFromInput,
   toMovieDraft,
 } from "./movieEditHelpers";
-import {
-  formatMovieDate,
-  movieEditInputClass,
-  movieEditSelectClass,
-  movieFileInputClass,
-  youtubeEmbedUrl,
-} from "./movieDetailUi";
+import { formatMovieDate, movieEditInputClass, movieFileInputClass, youtubeEmbedUrl } from "./movieDetailUi";
 
 const statuses: Status[] = ["Published", "Draft", "Scheduled", "Review"];
 
-function EditRow({ label, children }: { label: string; children: React.ReactNode }) {
+const compactInputClass =
+  "w-full rounded-lg border border-border bg-surface-elevated px-2 py-1.5 text-xs font-medium text-text outline-none transition-colors placeholder:text-text-disabled hover:border-border-hover focus:border-brand/50";
+
+const compactSelectClass =
+  "w-full rounded-lg border border-border bg-surface px-2 py-1.5 text-xs font-semibold text-text outline-none transition-colors focus:border-border-hover";
+
+function EditField({
+  label,
+  children,
+  className = "",
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <tr>
-      <th
-        scope="row"
-        className="w-44 px-5 py-3 text-left align-top font-semibold text-text-muted"
-      >
+    <label className={`block min-w-0 ${className}`.trim()}>
+      <span className="mb-1 block text-2xs font-semibold uppercase tracking-[0.1em] text-text-disabled">
         {label}
-      </th>
-      <td className="px-5 py-3 align-top">{children}</td>
-    </tr>
+      </span>
+      {children}
+    </label>
   );
 }
 
@@ -268,9 +275,7 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
     return (
       <AdminCard title="Movie not found">
         <p className="text-sm text-text-muted">This movie is not in the admin catalog.</p>
-        <Button href="/movie" variant="secondary" className="mt-4">
-          Back to movies
-        </Button>
+        <BackButton href="/movie" label="Back to movies" className="mt-4" size="md" />
       </AdminCard>
     );
   }
@@ -282,14 +287,18 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
 
   return (
     <form onSubmit={saveEdit} className="space-y-5">
-      {/* Tabs + actions */}
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border">
-        <AdminSectionTabs
-          tabs={tabs}
-          active={tab}
-          onChange={(k) => setTab(k as "overview" | "media")}
-          bare
-        />
+        <div className="flex min-w-0 flex-wrap items-end gap-3">
+          <div className="pb-2">
+            <BackButton href="/movie" label="Back" />
+          </div>
+          <AdminSectionTabs
+            tabs={tabs}
+            active={tab}
+            onChange={(k) => setTab(k as "overview" | "media")}
+            bare
+          />
+        </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2 pb-2">
           <Button href={`/movie/${movie.id}`} variant="secondary" size="sm">
             Cancel
@@ -300,302 +309,319 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
         </div>
       </div>
 
-      {/* Active section */}
-      <div>
-          <div className={tab === "overview" ? "block" : "hidden"}>
-            <div className="min-h-[calc(100vh-13rem)] rounded-xl border border-border bg-surface">
-              <table className="w-full text-left text-sm">
-                <tbody className="divide-y divide-border">
-                  <EditRow label="English title">
-                    <input
-                      className={movieEditInputClass}
-                      value={editDraft.title}
-                      onChange={(e) => patchDraft({ title: e.target.value })}
-                      required
-                    />
-                  </EditRow>
-                  <EditRow label="Khmer title">
-                    <input
-                      className={movieEditInputClass}
-                      value={editDraft.titleKm ?? ""}
-                      onChange={(e) => patchDraft({ titleKm: e.target.value })}
-                      placeholder="Optional"
-                    />
-                  </EditRow>
-                  <EditRow label="Region">
-                    <AdminSelect
-                      className={movieEditSelectClass}
-                      value={editDraft.region ?? ""}
-                      onChange={(v) => patchDraft({ region: v || null })}
-                      options={[{ value: "", label: "None" }, ...REGION_OPTIONS]}
-                      aria-label="Region"
-                    />
-                  </EditRow>
-                  <EditRow label="Status">
-                    <AdminSelect
-                      className={movieEditSelectClass}
-                      value={editDraft.status}
-                      onChange={(v) => patchDraft({ status: v as Status })}
-                      options={statuses.map((s) => ({ value: s, label: s }))}
-                      aria-label="Status"
-                    />
-                  </EditRow>
-                  <EditRow label="Type">
-                    <span className="font-semibold text-text">{editDraft.type}</span>
-                  </EditRow>
-                  <EditRow label="Genre">
-                    <GenreMultiSelect
-                      selected={parseGenresFromStored(editDraft.genre)}
-                      onChange={(next) => patchDraft({ genre: formatGenres(next) })}
-                      options={genreOptions}
-                      onDeleteGenre={handleDeleteGenre}
-                    />
-                  </EditRow>
-                  <EditRow label="Price">
-                    <input
-                      className={movieEditInputClass}
-                      value={editDraft.price}
-                      onChange={(e) => patchDraft({ price: e.target.value })}
-                      placeholder="0, Free, or 2.99"
-                    />
-                    <p className="mt-1.5 text-2xs text-text-disabled">{ADMIN_PRICE_HINT}</p>
-                  </EditRow>
-                  <EditRow label="Rating">
-                    <input
-                      className={movieEditInputClass}
-                      value={editDraft.rating}
-                      onChange={(e) => patchDraft({ rating: e.target.value })}
-                      placeholder="8.7"
-                    />
-                  </EditRow>
-                  <EditRow label="Runtime (minutes)">
-                    <input
-                      className={movieEditInputClass}
-                      type="number"
-                      min={1}
-                      step={1}
-                      inputMode="numeric"
-                      value={editDraft.runtimeMinutes ?? ""}
-                      onChange={(e) =>
-                        patchDraft({
-                          runtimeMinutes: e.target.value ? Number(e.target.value) : null,
-                        })
-                      }
-                      placeholder="135"
-                    />
-                  </EditRow>
-                  <EditRow label="Release year">
-                    <input
-                      className={movieEditInputClass}
-                      type="number"
-                      min={1900}
-                      max={2100}
-                      value={editDraft.releaseYear ?? ""}
-                      onChange={(e) =>
-                        patchDraft({
-                          releaseYear: e.target.value ? Number(e.target.value) : null,
-                        })
-                      }
-                      placeholder="2024"
-                    />
-                  </EditRow>
-                  <EditRow label="Watchers">
-                    <span className="font-semibold text-text">
-                      {(movie.watchCount ?? 0).toLocaleString()}
-                    </span>
-                  </EditRow>
-                  <EditRow label="Transcode">
-                    <span className="font-semibold text-text">
-                      {movie.transcodeStatus || "-"}
-                    </span>
-                  </EditRow>
-                  <EditRow label="Updated">
-                    <span className="font-semibold text-text">
-                      {formatMovieDate(movie.updatedAt)}
-                    </span>
-                  </EditRow>
-                  <EditRow label="Description">
-                    <textarea
-                      className={`${movieEditInputClass} min-h-20 resize-y font-normal`}
-                      value={editDraft.description ?? ""}
-                      onChange={(e) => patchDraft({ description: e.target.value || null })}
-                      placeholder="Brief synopsis shown on the movie page…"
-                    />
-                  </EditRow>
-                </tbody>
-              </table>
-            </div>
+      <div className={tab === "overview" ? "block" : "hidden"}>
+        <div className="rounded-lg border border-border bg-surface p-4 sm:p-5">
+          <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1 border-b border-border pb-3 text-2xs text-text-muted">
+            <span>
+              Type <strong className="text-text">{editDraft.type}</strong>
+            </span>
+            <span>
+              Watchers{" "}
+              <strong className="text-text">{(movie.watchCount ?? 0).toLocaleString()}</strong>
+            </span>
+            <span>
+              Transcode <strong className="text-text">{movie.transcodeStatus || "-"}</strong>
+            </span>
+            <span>
+              Updated <strong className="text-text">{formatMovieDate(movie.updatedAt)}</strong>
+            </span>
           </div>
 
-          <div className={tab === "media" ? "block" : "hidden"}>
-            <div className="rounded-xl border border-border bg-surface p-6">
-              <div className="grid gap-6 lg:grid-cols-2">
-                <div>
-                  <div className="mb-2 text-xs font-semibold text-text-muted">Poster</div>
-                  {posterPreviewUrl ? (
-                    <img
-                      src={posterPreviewUrl}
-                      alt={`${movie.title} poster`}
-                      className="aspect-2/3 w-40 rounded-lg border border-border object-cover"
-                    />
-                  ) : (
-                    <div className="grid aspect-2/3 w-40 place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-xs text-text-muted">
-                      No poster
-                    </div>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className={movieFileInputClass}
-                    disabled={isUploadingPoster}
-                    onChange={(e) => handlePosterFileChange(pickFileFromInput(e.target.files))}
-                  />
-                  {isUploadingPoster ? (
-                    <p className="mt-2 text-2xs text-text-muted">Uploading…</p>
-                  ) : editPosterFile ? (
-                    <p className="mt-2 break-all text-2xs text-text-muted">
-                      New file: {editPosterFile.name}
-                    </p>
-                  ) : (
-                    <p className="mt-2 break-all text-2xs text-text-disabled">
-                      {movie.posterKey || "No poster uploaded"}
-                    </p>
-                  )}
-                </div>
+          <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
+            <EditField label="English title" className="sm:col-span-2">
+              <input
+                className={compactInputClass}
+                value={editDraft.title}
+                onChange={(e) => patchDraft({ title: e.target.value })}
+                required
+              />
+            </EditField>
+            <EditField label="Khmer title" className="sm:col-span-2">
+              <input
+                className={compactInputClass}
+                value={editDraft.titleKm ?? ""}
+                onChange={(e) => patchDraft({ titleKm: e.target.value })}
+                placeholder="Optional"
+              />
+            </EditField>
+            <EditField label="Region">
+              <AdminSelect
+                className={compactSelectClass}
+                value={editDraft.region ?? ""}
+                onChange={(v) => patchDraft({ region: v || null })}
+                options={[{ value: "", label: "None" }, ...REGION_OPTIONS]}
+                aria-label="Region"
+              />
+            </EditField>
+            <EditField label="Status">
+              <AdminSelect
+                className={compactSelectClass}
+                value={editDraft.status}
+                onChange={(v) => patchDraft({ status: v as Status })}
+                options={statuses.map((s) => ({ value: s, label: s }))}
+                aria-label="Status"
+              />
+            </EditField>
+            <EditField label="Genre" className="sm:col-span-2">
+              <GenreMultiSelect
+                selected={parseGenresFromStored(editDraft.genre)}
+                onChange={(next) => patchDraft({ genre: formatGenres(next) })}
+                options={genreOptions}
+                onDeleteGenre={handleDeleteGenre}
+              />
+            </EditField>
+            <EditField label="Price">
+              <input
+                className={compactInputClass}
+                value={editDraft.price}
+                onChange={(e) => patchDraft({ price: e.target.value })}
+                placeholder="0, Free, or 2.99"
+              />
+              <p className="mt-1 text-2xs text-text-disabled">{ADMIN_PRICE_HINT}</p>
+            </EditField>
+            <EditField label="Rating">
+              <input
+                className={compactInputClass}
+                value={editDraft.rating}
+                onChange={(e) => patchDraft({ rating: e.target.value })}
+                placeholder="8.7"
+              />
+            </EditField>
+            <EditField label="Runtime (min)">
+              <input
+                className={compactInputClass}
+                type="number"
+                min={1}
+                step={1}
+                inputMode="numeric"
+                value={editDraft.runtimeMinutes ?? ""}
+                onChange={(e) =>
+                  patchDraft({
+                    runtimeMinutes: e.target.value ? Number(e.target.value) : null,
+                  })
+                }
+                placeholder="135"
+              />
+            </EditField>
+            <EditField label="Release year">
+              <input
+                className={compactInputClass}
+                type="number"
+                min={1900}
+                max={2100}
+                value={editDraft.releaseYear ?? ""}
+                onChange={(e) =>
+                  patchDraft({
+                    releaseYear: e.target.value ? Number(e.target.value) : null,
+                  })
+                }
+                placeholder="2024"
+              />
+            </EditField>
+            <EditField label="Description" className="sm:col-span-2 lg:col-span-4">
+              <textarea
+                className={`${compactInputClass} min-h-24 resize-y font-normal`}
+                value={editDraft.description ?? ""}
+                onChange={(e) => patchDraft({ description: e.target.value || null })}
+                placeholder="Brief synopsis shown on the movie page…"
+              />
+            </EditField>
+          </div>
+        </div>
+      </div>
 
-                <div>
-                  <div className="mb-2 text-xs font-semibold text-text-muted">Banner</div>
-                  {bannerPreviewUrl ? (
-                    <img
-                      src={bannerPreviewUrl}
-                      alt={`${movie.title} banner`}
-                      className="w-full rounded-lg border border-border"
-                    />
-                  ) : (
-                    <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-xs text-text-muted">
-                      No banner
-                    </div>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className={movieFileInputClass}
-                    disabled={isUploadingBanner}
-                    onChange={(e) => handleBannerFileChange(pickFileFromInput(e.target.files))}
+      <div className={tab === "media" ? "block" : "hidden"}>
+        <div className="rounded-lg border border-border bg-surface p-5 sm:p-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="text-xs font-semibold text-text-muted">Poster</div>
+                {!editPosterFile ? (
+                  <AdminDownloadImageButton
+                    url={movie.posterUrl}
+                    filename={
+                      movie.posterKey?.split("/").pop() ||
+                      `${movie.slug || movie.id}-poster.jpg`
+                    }
+                    label="Download"
                   />
-                  {isUploadingBanner ? (
-                    <p className="mt-2 text-2xs text-text-muted">Uploading…</p>
-                  ) : editBannerFile ? (
-                    <p className="mt-2 break-all text-2xs text-text-muted">
-                      New file: {editBannerFile.name}
-                    </p>
-                  ) : (
-                    <p className="mt-2 break-all text-2xs text-text-disabled">
-                      {movie.bannerKey || "No banner uploaded"}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <div className="text-xs font-semibold text-text-muted">
-                      Original video (source.mp4)
-                    </div>
-                    {!editVideoFile ? (
-                      <AdminDownloadSourceButton contentId={movie.id} label={movie.title} />
-                    ) : null}
-                  </div>
-                  {editVideoFile ? (
-                    <video
-                      controls
-                      className="aspect-video w-full rounded-lg border border-border bg-black"
-                      src={editVideoPreviewUrl ?? undefined}
-                    />
-                  ) : (
-                    <AdminSourceVideoPlayer contentId={movie.id} title={movie.title} />
-                  )}
-                  <input
-                    type="file"
-                    accept="video/mp4,video/quicktime,application/x-mpegURL,video/*"
-                    className={movieFileInputClass}
-                    onChange={(e) => setEditVideoFile(pickFileFromInput(e.target.files))}
-                  />
-                  {editVideoFile ? (
-                    <p className="mt-2 break-all text-2xs text-text-muted">
-                      New file: {editVideoFile.name} — saving will queue a fresh transcode.
-                    </p>
-                  ) : (
-                    <p className="mt-2 break-all text-2xs text-text-disabled">
-                      {movie.slug ? `movies/${movie.slug}/source.mp4` : "No source uploaded"}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <div className="mb-2 text-xs font-semibold text-text-muted">
-                    Stream (HLS)
-                  </div>
-                  <AdminContentHlsPlayer
-                    contentId={movie.id}
-                    title={movie.title}
-                    hasVideo={Boolean(movie.hlsMasterKey)}
-                  />
-                  {editUploadProgress !== null ? (
-                    <div className="mt-3">
-                      <div className="h-2 overflow-hidden rounded-full bg-surface-elevated">
-                        <div
-                          className="h-full bg-brand transition-all"
-                          style={{ width: `${editUploadProgress}%` }}
-                        />
-                      </div>
-                      <p className="mt-1 text-2xs text-text-muted">
-                        Uploading video: {editUploadProgress}%
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="mt-2 break-all text-2xs text-text-disabled">
-                      {movie.hlsMasterKey || "Not transcoded yet"}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <div className="mb-2 text-xs font-semibold text-text-muted">Trailer</div>
-                  <input
-                    className={`${movieEditInputClass} mb-3 font-normal`}
-                    type="url"
-                    value={editDraft.trailerUrl ?? ""}
-                    onChange={(e) => patchDraft({ trailerUrl: e.target.value || null })}
-                    placeholder="https://www.youtube.com/watch?v=..."
-                  />
-                  {editTrailerEmbedUrl ? (
-                    <iframe
-                      className="aspect-video w-full rounded-lg border border-border bg-black"
-                      src={editTrailerEmbedUrl}
-                      title={`${movie.title} trailer`}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  ) : editDraft.trailerUrl ? (
-                    <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center">
-                      <Button
-                        href={editDraft.trailerUrl ?? "#"}
-                        target="_blank"
-                        rel="noreferrer"
-                        size="sm"
-                      >
-                        Open trailer
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-xs text-text-muted">
-                      No trailer URL added.
-                    </div>
-                  )}
-                </div>
+                ) : null}
               </div>
+              {posterPreviewUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={posterPreviewUrl}
+                  alt={`${movie.title} poster`}
+                  className="aspect-2/3 w-40 rounded-lg border border-border object-cover"
+                />
+              ) : (
+                <div className="grid aspect-2/3 w-40 place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-xs text-text-muted">
+                  No poster
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                className={movieFileInputClass}
+                disabled={isUploadingPoster}
+                onChange={(e) => handlePosterFileChange(pickFileFromInput(e.target.files))}
+              />
+              {isUploadingPoster ? (
+                <p className="mt-2 text-2xs text-text-muted">Uploading…</p>
+              ) : editPosterFile ? (
+                <p className="mt-2 break-all text-2xs text-text-muted">
+                  New file: {editPosterFile.name}
+                </p>
+              ) : (
+                <p className="mt-2 break-all text-2xs text-text-disabled">
+                  {movie.posterKey || "No poster uploaded"}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="text-xs font-semibold text-text-muted">Banner</div>
+                {!editBannerFile ? (
+                  <AdminDownloadImageButton
+                    url={movie.bannerUrl}
+                    filename={
+                      movie.bannerKey?.split("/").pop() ||
+                      `${movie.slug || movie.id}-banner.jpg`
+                    }
+                    label="Download"
+                  />
+                ) : null}
+              </div>
+              {bannerPreviewUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={bannerPreviewUrl}
+                  alt={`${movie.title} banner`}
+                  className="w-full rounded-lg border border-border"
+                />
+              ) : (
+                <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-xs text-text-muted">
+                  No banner
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                className={movieFileInputClass}
+                disabled={isUploadingBanner}
+                onChange={(e) => handleBannerFileChange(pickFileFromInput(e.target.files))}
+              />
+              {isUploadingBanner ? (
+                <p className="mt-2 text-2xs text-text-muted">Uploading…</p>
+              ) : editBannerFile ? (
+                <p className="mt-2 break-all text-2xs text-text-muted">
+                  New file: {editBannerFile.name}
+                </p>
+              ) : (
+                <p className="mt-2 break-all text-2xs text-text-disabled">
+                  {movie.bannerKey || "No banner uploaded"}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="text-xs font-semibold text-text-muted">
+                  Original video (source.mp4)
+                </div>
+                {!editVideoFile ? (
+                  <AdminDownloadSourceButton contentId={movie.id} label={movie.title} />
+                ) : null}
+              </div>
+              {editVideoFile ? (
+                <video
+                  controls
+                  className="aspect-video w-full rounded-lg border border-border bg-black"
+                  src={editVideoPreviewUrl ?? undefined}
+                />
+              ) : (
+                <AdminSourceVideoPlayer contentId={movie.id} title={movie.title} />
+              )}
+              <input
+                type="file"
+                accept="video/mp4,video/quicktime,application/x-mpegURL,video/*"
+                className={movieFileInputClass}
+                onChange={(e) => setEditVideoFile(pickFileFromInput(e.target.files))}
+              />
+              {editVideoFile ? (
+                <p className="mt-2 break-all text-2xs text-text-muted">
+                  New file: {editVideoFile.name} — saving will queue a fresh transcode.
+                </p>
+              ) : (
+                <p className="mt-2 break-all text-2xs text-text-disabled">
+                  {movie.slug ? `movies/${movie.slug}/source.mp4` : "No source uploaded"}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <div className="mb-2 text-xs font-semibold text-text-muted">Stream (HLS)</div>
+              <AdminContentHlsPlayer
+                contentId={movie.id}
+                title={movie.title}
+                hasVideo={Boolean(movie.hlsMasterKey)}
+              />
+              {editUploadProgress !== null ? (
+                <div className="mt-3">
+                  <div className="h-2 overflow-hidden rounded-full bg-surface-elevated">
+                    <div
+                      className="h-full bg-brand transition-all"
+                      style={{ width: `${editUploadProgress}%` }}
+                    />
+                  </div>
+                  <p className="mt-1 text-2xs text-text-muted">
+                    Uploading video: {editUploadProgress}%
+                  </p>
+                </div>
+              ) : (
+                <p className="mt-2 break-all text-2xs text-text-disabled">
+                  {movie.hlsMasterKey || "Not transcoded yet"}
+                </p>
+              )}
+            </div>
+
+            <div className="lg:col-span-2">
+              <div className="mb-2 text-xs font-semibold text-text-muted">Trailer</div>
+              <input
+                className={`${movieEditInputClass} mb-3 font-normal`}
+                type="url"
+                value={editDraft.trailerUrl ?? ""}
+                onChange={(e) => patchDraft({ trailerUrl: e.target.value || null })}
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+              {editTrailerEmbedUrl ? (
+                <iframe
+                  className="aspect-video w-full max-w-3xl rounded-lg border border-border bg-black"
+                  src={editTrailerEmbedUrl}
+                  title={`${movie.title} trailer`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : editDraft.trailerUrl ? (
+                <div className="grid aspect-video max-w-3xl place-items-center rounded-lg border border-dashed border-border bg-bg text-center">
+                  <Button
+                    href={editDraft.trailerUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    size="sm"
+                  >
+                    Open trailer
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid aspect-video max-w-3xl place-items-center rounded-lg border border-dashed border-border bg-bg text-center text-xs text-text-muted">
+                  No trailer URL added.
+                </div>
+              )}
             </div>
           </div>
+        </div>
       </div>
 
       {editSaveError ? (

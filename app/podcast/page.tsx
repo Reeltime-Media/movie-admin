@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -9,6 +8,7 @@ import { AdminCard } from "../components/AdminCard";
 import { AdminCatalogSearchBar } from "../components/AdminCatalogSearchBar";
 import { AdminEmptyState } from "../components/AdminEmptyState";
 import { AdminErrorAlert } from "../components/AdminErrorAlert";
+import { AdminMediaThumb } from "../components/AdminMediaThumb";
 import { AdminPagination } from "../components/AdminPagination";
 import { AdminShell } from "../components/AdminShell";
 import { InlineLoading } from "../components/InlineLoading";
@@ -16,7 +16,6 @@ import { Button } from "../components/ui/Button";
 import { useAdminPodcasts } from "../hooks/adminQueries";
 import { statusClasses } from "../lib/adminData";
 import { deleteAdminPodcast, type ApiContent } from "../lib/api";
-import { mediaUrl } from "../lib/media";
 import { formatPodcastDate, toUiStatus } from "./podcastUi";
 
 const PAGE_SIZE = 20;
@@ -107,101 +106,77 @@ export default function PodcastsPage() {
         />
       ) : (
         <section className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-          <div className="px-5 pb-5 pt-5">
-            <div className="-mx-5 overflow-x-auto">
-              <table className="w-full min-w-200 text-left text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-surface-elevated text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
-                    <th className="px-5 py-3 font-semibold">Cover</th>
-                    <th className="px-5 py-3 font-semibold">Title</th>
-                    <th className="px-5 py-3 font-semibold">Access</th>
-                    <th className="px-5 py-3 font-semibold">Audio</th>
-                    <th className="px-5 py-3 font-semibold">Status</th>
-                    <th className="px-5 py-3 font-semibold">Updated</th>
-                    <th className="px-5 py-3 text-right font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {filteredItems.map((item) => {
-                    const poster = mediaUrl(item.poster_key, item.updated_at);
-                    const uiStatus = toUiStatus(item.status);
-                    return (
-                      <tr
-                        key={item.id}
-                        role="link"
-                        tabIndex={0}
-                        className="group cursor-pointer transition-colors hover:bg-surface-elevated"
+          <div className="p-4 sm:p-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+              {filteredItems.map((item) => {
+                const uiStatus = toUiStatus(item.status);
+                return (
+                  <article
+                    key={item.id}
+                    className="group flex flex-col overflow-hidden rounded-xl border border-border bg-bg/40 transition-colors hover:border-border-hover hover:bg-surface-elevated/50"
+                  >
+                    <button
+                      type="button"
+                      className="relative block w-full cursor-pointer text-left"
+                      onClick={() => router.push(`/podcast/${item.id}`)}
+                    >
+                      <AdminMediaThumb
+                        objectKey={item.poster_key}
+                        alt={`${item.title} cover`}
+                        className="aspect-2/3 w-full rounded-none border-0 border-b border-border"
+                        emptyLabel="No cover"
+                      />
+                      <span className="absolute left-2 top-2">
+                        <span className={statusClasses(uiStatus)}>{uiStatus}</span>
+                      </span>
+                      <span className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/55 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                    </button>
+
+                    <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
+                      <button
+                        type="button"
+                        className="min-w-0 cursor-pointer text-left"
                         onClick={() => router.push(`/podcast/${item.id}`)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            router.push(`/podcast/${item.id}`);
-                          }
-                        }}
                       >
-                        <td className="px-5 py-3">
-                          <div className="relative h-12 w-12 overflow-hidden rounded-lg bg-surface-elevated">
-                            {poster ? (
-                              <Image src={poster} alt="" fill className="object-cover" unoptimized />
-                            ) : (
-                              <div className="flex h-full items-center justify-center text-2xs text-text-disabled">
-                                —
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-5 py-3">
-                          <div className="max-w-56 truncate font-medium text-text group-hover:text-brand">
-                            {item.title}
-                          </div>
-                          {item.title_km ? (
-                            <div className="max-w-56 truncate text-2xs text-text-muted">{item.title_km}</div>
-                          ) : null}
-                        </td>
-                        <td className="px-5 py-3 text-text-muted">
-                          {item.is_free ? "Free" : "Included with Plan"}
-                        </td>
-                        <td className="px-5 py-3 text-text-muted">{item.audio_key ? "Ready" : "Missing"}</td>
-                        <td className="px-5 py-3">
-                          <span className={statusClasses(uiStatus)}>{uiStatus}</span>
-                        </td>
-                        <td className="px-5 py-3 text-text-muted">{formatPodcastDate(item.updated_at)}</td>
-                        <td className="px-5 py-3 text-right">
-                          <div className="flex flex-wrap justify-end gap-1.5">
-                            <Button
-                              href={`/podcast/${item.id}`}
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              View
-                            </Button>
-                            <Button
-                              href={`/podcast/${item.id}/edit`}
-                              variant="secondary"
-                              size="sm"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="danger-soft"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setConfirmDelete(item);
-                              }}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                        <h3 className="truncate text-sm font-semibold text-text transition-colors group-hover:text-brand">
+                          {item.title}
+                        </h3>
+                        {item.title_km?.trim() ? (
+                          <p className="mt-0.5 truncate text-2xs text-text-muted">{item.title_km}</p>
+                        ) : null}
+                        <p className="mt-1.5 truncate text-2xs text-text-muted">
+                          {[
+                            item.is_free ? "Free" : "With plan",
+                            item.audio_key ? "Audio ready" : "No audio",
+                            formatPodcastDate(item.updated_at),
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      </button>
+
+                      <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
+                        <Button
+                          href={`/podcast/${item.id}/edit`}
+                          variant="secondary"
+                          size="sm"
+                          className="flex-1"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="danger-soft"
+                          size="sm"
+                          onClick={() => setConfirmDelete(item)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
             {total > 0 ? (
               <AdminPagination

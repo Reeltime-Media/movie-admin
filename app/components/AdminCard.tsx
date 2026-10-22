@@ -56,7 +56,7 @@ export function AdminCard({
       <div
         className={[
           flush ? "px-5 pb-4 pt-3" : "p-4",
-          fillHeight ? "min-h-0 flex-1 overflow-hidden" : "",
+          fillHeight ? "flex min-h-0 flex-1 flex-col overflow-hidden" : "",
         ].join(" ")}
       >
         {children}

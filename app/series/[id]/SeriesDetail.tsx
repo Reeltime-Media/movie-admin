@@ -3,6 +3,7 @@
 import { ChevronDown, ChevronRight, PlayCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AdminCard } from "../../components/AdminCard";
+import { BackButton } from "../../components/BackButton";
 import { Button } from "../../components/ui/Button";
 import { AdminContentHlsPlayer } from "../../components/AdminContentHlsPlayer";
 import { AdminDownloadSourceButton } from "../../components/AdminDownloadSourceButton";
@@ -126,9 +127,7 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
         <p className="text-sm text-text-muted">
           This series is not in the current admin catalog.
         </p>
-        <Button href="/series" variant="secondary" className="mt-4">
-          Back to series management
-        </Button>
+        <BackButton href="/series" label="Back to series" className="mt-4" size="md" />
       </AdminCard>
     );
   }

@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   Radio,
+  RectangleVertical,
   Server,
   Tv,
   Users,
@@ -21,109 +22,68 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { clearAdminToken, getAdminToken } from "../lib/api";
+import { BrandWordmark } from "./BrandLogo";
 import { ThemeToggle } from "./ThemeToggle";
 import { useUploadProgress } from "./UploadProgressContext";
 
 type NavItem = { label: string; href: string; icon: LucideIcon };
-type NavGroup = { heading: string; items: NavItem[] };
 
-const navGroups: NavGroup[] = [
-  {
-    heading: "Overview",
-    items: [{ label: "Dashboard", href: "/", icon: LayoutDashboard }],
-  },
-  {
-    heading: "Catalog",
-    items: [
-      { label: "Movies", href: "/movie", icon: Film },
-      { label: "Series", href: "/series", icon: Tv },
-      { label: "Podcasts", href: "/podcast", icon: Headphones },
-      { label: "TV channels", href: "/tv-channels", icon: Radio },
-      { label: "Home page", href: "/promotions", icon: Home },
-    ],
-  },
-  {
-    heading: "Business",
-    items: [
-      { label: "Revenue", href: "/revenue", icon: Wallet },
-      { label: "Payments", href: "/payments", icon: CreditCard },
-      { label: "Plans", href: "/plans", icon: BarChart3 },
-      { label: "TV access IDs", href: "/tv-access", icon: Tv },
-      { label: "Users", href: "/users", icon: Users },
-    ],
-  },
-  {
-    heading: "System",
-    items: [
-      { label: "Transcode", href: "/transcode", icon: Server },
-      { label: "Reports", href: "/reports", icon: BarChart3 },
-    ],
-  },
+const navItems: NavItem[] = [
+  { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Movies", href: "/movie", icon: Film },
+  { label: "Series", href: "/series", icon: Tv },
+  { label: "Short series", href: "/short-series", icon: RectangleVertical },
+  { label: "Podcasts", href: "/podcast", icon: Headphones },
+  { label: "TV channels", href: "/tv-channels", icon: Radio },
+  { label: "Home page", href: "/promotions", icon: Home },
+  { label: "Revenue", href: "/revenue", icon: Wallet },
+  { label: "Payments", href: "/payments", icon: CreditCard },
+  { label: "Plans", href: "/plans", icon: BarChart3 },
+  { label: "TV access IDs", href: "/tv-access", icon: Tv },
+  { label: "Users", href: "/users", icon: Users },
+  { label: "Transcode", href: "/transcode", icon: Server },
+  { label: "Reports", href: "/reports", icon: BarChart3 },
 ];
-
-function Wordmark({ onNavigate }: { onNavigate?: () => void }) {
-  return (
-    <Link href="/" onClick={onNavigate} className="group block leading-none">
-      <div className="flex items-center gap-3">
-        <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand text-sm font-black tracking-tight text-white shadow-[0_0_24px_rgba(229,9,20,0.35)]">
-          R
-        </span>
-        <div>
-          <div className="text-[15px] font-bold tracking-[0.18em] text-text">REELTIME</div>
-          <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-brand">
-            Cinema console
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-}
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <nav className="space-y-6">
-      {navGroups.map((group) => (
-        <div key={group.heading}>
-          <div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-text-disabled">
-            {group.heading}
-          </div>
-          <div className="space-y-1">
-            {group.items.map((item) => {
-              const active =
-                pathname === item.href ||
-                (item.href !== "/" && pathname.startsWith(`${item.href}/`));
-              const Icon = item.icon;
+    <nav className="space-y-1">
+      {navItems.map((item) => {
+        // Keep /series from lighting up on /short-series routes.
+        const active =
+          item.href === "/series"
+            ? pathname === "/series" || pathname.startsWith("/series/")
+            : pathname === item.href ||
+              (item.href !== "/" && pathname.startsWith(`${item.href}/`));
+        const Icon = item.icon;
 
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  onClick={onNavigate}
-                  aria-current={active ? "page" : undefined}
-                  className={[
-                    "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                    active
-                      ? "bg-brand/15 text-text shadow-[inset_3px_0_0_0_var(--rt-brand)]"
-                      : "text-text-muted hover:bg-surface-elevated hover:text-text",
-                  ].join(" ")}
-                >
-                  <Icon
-                    size={16}
-                    strokeWidth={2}
-                    className={
-                      active ? "text-brand" : "text-text-disabled group-hover:text-text-muted"
-                    }
-                    aria-hidden
-                  />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      ))}
+        return (
+          <Link
+            key={item.label}
+            href={item.href}
+            onClick={onNavigate}
+            aria-current={active ? "page" : undefined}
+            className={[
+              "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+              active
+                ? "bg-brand/15 text-text shadow-[inset_3px_0_0_0_var(--rt-brand)]"
+                : "text-text-muted hover:bg-surface-elevated hover:text-text",
+            ].join(" ")}
+          >
+            <Icon
+              size={16}
+              strokeWidth={2}
+              className={
+                active ? "text-brand" : "text-text-disabled group-hover:text-text-muted"
+              }
+              aria-hidden
+            />
+            {item.label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }
@@ -197,7 +157,7 @@ export function AdminShell({
   const sidebarInner = (
     <>
       <div className="border-b border-border px-4 pb-5 pt-1">
-        <Wordmark onNavigate={mobileNavOpen ? () => setMobileNavOpen(false) : undefined} />
+        <BrandWordmark onNavigate={mobileNavOpen ? () => setMobileNavOpen(false) : undefined} />
       </div>
       <div className="flex-1 overflow-y-auto px-3 py-5">
         <NavList onNavigate={mobileNavOpen ? () => setMobileNavOpen(false) : undefined} />
@@ -227,7 +187,7 @@ export function AdminShell({
           <aside className="absolute left-0 top-0 flex h-full w-72 max-w-[84%] flex-col overflow-hidden border-r border-border bg-sidebar shadow-xl">
             <div className="h-1 w-full bg-brand" />
             <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-4">
-              <Wordmark onNavigate={() => setMobileNavOpen(false)} />
+              <BrandWordmark onNavigate={() => setMobileNavOpen(false)} />
               <button
                 type="button"
                 aria-label="Close menu"

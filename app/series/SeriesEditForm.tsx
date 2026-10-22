@@ -6,6 +6,8 @@ import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
 import { AdminSectionTabs } from "../components/AdminSectionTabs";
 import { AdminSelect } from "../components/AdminSelect";
+import { AdminDownloadImageButton } from "../components/AdminDownloadImageButton";
+import { BackButton } from "../components/BackButton";
 import { Button } from "../components/ui/Button";
 import { GenreMultiSelect } from "../components/GenreMultiSelect";
 import { InlineLoading } from "../components/InlineLoading";
@@ -58,6 +60,7 @@ function ArtworkField({
   currentKey,
   newFile,
   onFileChange,
+  downloadFilename,
 }: {
   label: string;
   hint: string;
@@ -65,6 +68,7 @@ function ArtworkField({
   currentKey?: string | null;
   newFile: File | null;
   onFileChange: (file: File | null) => void;
+  downloadFilename?: string;
 }) {
   const isBanner = label === "Banner";
   const imgClass = isBanner ? "w-full" : "aspect-2/3 w-40 object-cover";
@@ -72,9 +76,23 @@ function ArtworkField({
 
   return (
     <div className="rounded-lg border border-border bg-bg p-4">
-      <div className="mb-1 text-base font-bold tracking-[-0.02em]">{label}</div>
+      <div className="mb-1 flex items-start justify-between gap-2">
+        <div className="text-base font-bold tracking-[-0.02em]">{label}</div>
+        {!newFile && previewUrl ? (
+          <AdminDownloadImageButton
+            url={previewUrl}
+            filename={
+              downloadFilename ||
+              currentKey?.split("/").pop() ||
+              `${label.toLowerCase()}.jpg`
+            }
+            label="Download"
+          />
+        ) : null}
+      </div>
       <p className="mb-3 text-xs text-text-muted">{hint}</p>
       {previewUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={previewUrl}
           alt={`${label} preview`}
@@ -322,9 +340,7 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
     return (
       <AdminCard title="Series not found">
         <p className="text-sm text-text-muted">This series is not in the admin catalog.</p>
-        <Button href="/series" variant="secondary" className="mt-4">
-          Back to series
-        </Button>
+        <BackButton href="/series" label="Back to series" className="mt-4" size="md" />
       </AdminCard>
     );
   }
@@ -332,19 +348,25 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
   const tabs = [
     { key: "overview", label: "Overview" },
     { key: "media", label: "Media" },
-    { key: "episodes", label: "Episodes" },
+    { key: "episodes", label: "Seasons" },
   ];
+
+  const listHref = editDraft.isShortMovie ? "/short-series" : "/series";
 
   return (
     <form onSubmit={saveEdit} className="space-y-5">
-      {/* Tabs + actions */}
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border">
-        <AdminSectionTabs
-          tabs={tabs}
-          active={tab}
-          onChange={(k) => setTab(k as "overview" | "media" | "episodes")}
-          bare
-        />
+        <div className="flex min-w-0 flex-wrap items-end gap-3">
+          <div className="pb-2">
+            <BackButton href={listHref} label="Back" />
+          </div>
+          <AdminSectionTabs
+            tabs={tabs}
+            active={tab}
+            onChange={(k) => setTab(k as "overview" | "media" | "episodes")}
+            bare
+          />
+        </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2 pb-2">
           <Button href={`/series/${series.id}`} variant="secondary" size="sm">
             Cancel
@@ -397,16 +419,20 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
                     />
                     <p className="mt-1 text-2xs text-text-disabled">{ADMIN_PRICE_HINT}</p>
                   </EditRow>
-                  <EditRow label="Short movie">
-                    <label className="flex items-center gap-2 text-sm text-text-muted">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(editDraft.isShortMovie)}
-                        onChange={(e) => patchDraft({ isShortMovie: e.target.checked })}
-                        className="rounded border-border"
-                      />
-                      Also list this series on /short-movies
-                    </label>
+                  <EditRow label="Catalog type">
+                    <AdminSelect
+                      className={movieEditSelectClass}
+                      value={editDraft.isShortMovie ? "short" : "series"}
+                      onChange={(v) => patchDraft({ isShortMovie: v === "short" })}
+                      options={[
+                        { value: "series", label: "Series" },
+                        { value: "short", label: "Short series" },
+                      ]}
+                      aria-label="Catalog type"
+                    />
+                    <p className="mt-1 text-2xs text-text-disabled">
+                      Short series appear in the short-form / vertical catalog.
+                    </p>
                   </EditRow>
                   <EditRow label="Rating">
                     <input
@@ -492,12 +518,20 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
           </div>
 
           <div className={tab === "episodes" ? "block" : "hidden"}>
-            <div className="rounded-xl border border-border bg-surface p-6">
-              <h3 className="mb-1 text-base font-bold tracking-[-0.02em]">Seasons and episodes</h3>
-              <p className="mb-5 text-sm text-text-muted">
-                Click Edit on an episode to change title, runtime, free flag, video, or poster. New
-                video uploads re-queue transcoding.
-              </p>
+            <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+                <div>
+                  <h3 className="text-base font-bold tracking-[-0.02em]">Seasons</h3>
+                  <p className="mt-1 text-sm text-text-muted">
+                    Expand a season to see its episodes. Edit an episode to change title, assets,
+                    or free access.
+                  </p>
+                </div>
+                <p className="text-2xs font-semibold tabular-nums text-text-disabled">
+                  {editDraft.seasons.reduce((n, s) => n + s.episodes.length, 0)} episodes ·{" "}
+                  {editDraft.seasons.length} season{editDraft.seasons.length === 1 ? "" : "s"}
+                </p>
+              </div>
               <SeasonsEpisodesEditor
                 seasons={editDraft.seasons}
                 onChange={(next) => patchDraft({ seasons: next })}

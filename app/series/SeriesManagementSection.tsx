@@ -14,23 +14,30 @@ import type { SeriesListFilter } from "./seriesListTypes";
 const TABLE_PAGE_SIZE = 25;
 
 const filterOptions: { key: SeriesListFilter; label: string }[] = [
-  { key: "all", label: "All series" },
+  { key: "all", label: "All" },
   { key: "drafts", label: "Drafts" },
 ];
 
-function tableTitleForFilter(f: SeriesListFilter): string {
-  return f === "drafts" ? "Draft series" : "All series";
-}
-
-export function SeriesManagementSection() {
+export function SeriesManagementSection({
+  shortForm = false,
+}: {
+  shortForm?: boolean;
+}) {
   const { movies, isLoading, error, refreshMovies } = useMovieCatalog();
   const [listFilter, setListFilter] = useState<SeriesListFilter>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
+  const noun = shortForm ? "short series" : "series";
+  const newHref = shortForm ? "/short-series/new" : "/series/new";
+  const addLabel = shortForm ? "Add short series" : "Add series";
+
   const seriesOnly = useMemo(
-    () => movies.filter((m) => m.type === "Series"),
-    [movies],
+    () =>
+      movies.filter(
+        (m) => m.type === "Series" && Boolean(m.isShortMovie) === shortForm,
+      ),
+    [movies, shortForm],
   );
 
   const entries = useMemo(() => {
@@ -67,6 +74,15 @@ export function SeriesManagementSection() {
     return entries.slice(start, start + TABLE_PAGE_SIZE);
   }, [entries, currentPage]);
 
+  const tableTitle =
+    listFilter === "drafts"
+      ? shortForm
+        ? "Draft short series"
+        : "Draft series"
+      : shortForm
+        ? "All short series"
+        : "All series";
+
   return (
     <>
       <div className="space-y-4">
@@ -84,32 +100,33 @@ export function SeriesManagementSection() {
             maxWidthClassName=""
             value={search}
             onChange={setSearch}
-            placeholder="Search series by title, genre, slug, episode, or description…"
+            placeholder={`Search ${noun} by title, genre, slug, episode, or description…`}
             resultCount={entries.length}
             totalCount={seriesOnly.length}
             filterValue={listFilter}
             filterOptions={filterOptions.map(({ key, label }) => ({
               value: key,
-              label,
+              label: key === "all" ? (shortForm ? "All short series" : "All series") : label,
             }))}
             onFilterChange={(next) => setListFilter(next as SeriesListFilter)}
-            filterLabel="Filter series"
+            filterLabel={`Filter ${noun}`}
           />
-          <Button href="/series/new" className="shrink-0">
-            Add series
+          <Button href={newHref} className="shrink-0">
+            {addLabel}
           </Button>
         </div>
       </div>
 
       {isLoading && seriesOnly.length === 0 ? (
-        <AdminCard title={tableTitleForFilter(listFilter)}>
-          <InlineLoading label="Loading series" />
+        <AdminCard title={tableTitle}>
+          <InlineLoading label={`Loading ${noun}`} />
         </AdminCard>
       ) : (
         <>
           <SeriesManagementTable
             entries={paginatedEntries}
             listFilter={listFilter}
+            shortForm={shortForm}
             footer={
               entries.length > 0 ? (
                 <AdminPagination

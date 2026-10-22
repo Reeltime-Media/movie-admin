@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { AdminCard } from "../../components/AdminCard";
+import { BackButton } from "../../components/BackButton";
 import { InlineLoading } from "../../components/InlineLoading";
 import { Button } from "../../components/ui/Button";
 import { useAdminPodcast } from "../../hooks/adminQueries";
@@ -54,9 +55,7 @@ export function PodcastDetail({ podcastId }: { podcastId: string }) {
     return (
       <AdminCard title="Podcast not found">
         <p className="text-sm text-text-muted">This podcast was not found.</p>
-        <Button href="/podcast" variant="secondary" className="mt-4">
-          Back to podcasts
-        </Button>
+        <BackButton href="/podcast" label="Back to podcasts" className="mt-4" size="md" />
       </AdminCard>
     );
   }
@@ -68,9 +67,7 @@ export function PodcastDetail({ podcastId }: { podcastId: string }) {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button href="/podcast" variant="secondary" size="sm">
-          Back to podcasts
-        </Button>
+        <BackButton href="/podcast" label="Back to podcasts" />
         <Button href={`/podcast/${podcast.id}/edit`} size="sm">
           Edit podcast
         </Button>

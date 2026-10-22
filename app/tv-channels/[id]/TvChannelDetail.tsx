@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { AdminCard } from "../../components/AdminCard";
 import { AdminErrorAlert } from "../../components/AdminErrorAlert";
+import { BackButton } from "../../components/BackButton";
 import { InlineLoading } from "../../components/InlineLoading";
 import { Button } from "../../components/ui/Button";
 import { useTvChannel } from "../../hooks/adminQueries";
@@ -238,9 +239,7 @@ export function TvChannelDetail({ channelId }: { channelId: string }) {
     return (
       <AdminCard title="Channel not found">
         <p className="text-sm text-text-muted">This TV channel could not be found.</p>
-        <Button href="/tv-channels" variant="secondary" className="mt-4">
-          Back to TV channels
-        </Button>
+        <BackButton href="/tv-channels" label="Back to TV channels" className="mt-4" size="md" />
       </AdminCard>
     );
   }
@@ -285,9 +284,7 @@ export function TvChannelDetail({ channelId }: { channelId: string }) {
           >
             Delete
           </Button>
-          <Button href="/tv-channels" variant="secondary" size="sm">
-            Back
-          </Button>
+          <BackButton href="/tv-channels" label="Back to TV channels" />
         </div>
       </div>
 

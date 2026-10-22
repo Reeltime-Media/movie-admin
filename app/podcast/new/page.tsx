@@ -1,5 +1,6 @@
 "use client";
 
+import { Headphones, ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -7,6 +8,8 @@ import { toast } from "react-toastify";
 import { AdminCard } from "../../components/AdminCard";
 import { AdminSelect } from "../../components/AdminSelect";
 import { AdminShell } from "../../components/AdminShell";
+import { AssetPicker } from "../../components/AssetPicker";
+import { BackButton } from "../../components/BackButton";
 import { WizardSteps } from "../../components/WizardSteps";
 import { Button } from "../../components/ui/Button";
 import { useUploadProgress } from "../../components/UploadProgressContext";
@@ -21,7 +24,6 @@ import {
   detectAudioDurationMinutes,
   formatRuntimeMinutes,
   isFreeFromPodcastAccess,
-  podcastFileInputClass,
   podcastSelectClass,
   podcastTextInputClass,
   toApiStatus,
@@ -59,6 +61,8 @@ export default function NewPodcastPage() {
   const [status, setStatus] = useState("Published");
   const [access, setAccess] = useState<PodcastAccess>("plan");
   const [detectedRuntime, setDetectedRuntime] = useState<number | null>(null);
+  const [posterFile, setPosterFile] = useState<File | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [detailsError, setDetailsError] = useState<string | null>(null);
@@ -100,6 +104,7 @@ export default function NewPodcastPage() {
   };
 
   const onAudioSelected = async (file: File | null) => {
+    setAudioFile(file);
     if (!file || file.size === 0) {
       setDetectedRuntime(null);
       return;
@@ -122,10 +127,14 @@ export default function NewPodcastPage() {
       return;
     }
 
-    const posterFile = fd.get("poster");
-    const audioFile = fd.get("audio");
-    const poster = posterFile instanceof File && posterFile.size > 0 ? posterFile : null;
-    const audio = audioFile instanceof File && audioFile.size > 0 ? audioFile : null;
+    const posterFromForm = fd.get("poster");
+    const audioFromForm = fd.get("audio");
+    const poster =
+      posterFile ??
+      (posterFromForm instanceof File && posterFromForm.size > 0 ? posterFromForm : null);
+    const audio =
+      audioFile ??
+      (audioFromForm instanceof File && audioFromForm.size > 0 ? audioFromForm : null);
 
     const targetStatus: Status =
       intent === "draft" ? "Draft" : toUiStatus(String(fd.get("status") || status));
@@ -227,64 +236,88 @@ export default function NewPodcastPage() {
   const runtimeLabel = formatRuntimeMinutes(detectedRuntime);
 
   return (
-    <AdminShell
-      title="Upload new podcast"
-      headerAction={
-        <Button href="/podcast" variant="secondary" size="sm" className="shrink-0">
-          Back to podcasts
-        </Button>
-      }
-    >
-      <WizardSteps labels={stepLabels} step={step} onStepChange={goToStep} />
+    <AdminShell title="Upload new podcast">
+      <WizardSteps
+        labels={stepLabels}
+        step={step}
+        onStepChange={goToStep}
+        leading={<BackButton href="/podcast" label="Back to podcasts" />}
+      />
 
       <form id="podcast-wizard-form" onSubmit={handleUploadSubmit} noValidate className="w-full space-y-6">
         <div className={step === 0 ? "block" : "hidden"} aria-hidden={step !== 0}>
           <AdminCard title="Podcast details">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="English title">
-                <input name="title" placeholder="Night Whispers" className={podcastTextInputClass} />
-              </Field>
-              <Field label="Khmer title">
-                <input name="titleKm" placeholder="Optional" className={podcastTextInputClass} />
-              </Field>
+            <p className="mb-5 text-sm text-text-muted">
+              Set the title, access, and listing fields first. Continue to attach cover art and
+              audio.
+            </p>
 
-              <Field
-                label="Status"
-                hint="Published requires a cover and audio on the Assets step."
-              >
-                <AdminSelect
-                  value={status}
-                  onChange={setStatus}
-                  options={[
-                    { value: "Draft", label: "Draft" },
-                    { value: "Review", label: "Review" },
-                    { value: "Scheduled", label: "Scheduled" },
-                    { value: "Published", label: "Published" },
-                  ]}
-                  className={podcastSelectClass}
-                  aria-label="Status"
-                />
-                <input type="hidden" name="status" value={status} />
-              </Field>
+            <div className="space-y-6">
+              <section>
+                <h3 className="mb-3 text-2xs font-semibold uppercase tracking-[0.14em] text-text-muted">
+                  Titles
+                </h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="English title">
+                    <input
+                      name="title"
+                      placeholder="Night Whispers"
+                      className={podcastTextInputClass}
+                    />
+                  </Field>
+                  <Field label="Khmer title">
+                    <input name="titleKm" placeholder="Optional" className={podcastTextInputClass} />
+                  </Field>
+                </div>
+              </section>
 
-              <Field
-                label="Access"
-                hint={
-                  access === "free"
-                    ? "Anyone can listen without a subscription."
-                    : "Unlocks with any active subscription plan."
-                }
-              >
-                <AdminSelect
-                  value={access}
-                  onChange={(v) => setAccess(v as PodcastAccess)}
-                  options={[...PODCAST_ACCESS_OPTIONS]}
-                  className={podcastSelectClass}
-                  aria-label="Access"
-                />
-              </Field>
+              <section>
+                <h3 className="mb-3 text-2xs font-semibold uppercase tracking-[0.14em] text-text-muted">
+                  Catalog
+                </h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field
+                    label="Status"
+                    hint="Published requires a cover and audio on Assets. Save draft does not."
+                  >
+                    <AdminSelect
+                      value={status}
+                      onChange={setStatus}
+                      options={[
+                        { value: "Draft", label: "Draft" },
+                        { value: "Review", label: "Review" },
+                        { value: "Scheduled", label: "Scheduled" },
+                        { value: "Published", label: "Published" },
+                      ]}
+                      className={podcastSelectClass}
+                      aria-label="Status"
+                    />
+                    <input type="hidden" name="status" value={status} />
+                  </Field>
 
-              <div className="md:col-span-2">
+                  <Field
+                    label="Access"
+                    hint={
+                      access === "free"
+                        ? "Anyone can listen without a subscription."
+                        : "Unlocks with any active subscription plan."
+                    }
+                  >
+                    <AdminSelect
+                      value={access}
+                      onChange={(v) => setAccess(v as PodcastAccess)}
+                      options={[...PODCAST_ACCESS_OPTIONS]}
+                      className={podcastSelectClass}
+                      aria-label="Access"
+                    />
+                  </Field>
+                </div>
+              </section>
+
+              <section>
+                <h3 className="mb-3 text-2xs font-semibold uppercase tracking-[0.14em] text-text-muted">
+                  Story
+                </h3>
                 <Field label="Description">
                   <textarea
                     name="description"
@@ -293,22 +326,24 @@ export default function NewPodcastPage() {
                     className={`${podcastTextInputClass} resize-y`}
                   />
                 </Field>
-              </div>
+              </section>
             </div>
 
             {detailsError ? (
               <p className="mt-4 text-xs font-semibold text-warning">{detailsError}</p>
             ) : null}
 
-            <div className="mt-6 flex flex-wrap justify-end gap-2">
-              <Button href="/podcast" variant="secondary">
-                Cancel
-              </Button>
-              <Button type="button" variant="secondary" onClick={handleSaveDraftClick} disabled={isSubmitting}>
+            <div className="mt-6 flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleSaveDraftClick}
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? "Saving…" : "Save draft"}
               </Button>
               <Button type="button" onClick={() => goToStep(1)}>
-                Continue
+                Continue to assets
               </Button>
             </div>
           </AdminCard>
@@ -319,26 +354,31 @@ export default function NewPodcastPage() {
             <p className="mb-5 text-sm text-text-muted">
               Attach cover art and the audio file. Runtime is detected from the audio automatically.
             </p>
-            <div className="space-y-4">
-              <Field label="Cover image" hint="Required for Published. Optional when saving a draft.">
-                <input name="poster" type="file" accept="image/*" className={podcastFileInputClass} />
-              </Field>
-              <Field
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <AssetPicker
+                name="poster"
+                accept="image/*"
+                label="Cover image"
+                hint="Required for Published. Optional for draft."
+                previewAspect="poster"
+                icon={<ImageIcon size={20} aria-hidden />}
+                file={posterFile}
+                onFileChange={setPosterFile}
+              />
+              <AssetPicker
+                name="audio"
+                accept="audio/mpeg,audio/mp4,audio/wav,audio/x-m4a,audio/aac,audio/*"
                 label="Audio file"
                 hint={
                   runtimeLabel
                     ? `Detected runtime: ${runtimeLabel}`
                     : "mp3, m4a, wav, or aac. Runtime is read from the file."
                 }
-              >
-                <input
-                  name="audio"
-                  type="file"
-                  accept="audio/mpeg,audio/mp4,audio/wav,audio/x-m4a,audio/aac,audio/*"
-                  className={podcastFileInputClass}
-                  onChange={(e) => void onAudioSelected(e.target.files?.[0] ?? null)}
-                />
-              </Field>
+                icon={<Headphones size={20} aria-hidden />}
+                file={audioFile}
+                onFileChange={(file) => void onAudioSelected(file)}
+              />
             </div>
 
             {submitError ? (
@@ -359,16 +399,26 @@ export default function NewPodcastPage() {
               </div>
             ) : null}
 
-            <div className="mt-6 flex flex-wrap justify-end gap-3">
-              <Button type="button" variant="secondary" onClick={() => goToStep(0)}>
-                Back
-              </Button>
-              <Button type="button" variant="secondary" onClick={handleSaveDraftClick} disabled={isSubmitting}>
-                {isSubmitting ? "Saving…" : "Save draft"}
-              </Button>
-              <Button type="submit" variant="success" loading={isSubmitting} disabled={isSubmitting}>
-                {isSubmitting ? "Uploading…" : "Upload"}
-              </Button>
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+              <BackButton label="Back" onClick={() => goToStep(0)} />
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleSaveDraftClick}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Saving…" : "Save draft"}
+                </Button>
+                <Button
+                  type="submit"
+                  variant="success"
+                  loading={isSubmitting}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Uploading…" : "Upload podcast"}
+                </Button>
+              </div>
             </div>
           </AdminCard>
         </div>

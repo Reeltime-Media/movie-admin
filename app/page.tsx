@@ -3,6 +3,7 @@
 import { AdminShell } from "./components/AdminShell";
 import { AdminStatCard } from "./components/AdminStatCard";
 import { AdminErrorAlert } from "./components/AdminErrorAlert";
+import { DashboardOps } from "./components/DashboardOps";
 import { DashboardRevenue } from "./components/DashboardRevenue";
 import { DashboardTopMovies } from "./components/DashboardTopMovies";
 import { useDashboardSummary } from "./hooks/adminQueries";
@@ -69,7 +70,7 @@ export default function Home() {
         </div>
       ) : null}
 
-      <div className="grid shrink-0 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid shrink-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
           <AdminStatCard
             key={stat.label}
@@ -83,13 +84,18 @@ export default function Home() {
         ))}
       </div>
 
-      <div className="grid min-h-0 flex-1 gap-3 overflow-hidden lg:grid-cols-5">
-        <div className="min-h-0 overflow-hidden lg:col-span-3">
+      {/* Fills everything between stats and Needs attention — no dead gap */}
+      <div className="grid min-h-0 flex-1 gap-3 overflow-hidden lg:grid-cols-5 lg:items-stretch">
+        <div className="min-h-0 h-full overflow-hidden lg:col-span-3">
           <DashboardRevenue compact />
         </div>
-        <div className="min-h-0 overflow-hidden lg:col-span-2">
+        <div className="min-h-0 h-full overflow-hidden lg:col-span-2">
           <DashboardTopMovies compact />
         </div>
+      </div>
+
+      <div className="shrink-0">
+        <DashboardOps summary={summary} loading={summaryLoading} />
       </div>
     </AdminShell>
   );
