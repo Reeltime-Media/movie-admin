@@ -30,8 +30,8 @@ export function AdminCard({
   const icon = isCreate ? <Plus size={14} aria-hidden /> : undefined;
   const actionVariant = isCreate ? "primary" : "secondary";
   return (
-    <section className="rounded-xl border border-border bg-surface">
-      <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3">
+    <section className="overflow-hidden rounded-xl border border-white/8 bg-surface shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+      <div className="flex items-center justify-between gap-3 border-b border-white/6 bg-white/[0.02] px-5 py-3.5">
         <h2 className="text-sm font-semibold tracking-[-0.01em] text-text">{title}</h2>
         {headerAction ? (
           headerAction

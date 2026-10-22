@@ -55,18 +55,18 @@ export function SeriesManagementTable({
 
   return (
     <>
-      <section className="border border-border bg-surface">
+      <section className="overflow-hidden rounded-xl border border-white/8 bg-surface">
         <div className="px-5 pb-5 pt-5">
         <div className="-mx-5 overflow-x-auto">
           <table className="w-full min-w-200 text-left text-sm">
             <thead>
-              <tr className="border-b border-border text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
-                <th className="px-5 pb-2.5 font-semibold">Khmer title</th>
-                <th className="px-5 pb-2.5 font-semibold">English title</th>
-                <th className="px-5 pb-2.5 font-semibold">Structure</th>
-                <th className="px-5 pb-2.5 font-semibold">Genre</th>
-                <th className="px-5 pb-2.5 font-semibold">Status</th>
-                <th className="px-5 pb-2.5 text-right font-semibold">Actions</th>
+              <tr className="border-b border-white/8 bg-white/[0.03] text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
+                <th className="px-5 py-3 font-semibold">Khmer title</th>
+                <th className="px-5 py-3 font-semibold">English title</th>
+                <th className="px-5 py-3 font-semibold">Structure</th>
+                <th className="px-5 py-3 font-semibold">Genre</th>
+                <th className="px-5 py-3 font-semibold">Status</th>
+                <th className="px-5 py-3 text-right font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">

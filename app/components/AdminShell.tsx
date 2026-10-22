@@ -63,14 +63,14 @@ const navGroups: NavGroup[] = [
 function Wordmark({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <Link href="/" onClick={onNavigate} className="group block leading-none">
-      <div className="flex items-center gap-2">
-        <span className="grid h-7 w-7 place-items-center rounded-md bg-brand text-2xs font-black text-white">
+      <div className="flex items-center gap-3">
+        <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand text-sm font-black tracking-tight text-white shadow-[0_0_24px_rgba(229,9,20,0.35)]">
           R
         </span>
         <div>
-          <div className="text-sm font-bold tracking-[0.12em] text-text">REELTIME</div>
-          <div className="mt-0.5 text-2xs font-medium tracking-wide text-text-disabled">
-            Admin
+          <div className="text-[15px] font-bold tracking-[0.18em] text-text">REELTIME</div>
+          <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-brand">
+            Cinema console
           </div>
         </div>
       </div>
@@ -82,13 +82,13 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <nav className="space-y-5">
+    <nav className="space-y-6">
       {navGroups.map((group) => (
         <div key={group.heading}>
-          <div className="mb-1.5 px-2.5 text-2xs font-semibold uppercase tracking-[0.14em] text-text-disabled">
+          <div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-text-disabled">
             {group.heading}
           </div>
-          <div className="space-y-0.5">
+          <div className="space-y-1">
             {group.items.map((item) => {
               const active =
                 pathname === item.href ||
@@ -102,20 +102,14 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                   onClick={onNavigate}
                   aria-current={active ? "page" : undefined}
                   className={[
-                    "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
+                    "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     active
-                      ? "bg-brand-soft text-text"
-                      : "text-text-muted hover:bg-surface-elevated hover:text-text",
+                      ? "bg-brand/15 text-text shadow-[inset_3px_0_0_0_var(--rt-brand)]"
+                      : "text-text-muted hover:bg-white/4 hover:text-text",
                   ].join(" ")}
                 >
-                  <span
-                    className={[
-                      "absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full transition-opacity",
-                      active ? "bg-brand opacity-100" : "opacity-0",
-                    ].join(" ")}
-                  />
                   <Icon
-                    size={15}
+                    size={16}
                     strokeWidth={2}
                     className={
                       active ? "text-brand" : "text-text-disabled group-hover:text-text-muted"
@@ -160,7 +154,6 @@ export function AdminShell({
     return () => window.removeEventListener("reeltime-admin-auth-cleared", handleAuthCleared);
   }, [router]);
 
-  // Prevent background scroll while the mobile drawer is open.
   useEffect(() => {
     if (!mobileNavOpen) return;
     const original = document.body.style.overflow;
@@ -190,71 +183,82 @@ export function AdminShell({
     <button
       type="button"
       onClick={handleSignOut}
-      className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-elevated hover:text-text"
+      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-text-muted transition-colors hover:bg-white/4 hover:text-text"
     >
-      <LogOut size={15} strokeWidth={2} className="text-text-disabled" aria-hidden />
+      <LogOut size={16} strokeWidth={2} className="text-text-disabled" aria-hidden />
       Sign out
     </button>
   );
 
+  const sidebarInner = (
+    <>
+      <div className="border-b border-white/6 px-4 pb-5 pt-1">
+        <Wordmark onNavigate={mobileNavOpen ? () => setMobileNavOpen(false) : undefined} />
+      </div>
+      <div className="flex-1 overflow-y-auto px-3 py-5">
+        <NavList onNavigate={mobileNavOpen ? () => setMobileNavOpen(false) : undefined} />
+      </div>
+      <div className="border-t border-white/6 px-3 py-3">{signOutButton}</div>
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-bg text-text">
-      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-56 flex-col overflow-y-auto border-r border-border bg-surface-soft px-3 py-5 lg:flex">
-        <div className="px-1">
-          <Wordmark />
-        </div>
-        <div className="mt-7 flex-1">
-          <NavList />
-        </div>
-        <div className="mt-4 border-t border-border pt-3">{signOutButton}</div>
+      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-60 flex-col overflow-hidden border-r border-white/8 bg-[#070709] lg:flex">
+        <div className="h-1 w-full bg-linear-to-r from-brand via-brand/80 to-transparent" />
+        {sidebarInner}
       </aside>
 
-      {/* Mobile navigation drawer */}
       {mobileNavOpen ? (
         <div className="fixed inset-0 z-40 lg:hidden">
           <button
             type="button"
             aria-label="Close menu"
             onClick={() => setMobileNavOpen(false)}
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/75 backdrop-blur-sm"
           />
-          <aside className="absolute left-0 top-0 flex h-full w-72 max-w-[82%] flex-col overflow-y-auto border-r border-border bg-surface-soft px-4 py-5">
-            <div className="flex items-center justify-between gap-2.5">
+          <aside className="absolute left-0 top-0 flex h-full w-72 max-w-[84%] flex-col overflow-hidden border-r border-white/8 bg-[#070709]">
+            <div className="h-1 w-full bg-linear-to-r from-brand via-brand/80 to-transparent" />
+            <div className="flex items-center justify-between gap-2 border-b border-white/6 px-4 py-4">
               <Wordmark onNavigate={() => setMobileNavOpen(false)} />
               <button
                 type="button"
                 aria-label="Close menu"
                 onClick={() => setMobileNavOpen(false)}
-                className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-surface-elevated text-text-muted transition-colors hover:border-border-hover hover:bg-border/60 hover:text-text"
+                className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-surface-elevated text-text-muted transition-colors hover:text-text"
               >
                 <X size={15} aria-hidden />
               </button>
             </div>
-
-            <div className="mt-8 flex-1">
+            <div className="flex-1 overflow-y-auto px-3 py-5">
               <NavList onNavigate={() => setMobileNavOpen(false)} />
             </div>
-            <div className="mt-4 border-t border-border pt-3">{signOutButton}</div>
+            <div className="border-t border-white/6 px-3 py-3">{signOutButton}</div>
           </aside>
         </div>
       ) : null}
 
-      <div className="flex min-h-screen min-w-0 flex-col lg:ml-56">
-        <header className="sticky top-0 z-20 border-b border-border bg-bg/85 backdrop-blur-xl">
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+      <div className="flex min-h-screen min-w-0 flex-col lg:ml-60">
+        <header className="sticky top-0 z-20 border-b border-white/8 bg-[#0a0a0c]/90 backdrop-blur-xl">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <button
                 type="button"
                 aria-label="Open menu"
                 aria-expanded={mobileNavOpen}
                 onClick={() => setMobileNavOpen(true)}
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border bg-surface-elevated text-text-muted transition-colors hover:border-border-hover hover:text-text lg:hidden"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border bg-surface-elevated text-text-muted transition-colors hover:text-text lg:hidden"
               >
                 <Menu size={17} aria-hidden />
               </button>
-              <h1 className="truncate text-lg font-semibold tracking-[-0.02em] text-text sm:text-xl">
-                {title}
-              </h1>
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text-disabled">
+                  Reeltime admin
+                </p>
+                <h1 className="truncate text-xl font-semibold tracking-[-0.03em] text-text sm:text-2xl">
+                  {title}
+                </h1>
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
@@ -374,7 +378,7 @@ export function AdminShell({
           </div>
         </header>
 
-        <main className="flex w-full min-w-0 flex-1 flex-col px-4 py-5 sm:px-6 lg:px-8">
+        <main className="flex w-full min-w-0 flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8">
           <div className="w-full min-w-0 flex-1 space-y-6">{children}</div>
         </main>
       </div>
