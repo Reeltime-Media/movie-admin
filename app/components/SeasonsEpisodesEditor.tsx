@@ -15,7 +15,7 @@ const fileInputClass =
 type SeasonsEpisodesEditorProps = {
   seasons: Season[];
   onChange: (next: Season[]) => void;
-  /** When true, compact list + per-episode Edit panel with replace video/poster. */
+  /** When true, compact list + per-episode Edit popup with replace video/poster. */
   allowAssetReplace?: boolean;
 };
 
@@ -23,10 +23,12 @@ function EpisodePosterThumb({
   posterFile,
   posterUrl,
   title,
+  size = "sm",
 }: {
   posterFile?: File;
   posterUrl?: string | null;
   title: string;
+  size?: "sm" | "md";
 }) {
   const localUrl = useMemo(
     () => (posterFile ? URL.createObjectURL(posterFile) : null),
@@ -39,10 +41,17 @@ function EpisodePosterThumb({
     };
   }, [localUrl]);
 
+  const box =
+    size === "md"
+      ? "aspect-2/3 w-28"
+      : "aspect-2/3 w-16";
+
   const src = localUrl ?? posterUrl ?? null;
   if (!src) {
     return (
-      <div className="grid aspect-2/3 w-16 place-items-center rounded border border-dashed border-border bg-bg text-center text-2xs text-text-disabled">
+      <div
+        className={`grid ${box} place-items-center rounded border border-dashed border-border bg-bg text-center text-2xs text-text-disabled`}
+      >
         No poster
       </div>
     );
@@ -53,7 +62,7 @@ function EpisodePosterThumb({
     <img
       src={src}
       alt={`${title} poster`}
-      className="aspect-2/3 w-16 rounded border border-border object-cover"
+      className={`${box} rounded border border-border object-cover`}
     />
   );
 }
@@ -65,6 +74,34 @@ export function SeasonsEpisodesEditor({
 }: SeasonsEpisodesEditorProps) {
   const [editingEpisodeId, setEditingEpisodeId] = useState<string | null>(null);
   const emit = (next: Season[]) => onChange(renumberSeasons(next));
+
+  const editingContext = useMemo(() => {
+    if (!editingEpisodeId) return null;
+    for (const season of seasons) {
+      const episode = season.episodes.find((ep) => ep.id === editingEpisodeId);
+      if (episode) return { season, episode };
+    }
+    return null;
+  }, [editingEpisodeId, seasons]);
+
+  useEffect(() => {
+    if (!editingEpisodeId) return;
+    if (!editingContext) {
+      setEditingEpisodeId(null);
+      return;
+    }
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setEditingEpisodeId(null);
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [editingEpisodeId, editingContext]);
 
   const updateSeason = (seasonId: string, patch: Partial<Pick<Season, "title">>) => {
     emit(seasons.map((s) => (s.id === seasonId ? { ...s, ...patch } : s)));
@@ -167,9 +204,7 @@ export function SeasonsEpisodesEditor({
     );
   };
 
-  const toggleEditEpisode = (episodeId: string) => {
-    setEditingEpisodeId((prev) => (prev === episodeId ? null : episodeId));
-  };
+  const closeEditor = () => setEditingEpisodeId(null);
 
   return (
     <div className="space-y-5">
@@ -220,9 +255,7 @@ export function SeasonsEpisodesEditor({
             ) : null}
 
             {season.episodes.map((ep) => {
-              const isEditing = allowAssetReplace && editingEpisodeId === ep.id;
               const isNewEpisode = !ep.slug;
-              const canEditAssets = allowAssetReplace;
               const hasPendingAssets = Boolean(ep.videoFile || ep.posterFile);
 
               if (!allowAssetReplace) {
@@ -273,10 +306,7 @@ export function SeasonsEpisodesEditor({
               return (
                 <div
                   key={ep.id}
-                  className={[
-                    "overflow-hidden rounded-lg border bg-surface/40",
-                    isEditing ? "border-brand/40" : "border-border",
-                  ].join(" ")}
+                  className="overflow-hidden rounded-lg border border-border bg-surface/40"
                 >
                   <div className="flex flex-wrap items-center gap-3 px-3 py-2.5">
                     <div className="w-8 shrink-0 text-center text-xs font-bold text-brand">
@@ -313,11 +343,11 @@ export function SeasonsEpisodesEditor({
                       ) : null}
                       <Button
                         type="button"
-                        variant={isEditing ? "primary" : "secondary"}
+                        variant="secondary"
                         size="sm"
-                        onClick={() => toggleEditEpisode(ep.id)}
+                        onClick={() => setEditingEpisodeId(ep.id)}
                       >
-                        {isEditing ? "Close" : "Edit"}
+                        {isNewEpisode ? "Edit & upload" : "Edit"}
                       </Button>
                       <Button
                         type="button"
@@ -330,124 +360,6 @@ export function SeasonsEpisodesEditor({
                       </Button>
                     </div>
                   </div>
-
-                  {isEditing ? (
-                    <div className="space-y-4 border-t border-border bg-bg/60 px-4 py-4">
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <label className="block">
-                          <span className="mb-1 block text-2xs font-semibold text-text-disabled">
-                            Title
-                          </span>
-                          <input
-                            className={inputClass}
-                            value={ep.title}
-                            onChange={(e) =>
-                              updateEpisode(season.id, ep.id, { title: e.target.value })
-                            }
-                            placeholder="Episode title"
-                          />
-                        </label>
-                        <label className="block">
-                          <span className="mb-1 block text-2xs font-semibold text-text-disabled">
-                            Runtime
-                          </span>
-                          <input
-                            className={inputClass}
-                            value={ep.runtime}
-                            onChange={(e) =>
-                              updateEpisode(season.id, ep.id, { runtime: e.target.value })
-                            }
-                            placeholder="45m"
-                          />
-                        </label>
-                      </div>
-
-                      <label className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(ep.isFree)}
-                          onChange={(e) =>
-                            updateEpisode(season.id, ep.id, { isFree: e.target.checked })
-                          }
-                          className="rounded border-border"
-                        />
-                        Free episode
-                      </label>
-
-                      {canEditAssets ? (
-                        <div className="grid gap-3 border-t border-border/60 pt-4 sm:grid-cols-[80px_minmax(0,1fr)_minmax(0,1fr)] sm:items-start">
-                          <div className="flex justify-center sm:justify-start">
-                            <EpisodePosterThumb
-                              posterFile={ep.posterFile}
-                              posterUrl={ep.posterUrl}
-                              title={ep.title}
-                            />
-                          </div>
-                          <div>
-                            <span className="block text-2xs font-semibold text-text-muted">
-                              {isNewEpisode ? "Video (required)" : "Replace video"}
-                            </span>
-                            <input
-                              type="file"
-                              accept="video/mp4,video/quicktime,video/*"
-                              className={fileInputClass}
-                              onChange={(e) =>
-                                setEpisodeAsset(season.id, ep.id, "video", e.target.files)
-                              }
-                            />
-                            {ep.videoFile ? (
-                              <p className="mt-1 break-all text-2xs text-text-muted">
-                                {isNewEpisode ? "Selected" : "New"}: {ep.videoFile.name}
-                              </p>
-                            ) : ep.hlsMasterKey ? (
-                              <p className="mt-1 text-2xs text-text-disabled">Current: HLS ready</p>
-                            ) : isNewEpisode ? (
-                              <p className="mt-1 text-2xs text-warning">
-                                Required — attach a video, then Save changes.
-                              </p>
-                            ) : (
-                              <p className="mt-1 text-2xs text-text-disabled">
-                                Optional — leave empty to keep current
-                              </p>
-                            )}
-                          </div>
-                          <div>
-                            <span className="block text-2xs font-semibold text-text-muted">
-                              {isNewEpisode ? "Poster (optional)" : "Replace poster"}
-                            </span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className={fileInputClass}
-                              onChange={(e) =>
-                                setEpisodeAsset(season.id, ep.id, "poster", e.target.files)
-                              }
-                            />
-                            {ep.posterFile ? (
-                              <p className="mt-1 break-all text-2xs text-text-muted">
-                                {isNewEpisode ? "Selected" : "New"}: {ep.posterFile.name}
-                              </p>
-                            ) : (
-                              <p className="mt-1 text-2xs text-text-disabled">
-                                Optional — leave empty to keep current
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ) : null}
-
-                      <div className="flex justify-end">
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setEditingEpisodeId(null)}
-                        >
-                          Done editing
-                        </Button>
-                      </div>
-                    </div>
-                  ) : null}
                 </div>
               );
             })}
@@ -460,6 +372,183 @@ export function SeasonsEpisodesEditor({
           Add season
         </Button>
       </div>
+
+      {editingContext ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-[2px]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="episode-edit-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeEditor();
+          }}
+        >
+          <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-md sm:p-6">
+            <div className="flex items-start justify-between gap-3 border-b border-border pb-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-brand">
+                  E{editingContext.episode.number}
+                </p>
+                <h2
+                  id="episode-edit-title"
+                  className="mt-1 text-lg font-bold tracking-[-0.02em] text-text"
+                >
+                  {editingContext.episode.title || `Episode ${editingContext.episode.number}`}
+                </h2>
+                <p className="mt-1 text-2xs text-text-muted">
+                  {editingContext.season.title} ·{" "}
+                  {editingContext.episode.slug
+                    ? "Update details or replace assets"
+                    : "New episode — attach a video, then Save changes on the series"}
+                </p>
+              </div>
+              <Button type="button" variant="secondary" size="sm" onClick={closeEditor}>
+                Close
+              </Button>
+            </div>
+
+            <div className="mt-5 space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block">
+                  <span className="mb-1 block text-2xs font-semibold text-text-disabled">
+                    Title
+                  </span>
+                  <input
+                    className={inputClass}
+                    value={editingContext.episode.title}
+                    onChange={(e) =>
+                      updateEpisode(editingContext.season.id, editingContext.episode.id, {
+                        title: e.target.value,
+                      })
+                    }
+                    placeholder="Episode title"
+                    autoFocus
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-2xs font-semibold text-text-disabled">
+                    Runtime
+                  </span>
+                  <input
+                    className={inputClass}
+                    value={editingContext.episode.runtime}
+                    onChange={(e) =>
+                      updateEpisode(editingContext.season.id, editingContext.episode.id, {
+                        runtime: e.target.value,
+                      })
+                    }
+                    placeholder="45m"
+                  />
+                </label>
+              </div>
+
+              <label className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted">
+                <input
+                  type="checkbox"
+                  checked={Boolean(editingContext.episode.isFree)}
+                  onChange={(e) =>
+                    updateEpisode(editingContext.season.id, editingContext.episode.id, {
+                      isFree: e.target.checked,
+                    })
+                  }
+                  className="rounded border-border"
+                />
+                Free episode
+              </label>
+
+              <div className="grid gap-4 border-t border-border/60 pt-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start">
+                <EpisodePosterThumb
+                  posterFile={editingContext.episode.posterFile}
+                  posterUrl={editingContext.episode.posterUrl}
+                  title={editingContext.episode.title}
+                  size="md"
+                />
+                <div className="space-y-4">
+                  <div>
+                    <span className="block text-2xs font-semibold text-text-muted">
+                      {editingContext.episode.slug ? "Replace video" : "Video (required)"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="video/mp4,video/quicktime,video/*"
+                      className={fileInputClass}
+                      onChange={(e) =>
+                        setEpisodeAsset(
+                          editingContext.season.id,
+                          editingContext.episode.id,
+                          "video",
+                          e.target.files,
+                        )
+                      }
+                    />
+                    {editingContext.episode.videoFile ? (
+                      <p className="mt-1 break-all text-2xs text-text-muted">
+                        {editingContext.episode.slug ? "New" : "Selected"}:{" "}
+                        {editingContext.episode.videoFile.name}
+                      </p>
+                    ) : editingContext.episode.hlsMasterKey ? (
+                      <p className="mt-1 text-2xs text-text-disabled">Current: HLS ready</p>
+                    ) : editingContext.episode.slug ? (
+                      <p className="mt-1 text-2xs text-text-disabled">
+                        Optional — leave empty to keep current
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-2xs text-warning">
+                        Required — attach a video, then Save changes.
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <span className="block text-2xs font-semibold text-text-muted">
+                      {editingContext.episode.slug ? "Replace poster" : "Poster (optional)"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className={fileInputClass}
+                      onChange={(e) =>
+                        setEpisodeAsset(
+                          editingContext.season.id,
+                          editingContext.episode.id,
+                          "poster",
+                          e.target.files,
+                        )
+                      }
+                    />
+                    {editingContext.episode.posterFile ? (
+                      <p className="mt-1 break-all text-2xs text-text-muted">
+                        {editingContext.episode.slug ? "New" : "Selected"}:{" "}
+                        {editingContext.episode.posterFile.name}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-2xs text-text-disabled">
+                        Optional — leave empty to keep current
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-border pt-4">
+              <Button
+                type="button"
+                variant="danger-soft"
+                size="sm"
+                onClick={() =>
+                  removeEpisode(editingContext.season.id, editingContext.episode.id)
+                }
+                disabled={editingContext.season.episodes.length <= 1}
+              >
+                Remove episode
+              </Button>
+              <Button type="button" variant="primary" size="sm" onClick={closeEditor}>
+                Done
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
