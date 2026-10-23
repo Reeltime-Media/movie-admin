@@ -1948,6 +1948,54 @@ export async function deleteAdminFreeToday(id: string): Promise<void> {
   await apiFetch<void>(`/admin/free-today/${id}`, { method: "DELETE" });
 }
 
+export type ApiGenreRailItem = {
+  id: string;
+  genre_name: string;
+  content_id: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  content_title: string | null;
+  content_slug: string | null;
+  poster_key: string | null;
+};
+
+export async function listAdminGenreRails(genre?: string): Promise<ApiGenreRailItem[]> {
+  const q = genre?.trim() ? `?genre=${encodeURIComponent(genre.trim())}` : "";
+  return apiFetch<ApiGenreRailItem[]>(`/admin/genre-rails${q}`);
+}
+
+export async function createAdminGenreRail(input: {
+  genreName: string;
+  contentId: string;
+  sortOrder?: number;
+}): Promise<ApiGenreRailItem> {
+  return apiFetch<ApiGenreRailItem>("/admin/genre-rails", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      genre_name: input.genreName,
+      content_id: input.contentId,
+      sort_order: input.sortOrder ?? 0,
+    }),
+  });
+}
+
+export async function updateAdminGenreRail(
+  id: string,
+  input: { sortOrder: number },
+): Promise<ApiGenreRailItem> {
+  return apiFetch<ApiGenreRailItem>(`/admin/genre-rails/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sort_order: input.sortOrder }),
+  });
+}
+
+export async function deleteAdminGenreRail(id: string): Promise<void> {
+  await apiFetch<void>(`/admin/genre-rails/${id}`, { method: "DELETE" });
+}
+
 export type ApiComingSoonItem = {
   id: string;
   content_id: string;

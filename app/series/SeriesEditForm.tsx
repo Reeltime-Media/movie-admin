@@ -16,13 +16,16 @@ import { TrailerPreview } from "../components/TrailerPreview";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
 import { useDeleteGenre, useGenres } from "../hooks/adminQueries";
 import {
+  listSeriesEpisodesApi,
   uploadEpisodeAssets,
   uploadEpisodeWithAssets,
   uploadSeriesAssets,
+  type ApiSeasonRead,
 } from "../lib/api";
 import type { CatalogEntry, Status } from "../lib/adminData";
 import { formatGenres, parseGenresFromStored } from "../lib/genres";
 import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../lib/money";
+import { mapApiSeasons } from "../lib/catalog";
 import { validateSeriesSeasons } from "../lib/seriesHelpers";
 import { pickAssetFile, pickFileFromInput } from "../movie/movieEditHelpers";
 import {
@@ -145,6 +148,25 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
     setEditPosterFile(null);
     setEditBannerFile(null);
   }
+
+  // Catalog list no longer embeds seasons — load them when opening edit.
+  useEffect(() => {
+    if (!series?.slug) return;
+    let cancelled = false;
+    void listSeriesEpisodesApi(series.slug)
+      .then((apiSeasons: ApiSeasonRead[]) => {
+        if (cancelled) return;
+        const seasons = mapApiSeasons(apiSeasons);
+        setEditDraft((prev) => (prev ? { ...prev, seasons } : prev));
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        toast.error(err instanceof Error ? err.message : "Could not load episodes.");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [series?.slug, series?.updatedAt]);
 
   const { data: genreData } = useGenres();
   const deleteGenreMutation = useDeleteGenre();

@@ -25,6 +25,7 @@ export const queryKeys = {
   heroFeatured: ["hero-featured"] as const,
   freeToday: ["free-today"] as const,
   comingSoon: ["coming-soon"] as const,
+  genreRails: (genre?: string) => ["genre-rails", genre ?? "all"] as const,
   genres: ["genres"] as const,
   comments: (params: { movieId: string; page: number; pageSize: number }) =>
     ["comments", params] as const,

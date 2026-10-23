@@ -78,7 +78,7 @@ export function apiContentToCatalogEntry(content: ApiContent): CatalogEntry {
   };
 }
 
-function mapApiSeasons(apiSeasons: ApiSeasonRead[]): Season[] {
+export function mapApiSeasons(apiSeasons: ApiSeasonRead[]): Season[] {
   return apiSeasons.map((s) => ({
     id: `s-${s.season_number}`,
     number: s.season_number,
@@ -134,28 +134,6 @@ export function apiSeriesToCatalogEntry(series: ApiSeries, apiSeasons: ApiSeason
   };
 }
 
-async function mapWithConcurrency<T, R>(
-  items: T[],
-  concurrency: number,
-  mapper: (item: T) => Promise<R>,
-): Promise<R[]> {
-  if (items.length === 0) return [];
-  const results = new Array<R>(items.length);
-  let nextIndex = 0;
-
-  async function worker() {
-    while (nextIndex < items.length) {
-      const index = nextIndex;
-      nextIndex += 1;
-      results[index] = await mapper(items[index]!);
-    }
-  }
-
-  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker());
-  await Promise.all(workers);
-  return results;
-}
-
 export async function fetchCatalog(): Promise<CatalogEntry[]> {
   if (!getAdminToken()) {
     return [];
@@ -163,17 +141,16 @@ export async function fetchCatalog(): Promise<CatalogEntry[]> {
 
   // Do not swallow series failures — that made Series / Short series look empty
   // while Movies still rendered.
+  // Skip per-series /episodes here: the list pages only need metadata, and fanning
+  // out dozens of episode requests through the local proxy routinely ETIMEDOUTs.
+  // Detail/edit load seasons on demand (useAdminSeries / SeriesEditForm).
   const [apiMovies, apiSeries] = await Promise.all([
     listAllAdminMovies(),
     listAllAdminSeries(),
   ]);
-  // Cap parallel episode fetches so a large catalog cannot stall the browser.
-  const episodesBySeries = await mapWithConcurrency(apiSeries, 6, (s) =>
-    listSeriesEpisodesApi(s.slug).catch(() => [] as ApiSeasonRead[]),
-  );
   return [
     ...apiMovies.map(apiContentToCatalogEntry),
-    ...apiSeries.map((s, i) => apiSeriesToCatalogEntry(s, episodesBySeries[i] ?? [])),
+    ...apiSeries.map((s) => apiSeriesToCatalogEntry(s, [])),
   ];
 }
 

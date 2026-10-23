@@ -45,7 +45,8 @@ export function seriesStructureSummary(entry: CatalogEntry): string {
   if (entry.type !== "Series") return "—";
   const ep = totalEpisodesInEntry(entry);
   const sn = entry.seasons.length;
-  if (sn === 0 && ep === 0) return "No seasons";
+  // Catalog list skips episode payloads — empty seasons just means "not loaded".
+  if (sn === 0 && ep === 0) return "";
   return `${sn} season${sn === 1 ? "" : "s"}, ${ep} episode${ep === 1 ? "" : "s"}`;
 }
 
