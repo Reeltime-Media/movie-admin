@@ -348,13 +348,6 @@ export function HeroFeaturedManager() {
           </Button>
         }
       >
-        <p className="mb-4 text-sm leading-relaxed text-text-muted">
-          The big carousel at the top of the client home page. Feature a{" "}
-          <strong className="font-semibold text-text">movie or series</strong> — its trailer plays
-          automatically — or add a <strong className="font-semibold text-text">video-only</strong>{" "}
-          slide. Drag a card to reorder (top shows first); only published titles appear
-          to visitors.
-        </p>
 
         {catalogLoading ? (
           <p className="mb-4 text-xs text-text-muted">Loading catalog…</p>

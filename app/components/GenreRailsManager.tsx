@@ -59,6 +59,8 @@ export function GenreRailsManager() {
   const [movies, setMovies] = useState<ApiContent[]>([]);
   const [moviesLoading, setMoviesLoading] = useState(true);
   const [moviesError, setMoviesError] = useState<string | null>(null);
+  /** Local order for the automatic (unpinned) rail so admins can drag before/while pinning. */
+  const [draftAutomatic, setDraftAutomatic] = useState<ApiContent[]>([]);
 
   const items = useMemo(() => itemsQuery.data ?? [], [itemsQuery.data]);
   const isLoading = itemsQuery.isLoading;
@@ -104,21 +106,59 @@ export function GenreRailsManager() {
 
   const listedIds = useMemo(() => new Set(items.map((i) => i.content_id)), [items]);
 
+  const normalizeGenre = (label: string) =>
+    label.trim().toLowerCase().replace(/[-\s]/g, "");
+
+  /** Home rails match primary genre only (same as movie-client filterByGenreLabel). */
+  const primaryGenreMatches = (m: ApiContent, genre: string) => {
+    const needle = normalizeGenre(genre);
+    const primary = (m.genres ?? []).map((g) => g.trim()).find(Boolean);
+    return primary != null && normalizeGenre(primary) === needle;
+  };
+
+  const movieMatchesGenre = (m: ApiContent, genre: string) => {
+    const needle = normalizeGenre(genre);
+    if (!needle) return false;
+    return (m.genres ?? []).some((g) => normalizeGenre(g) === needle);
+  };
+
+  /** Same titles the website auto-shows for this genre when nothing is curated yet. */
+  const automaticRailMovies = useMemo(() => {
+    return movies
+      .filter((m) => m.is_published && primaryGenreMatches(m, selectedGenre))
+      .slice(0, MAX_PICKS);
+  }, [movies, selectedGenre]);
+
+  useEffect(() => {
+    setDraftAutomatic(automaticRailMovies);
+  }, [automaticRailMovies]);
+
   const filteredMovies = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const genreLower = selectedGenre.toLowerCase();
-    return movies.filter((m) => {
+
+    const matchesSearch = (m: ApiContent) => {
+      if (!q) return true;
       const genres = (m.genres ?? []).map((g) => g.toLowerCase());
-      const matchesGenre = genres.includes(genreLower) || genres.some((g) => g.includes(genreLower));
-      // Prefer genre matches, but still allow search across all when typing.
-      if (q) {
-        return (
-          m.title.toLowerCase().includes(q) ||
-          m.slug.toLowerCase().includes(q) ||
-          genres.some((g) => g.includes(q))
-        );
-      }
-      return matchesGenre || genres.length === 0;
+      return (
+        m.title.toLowerCase().includes(q) ||
+        m.slug.toLowerCase().includes(q) ||
+        genres.some((g) => g.includes(q))
+      );
+    };
+
+    return [...movies].filter(matchesSearch).sort((a, b) => {
+      const aMatch = primaryGenreMatches(a, selectedGenre)
+        ? 0
+        : movieMatchesGenre(a, selectedGenre)
+          ? 1
+          : 2;
+      const bMatch = primaryGenreMatches(b, selectedGenre)
+        ? 0
+        : movieMatchesGenre(b, selectedGenre)
+          ? 1
+          : 2;
+      if (aMatch !== bMatch) return aMatch - bMatch;
+      return a.title.localeCompare(b.title);
     });
   }, [movies, search, selectedGenre]);
 
@@ -142,6 +182,45 @@ export function GenreRailsManager() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const pinMoviesInOrder = async (ordered: ApiContent[], successMessage: string) => {
+    if (!ordered.length) return;
+    setIsSaving(true);
+    try {
+      for (let i = 0; i < ordered.length; i += 1) {
+        const movie = ordered[i]!;
+        await createAdminGenreRail({
+          genreName: selectedGenre,
+          contentId: movie.id,
+          sortOrder: i,
+        });
+      }
+      invalidate();
+      toast.success(successMessage);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not pin the current rail.");
+      invalidate();
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePinAutomaticRail = async () => {
+    const ordered = draftAutomatic.length ? draftAutomatic : automaticRailMovies;
+    await pinMoviesInOrder(
+      ordered,
+      `Pinned ${ordered.length} ${selectedGenre} titles — drag to reorder anytime.`,
+    );
+  };
+
+  const handleReorderAutomatic = async (next: ApiContent[]) => {
+    setDraftAutomatic(next);
+    // Reordering the live automatic rail pins it so the website keeps this order.
+    await pinMoviesInOrder(
+      next,
+      `Order saved for ${selectedGenre} — this rail is now curated.`,
+    );
   };
 
   const handleRemove = async (item: ApiGenreRailItem) => {
@@ -183,39 +262,29 @@ export function GenreRailsManager() {
   return (
     <>
       <AdminCard
-        title={`Genre rails · ${selectedGenre} · ${items.length}/${MAX_PICKS}`}
+        title={`Genre rails · ${items.length}/${MAX_PICKS}`}
         headerAction={
-          <button
-            type="button"
-            onClick={() => setShowPicker(true)}
-            disabled={atLimit || !selectedGenre}
-            title={atLimit ? "Limit reached — remove a movie first." : undefined}
-            className={`inline-flex shrink-0 items-center gap-1.5 ${adminPrimaryButtonClass} disabled:opacity-40`}
-          >
-            <Plus size={14} strokeWidth={2.5} aria-hidden />
-            Add movie
-          </button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <AdminSelect
+              value={selectedGenre}
+              onChange={setSelectedGenre}
+              options={genreOptions}
+              className={`${adminInputClass} min-w-[9.5rem] py-2`}
+              aria-label="Genre rail"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPicker(true)}
+              disabled={atLimit || !selectedGenre}
+              title={atLimit ? "Limit reached — remove a movie first." : undefined}
+              className={`inline-flex shrink-0 items-center gap-1.5 ${adminPrimaryButtonClass} disabled:opacity-40`}
+            >
+              <Plus size={14} strokeWidth={2.5} aria-hidden />
+              Add movie
+            </button>
+          </div>
         }
       >
-        <p className="mb-4 text-sm leading-relaxed text-text-muted">
-          Control which movies appear under each home-page genre rail (Horror, Action, …) and
-          drag to set order — <strong className="font-semibold text-text">#1 shows first</strong>.
-          Up to {MAX_PICKS} titles per genre. Empty genres keep the automatic newest-first rail on
-          the website.
-        </p>
-
-        <div className="mb-4 max-w-xs">
-          <label className="mb-1.5 block text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
-            Genre
-          </label>
-          <AdminSelect
-            value={selectedGenre}
-            onChange={setSelectedGenre}
-            options={genreOptions}
-            className={`${adminInputClass} py-2`}
-            aria-label="Genre rail"
-          />
-        </div>
 
         {isLoading && !items.length ? (
           <InlineLoading label="Loading genre rail" />
@@ -236,12 +305,63 @@ export function GenreRailsManager() {
             </button>
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border py-8 text-center">
-            <p className="text-sm text-text-muted">No curated picks for {selectedGenre} yet.</p>
-            <p className="mt-1 text-xs text-text-disabled">
-              Click &ldquo;Add movie&rdquo; to pin up to {MAX_PICKS} titles on this home rail.
-            </p>
-          </div>
+          moviesLoading ? (
+            <InlineLoading label={`Loading ${selectedGenre} titles`} />
+          ) : moviesError ? (
+            <div className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-4 text-xs text-warning">
+              {moviesError}
+            </div>
+          ) : draftAutomatic.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border py-8 text-center">
+              <p className="text-sm text-text-muted">
+                No published movies tagged {selectedGenre} yet.
+              </p>
+              <p className="mt-1 text-xs text-text-disabled">
+                Tag movies with this genre, or use &ldquo;Add movie&rdquo; to pick any title.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface-elevated/40 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-text">
+                    On the website now · {draftAutomatic.length} titles
+                  </p>
+                  <p className="mt-0.5 text-xs text-text-muted">
+                    Drag to change order (saves to the site). Or pin as-is, then keep editing.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void handlePinAutomaticRail()}
+                  disabled={isSaving}
+                  className={`${adminPrimaryButtonClass} disabled:opacity-40`}
+                >
+                  Pin these to rail
+                </button>
+              </div>
+              <SortableList
+                items={draftAutomatic}
+                disabled={isSaving}
+                onReorder={handleReorderAutomatic}
+                renderItem={(movie, index) => (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <span className="rounded-md bg-surface-elevated px-1.5 py-0.5 font-mono text-2xs font-semibold tabular-nums text-text-muted">
+                        #{index + 1}
+                      </span>
+                      <h3 className="truncate text-sm font-bold text-text">{movie.title}</h3>
+                      {movie.release_year != null ? (
+                        <span className="shrink-0 text-xs text-text-disabled">
+                          {movie.release_year}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                )}
+              />
+            </div>
+          )
         ) : (
           <SortableList
             items={items}
@@ -323,6 +443,9 @@ export function GenreRailsManager() {
                 ) : (
                   filteredMovies.map((movie, idx) => {
                     const listed = listedIds.has(movie.id);
+                    const onGenre = (movie.genres ?? [])
+                      .map((g) => g.toLowerCase())
+                      .includes(selectedGenre.toLowerCase());
                     return (
                       <div
                         key={movie.id}
@@ -331,9 +454,21 @@ export function GenreRailsManager() {
                           idx > 0 ? "border-t border-border" : "",
                         ].join(" ")}
                       >
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-text">
-                          {movie.title}
-                        </span>
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium text-text">
+                            {movie.title}
+                          </span>
+                          {(movie.genres ?? []).length > 0 ? (
+                            <span className="mt-0.5 block truncate text-2xs text-text-muted">
+                              {(movie.genres ?? []).join(", ")}
+                            </span>
+                          ) : null}
+                        </div>
+                        {onGenre ? (
+                          <span className="shrink-0 rounded-full bg-brand/10 px-2 py-0.5 text-2xs font-bold text-brand">
+                            {selectedGenre}
+                          </span>
+                        ) : null}
                         {!movie.is_published ? (
                           <span className="shrink-0 rounded-full bg-warning/10 px-2 py-0.5 text-2xs font-bold text-warning">
                             Draft

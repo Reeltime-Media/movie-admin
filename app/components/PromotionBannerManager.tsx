@@ -257,11 +257,6 @@ export function PromotionBannerManager() {
           </Button>
         }
       >
-        <p className="mb-4 text-sm leading-relaxed text-text-muted">
-          Create promotional strips shown on the client home page. Drag a card to reorder
-          (top shows first). Leave schedule empty to show anytime while active.
-        </p>
-
         {isLoading && !banners.length ? (
           <InlineLoading label="Loading banners" />
         ) : error ? (

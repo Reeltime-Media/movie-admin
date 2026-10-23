@@ -159,13 +159,6 @@ export function FreeTodayManager() {
           </button>
         }
       >
-        <p className="mb-4 text-sm leading-relaxed text-text-muted">
-          Movies listed here are <strong className="font-semibold text-text">free to watch
-          for everyone</strong> while listed — no purchase or subscription needed. Remove a
-          movie and normal pricing applies again immediately. Up to {MAX_PICKS} picks; drag
-          a card to set home page order (top shows first).
-        </p>
-
         {isLoading && !items.length ? (
           <InlineLoading label="Loading free movies" />
         ) : error ? (

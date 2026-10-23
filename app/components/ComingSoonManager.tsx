@@ -159,12 +159,6 @@ export function ComingSoonManager() {
           </button>
         }
       >
-        <p className="mb-4 text-sm leading-relaxed text-text-muted">
-          Showcase upcoming titles on the home page — even drafts without video.
-          A poster is required. Up to {MAX_PICKS} picks; drag to set home order
-          (top shows first).
-        </p>
-
         {isLoading && !items.length ? (
           <InlineLoading label="Loading Coming Soon" />
         ) : error ? (
