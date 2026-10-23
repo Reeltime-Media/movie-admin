@@ -285,144 +285,127 @@ export function SeriesUploadWizard({
               then attach {noun} artwork and episode videos.
             </p>
 
-            <div className="space-y-6">
-              <section>
-                <h3 className="mb-3 text-2xs font-semibold uppercase tracking-[0.14em] text-text-muted">
-                  Titles
-                </h3>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="English title">
-                    <input name="title" placeholder="Echo Valley" className={textInputClass} />
-                  </Field>
-                  <Field label="Khmer title">
-                    <input name="titleKm" placeholder="Optional" className={textInputClass} />
-                  </Field>
-                </div>
-              </section>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="English title">
+                <input name="title" placeholder="Echo Valley" className={textInputClass} />
+              </Field>
+              <Field label="Khmer title">
+                <input name="titleKm" placeholder="Optional" className={textInputClass} />
+              </Field>
 
-              <section>
-                <h3 className="mb-3 text-2xs font-semibold uppercase tracking-[0.14em] text-text-muted">
-                  Catalog
-                </h3>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <div className="mb-1.5 flex items-center justify-between gap-2">
-                      <span className="text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
-                        Genres
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowNewGenre((v) => !v);
-                          setNewGenreName("");
-                        }}
-                        className="flex items-center gap-1 rounded-lg border border-border bg-surface-elevated px-2 py-1 text-2xs font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
-                      >
-                        New genre
-                      </button>
-                    </div>
-                    {showNewGenre ? (
-                      <div className="mb-2 flex gap-2">
-                        <input
-                          type="text"
-                          value={newGenreName}
-                          onChange={(e) => setNewGenreName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              void handleAddGenre();
-                            }
-                          }}
-                          placeholder="Genre name"
-                          className={textInputClass}
-                          autoFocus
-                        />
-                        <Button
-                          type="button"
-                          size="sm"
-                          className="shrink-0"
-                          onClick={() => void handleAddGenre()}
-                          disabled={createGenreMutation.isPending || !newGenreName.trim()}
-                        >
-                          {createGenreMutation.isPending ? "Adding…" : "Add"}
-                        </Button>
-                      </div>
-                    ) : null}
-                    <GenreMultiSelect
-                      selected={genres}
-                      onChange={setGenres}
-                      options={genreOptions}
-                      onDeleteGenre={handleDeleteGenre}
+              <div>
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <span className="text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
+                    Genres
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewGenre((v) => !v);
+                      setNewGenreName("");
+                    }}
+                    className="flex items-center gap-1 rounded-lg border border-border bg-surface-elevated px-2 py-1 text-2xs font-semibold text-text-muted transition-colors hover:border-border-hover hover:text-text"
+                  >
+                    New genre
+                  </button>
+                </div>
+                {showNewGenre ? (
+                  <div className="mb-2 flex gap-2">
+                    <input
+                      type="text"
+                      value={newGenreName}
+                      onChange={(e) => setNewGenreName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void handleAddGenre();
+                        }
+                      }}
+                      placeholder="Genre name"
+                      className={textInputClass}
+                      autoFocus
                     />
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="shrink-0"
+                      onClick={() => void handleAddGenre()}
+                      disabled={createGenreMutation.isPending || !newGenreName.trim()}
+                    >
+                      {createGenreMutation.isPending ? "Adding…" : "Add"}
+                    </Button>
                   </div>
+                ) : null}
+                <GenreMultiSelect
+                  selected={genres}
+                  onChange={setGenres}
+                  options={genreOptions}
+                  onDeleteGenre={handleDeleteGenre}
+                />
+              </div>
 
-                  <Field label="Release year">
-                    <input
-                      name="releaseYear"
-                      type="number"
-                      min={1900}
-                      max={2100}
-                      placeholder="2026"
-                      className={textInputClass}
-                    />
-                  </Field>
+              <Field label="Release year">
+                <input
+                  name="releaseYear"
+                  type="number"
+                  min={1900}
+                  max={2100}
+                  placeholder="2026"
+                  className={textInputClass}
+                />
+              </Field>
 
-                  <Field label="Rating">
-                    <input
-                      name="rating"
-                      inputMode="decimal"
-                      placeholder="8.7"
-                      className={textInputClass}
-                    />
-                  </Field>
+              <Field label="Rating">
+                <input
+                  name="rating"
+                  inputMode="decimal"
+                  placeholder="8.7"
+                  className={textInputClass}
+                />
+              </Field>
 
-                  <Field
-                    label="Status"
-                    hint="Applies when you upload. Save draft always creates a draft."
-                  >
-                    <AdminSelect
-                      value={status}
-                      onChange={setStatus}
-                      options={[
-                        { value: "Draft", label: "Draft" },
-                        { value: "Review", label: "Review" },
-                        { value: "Scheduled", label: "Scheduled" },
-                        { value: "Published", label: "Published" },
-                      ]}
-                      className={selectClass}
-                      aria-label="Status"
-                    />
-                    <input type="hidden" name="status" value={status} />
-                  </Field>
-                </div>
-              </section>
+              <Field
+                label="Status"
+                hint="Applies when you upload. Save draft always creates a draft."
+              >
+                <AdminSelect
+                  value={status}
+                  onChange={setStatus}
+                  options={[
+                    { value: "Draft", label: "Draft" },
+                    { value: "Review", label: "Review" },
+                    { value: "Scheduled", label: "Scheduled" },
+                    { value: "Published", label: "Published" },
+                  ]}
+                  className={selectClass}
+                  aria-label="Status"
+                />
+                <input type="hidden" name="status" value={status} />
+              </Field>
 
-              <section>
-                <h3 className="mb-3 text-2xs font-semibold uppercase tracking-[0.14em] text-text-muted">
-                  Story
-                </h3>
-                <div className="grid gap-4">
-                  <Field
-                    label="Trailer URL"
-                    hint="Paste a YouTube URL. The trailer is linked, not uploaded."
-                  >
-                    <input
-                      name="trailerUrl"
-                      type="url"
-                      placeholder="https://www.youtube.com/watch?v=..."
-                      className={textInputClass}
-                    />
-                  </Field>
-                  <Field label="Description">
-                    <textarea
-                      name="description"
-                      rows={5}
-                      placeholder="Short synopsis shown on detail pages."
-                      className={`${textInputClass} resize-y`}
-                    />
-                  </Field>
-                </div>
-              </section>
+              <div className="md:col-span-2">
+                <Field
+                  label="Trailer URL"
+                  hint="Paste a YouTube URL. The trailer is linked, not uploaded."
+                >
+                  <input
+                    name="trailerUrl"
+                    type="url"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    className={textInputClass}
+                  />
+                </Field>
+              </div>
+              <div className="md:col-span-2">
+                <Field label="Description">
+                  <textarea
+                    name="description"
+                    rows={5}
+                    placeholder="Short synopsis shown on detail pages."
+                    className={`${textInputClass} resize-y`}
+                  />
+                </Field>
+              </div>
             </div>
 
             {detailsError ? (

@@ -252,72 +252,55 @@ export default function NewPodcastPage() {
               audio.
             </p>
 
-            <div className="space-y-6">
-              <section>
-                <h3 className="mb-3 text-2xs font-semibold uppercase tracking-[0.14em] text-text-muted">
-                  Titles
-                </h3>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="English title">
-                    <input
-                      name="title"
-                      placeholder="Night Whispers"
-                      className={podcastTextInputClass}
-                    />
-                  </Field>
-                  <Field label="Khmer title">
-                    <input name="titleKm" placeholder="Optional" className={podcastTextInputClass} />
-                  </Field>
-                </div>
-              </section>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="English title">
+                <input
+                  name="title"
+                  placeholder="Night Whispers"
+                  className={podcastTextInputClass}
+                />
+              </Field>
+              <Field label="Khmer title">
+                <input name="titleKm" placeholder="Optional" className={podcastTextInputClass} />
+              </Field>
 
-              <section>
-                <h3 className="mb-3 text-2xs font-semibold uppercase tracking-[0.14em] text-text-muted">
-                  Catalog
-                </h3>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field
-                    label="Status"
-                    hint="Published requires a cover and audio on Assets. Save draft does not."
-                  >
-                    <AdminSelect
-                      value={status}
-                      onChange={setStatus}
-                      options={[
-                        { value: "Draft", label: "Draft" },
-                        { value: "Review", label: "Review" },
-                        { value: "Scheduled", label: "Scheduled" },
-                        { value: "Published", label: "Published" },
-                      ]}
-                      className={podcastSelectClass}
-                      aria-label="Status"
-                    />
-                    <input type="hidden" name="status" value={status} />
-                  </Field>
+              <Field
+                label="Status"
+                hint="Published requires a cover and audio on Assets. Save draft does not."
+              >
+                <AdminSelect
+                  value={status}
+                  onChange={setStatus}
+                  options={[
+                    { value: "Draft", label: "Draft" },
+                    { value: "Review", label: "Review" },
+                    { value: "Scheduled", label: "Scheduled" },
+                    { value: "Published", label: "Published" },
+                  ]}
+                  className={podcastSelectClass}
+                  aria-label="Status"
+                />
+                <input type="hidden" name="status" value={status} />
+              </Field>
 
-                  <Field
-                    label="Access"
-                    hint={
-                      access === "free"
-                        ? "Anyone can listen without a subscription."
-                        : "Unlocks with any active subscription plan."
-                    }
-                  >
-                    <AdminSelect
-                      value={access}
-                      onChange={(v) => setAccess(v as PodcastAccess)}
-                      options={[...PODCAST_ACCESS_OPTIONS]}
-                      className={podcastSelectClass}
-                      aria-label="Access"
-                    />
-                  </Field>
-                </div>
-              </section>
+              <Field
+                label="Access"
+                hint={
+                  access === "free"
+                    ? "Anyone can listen without a subscription."
+                    : "Unlocks with any active subscription plan."
+                }
+              >
+                <AdminSelect
+                  value={access}
+                  onChange={(v) => setAccess(v as PodcastAccess)}
+                  options={[...PODCAST_ACCESS_OPTIONS]}
+                  className={podcastSelectClass}
+                  aria-label="Access"
+                />
+              </Field>
 
-              <section>
-                <h3 className="mb-3 text-2xs font-semibold uppercase tracking-[0.14em] text-text-muted">
-                  Story
-                </h3>
+              <div className="md:col-span-2">
                 <Field label="Description">
                   <textarea
                     name="description"
@@ -326,7 +309,7 @@ export default function NewPodcastPage() {
                     className={`${podcastTextInputClass} resize-y`}
                   />
                 </Field>
-              </section>
+              </div>
             </div>
 
             {detailsError ? (

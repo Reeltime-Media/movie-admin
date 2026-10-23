@@ -2,14 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { AdminCard } from "../../components/AdminCard";
-import { AdminMediaThumb } from "../../components/AdminMediaThumb";
 import { BackButton } from "../../components/BackButton";
 import { Button } from "../../components/ui/Button";
 import { AdminSectionTabs } from "../../components/AdminSectionTabs";
 import { InlineLoading } from "../../components/InlineLoading";
-import { statusClasses } from "../../lib/adminData";
 import { regionLabel } from "../../lib/regions";
 import { AdminContentHlsPlayer } from "../../components/AdminContentHlsPlayer";
+import { AdminDownloadImageButton } from "../../components/AdminDownloadImageButton";
 import { AdminDownloadSourceButton } from "../../components/AdminDownloadSourceButton";
 import { AdminSourceVideoPlayer } from "../../components/AdminSourceVideoPlayer";
 import { MovieCommentsAdmin } from "../MovieCommentsAdmin";
@@ -101,69 +100,8 @@ export function MovieDetail({ movieId }: { movieId: string }) {
     { key: "comments", label: "Comments" },
   ];
 
-  const heroImage = movie.bannerUrl || movie.posterUrl;
-
   return (
     <div className="space-y-5">
-      {/* Hero */}
-      <section className="relative overflow-hidden rounded-xl border border-border bg-surface">
-        <div className="absolute inset-0">
-          {heroImage ? (
-            // eslint-disable-next-line @next/next/no-img-element -- admin CDN hosts vary
-            <img
-              src={heroImage}
-              alt=""
-              className="h-full w-full object-cover opacity-35"
-            />
-          ) : (
-            <div className="h-full w-full bg-surface-elevated" />
-          )}
-          <div className="absolute inset-0 bg-linear-to-r from-bg via-bg/90 to-bg/55" />
-          <div className="absolute inset-0 bg-linear-to-t from-bg via-transparent to-bg/40" />
-        </div>
-
-        <div className="relative flex flex-col gap-5 p-5 sm:flex-row sm:items-end sm:p-6">
-          <AdminMediaThumb
-            objectKey={movie.posterKey}
-            srcUrl={movie.posterUrl}
-            alt={`${movie.title} poster`}
-            className="aspect-2/3 w-28 shrink-0 shadow-lg sm:w-36"
-            emptyLabel="No poster"
-          />
-
-          <div className="min-w-0 flex-1 space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={statusClasses(movie.status)}>{movie.status}</span>
-              {movie.genre ? (
-                <span className="text-2xs font-semibold uppercase tracking-[0.12em] text-text-muted">
-                  {movie.genre}
-                </span>
-              ) : null}
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold tracking-[-0.03em] text-text sm:text-3xl">
-                {movie.title}
-              </h2>
-              {movie.titleKm?.trim() ? (
-                <p className="mt-1 text-sm text-text-muted">{movie.titleKm}</p>
-              ) : null}
-            </div>
-            <p className="text-sm text-text-muted">
-              {[movie.price, movie.runtime, movie.releaseYear]
-                .filter((v) => v != null && v !== "")
-                .join(" · ")}
-            </p>
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <BackButton href="/movie" label="Back to movies" />
-              <Button href={`/movie/${movie.id}/edit`} size="sm">
-                Edit movie
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Tabs */}
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border">
         <AdminSectionTabs
           tabs={tabs}
@@ -171,6 +109,11 @@ export function MovieDetail({ movieId }: { movieId: string }) {
           onChange={(k) => setTab(k as MovieTab)}
           bare
         />
+        <div className="flex shrink-0 flex-wrap items-center gap-2 pb-2">
+          <Button href={`/movie/${movie.id}/edit`} size="sm">
+            Edit movie
+          </Button>
+        </div>
       </div>
 
       {tab === "overview" ? (
@@ -183,6 +126,11 @@ export function MovieDetail({ movieId }: { movieId: string }) {
             </AdminCard>
             <AdminCard title="Details">
               <div className="grid gap-2 sm:grid-cols-2">
+                <FactChip label="English title" value={movie.title} />
+                <FactChip label="Khmer title" value={movie.titleKm} />
+                <FactChip label="Status" value={movie.status} />
+                <FactChip label="Genre" value={movie.genre} />
+                <FactChip label="Price" value={movie.price} />
                 <FactChip label="Region" value={regionLabel(movie.region)} />
                 <FactChip label="Rating" value={movie.rating} />
                 <FactChip label="Release year" value={movie.releaseYear} />
@@ -230,7 +178,19 @@ export function MovieDetail({ movieId }: { movieId: string }) {
 
       {tab === "media" ? (
         <div className="grid gap-4 lg:grid-cols-2">
-          <MediaBlock title="Poster">
+          <MediaBlock
+            title="Poster"
+            action={
+              <AdminDownloadImageButton
+                url={movie.posterUrl}
+                filename={
+                  movie.posterKey?.split("/").pop() ||
+                  `${movie.slug || movie.id}-poster.jpg`
+                }
+                label="Download"
+              />
+            }
+          >
             {movie.posterUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -245,7 +205,19 @@ export function MovieDetail({ movieId }: { movieId: string }) {
             )}
           </MediaBlock>
 
-          <MediaBlock title="Banner">
+          <MediaBlock
+            title="Banner"
+            action={
+              <AdminDownloadImageButton
+                url={movie.bannerUrl}
+                filename={
+                  movie.bannerKey?.split("/").pop() ||
+                  `${movie.slug || movie.id}-banner.jpg`
+                }
+                label="Download"
+              />
+            }
+          >
             {movie.bannerUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img

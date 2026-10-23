@@ -70,12 +70,12 @@ export type CatalogEntry = {
 
 export function statusClasses(status: Status) {
   const base =
-    "inline-flex items-center rounded-md px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-[0.08em] ring-1 ring-inset";
+    "inline-flex items-center rounded-md px-1.5 py-0.5 text-2xs font-bold uppercase tracking-[0.08em] shadow-md";
   const tones = {
-    Published: "bg-success/10 text-success ring-success/25",
-    Draft: "bg-surface-elevated text-text-muted ring-border",
-    Scheduled: "bg-warning/10 text-warning ring-warning/25",
-    Review: "bg-warning/10 text-warning ring-warning/25",
+    Published: "bg-success text-white",
+    Draft: "bg-zinc-800 text-white",
+    Scheduled: "bg-warning text-white",
+    Review: "bg-warning text-white",
   };
 
   return `${base} ${tones[status]}`;

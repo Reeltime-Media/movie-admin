@@ -492,6 +492,10 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
                   currentKey={series.posterKey}
                   newFile={editPosterFile}
                   onFileChange={setEditPosterFile}
+                  downloadFilename={
+                    series.posterKey?.split("/").pop() ||
+                    `${series.slug || series.id}-poster.jpg`
+                  }
                 />
                 <ArtworkField
                   label="Banner"
@@ -500,6 +504,10 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
                   currentKey={series.bannerKey}
                   newFile={editBannerFile}
                   onFileChange={setEditBannerFile}
+                  downloadFilename={
+                    series.bannerKey?.split("/").pop() ||
+                    `${series.slug || series.id}-banner.jpg`
+                  }
                 />
                 <div className="rounded-lg border border-border bg-bg p-4">
                   <div className="mb-1 text-base font-bold tracking-[-0.02em]">Trailer</div>

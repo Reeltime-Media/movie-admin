@@ -6,6 +6,7 @@ import { AdminCard } from "../../components/AdminCard";
 import { BackButton } from "../../components/BackButton";
 import { Button } from "../../components/ui/Button";
 import { AdminContentHlsPlayer } from "../../components/AdminContentHlsPlayer";
+import { AdminDownloadImageButton } from "../../components/AdminDownloadImageButton";
 import { AdminDownloadSourceButton } from "../../components/AdminDownloadSourceButton";
 import { AdminSourceVideoPlayer } from "../../components/AdminSourceVideoPlayer";
 import { AdminSectionTabs } from "../../components/AdminSectionTabs";
@@ -201,8 +202,19 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
             <div className="rounded-xl border border-border bg-surface p-6">
               <div className="grid gap-6 lg:grid-cols-2">
                 <div>
-                  <div className="mb-2 text-xs font-semibold text-text-muted">Poster</div>
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <div className="text-xs font-semibold text-text-muted">Poster</div>
+                    <AdminDownloadImageButton
+                      url={series.posterUrl}
+                      filename={
+                        series.posterKey?.split("/").pop() ||
+                        `${series.slug || series.id}-poster.jpg`
+                      }
+                      label="Download"
+                    />
+                  </div>
                   {series.posterUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={series.posterUrl}
                       alt={`${series.title} poster`}
@@ -216,8 +228,19 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
                 </div>
 
                 <div>
-                  <div className="mb-2 text-xs font-semibold text-text-muted">Banner</div>
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <div className="text-xs font-semibold text-text-muted">Banner</div>
+                    <AdminDownloadImageButton
+                      url={series.bannerUrl}
+                      filename={
+                        series.bannerKey?.split("/").pop() ||
+                        `${series.slug || series.id}-banner.jpg`
+                      }
+                      label="Download"
+                    />
+                  </div>
                   {series.bannerUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={series.bannerUrl}
                       alt={`${series.title} banner`}
