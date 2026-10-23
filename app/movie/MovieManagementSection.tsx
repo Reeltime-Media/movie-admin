@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AdminCard } from "../components/AdminCard";
-import { AdminCatalogSearchBar } from "../components/AdminCatalogSearchBar";
+import { AdminCatalogListToolbar } from "../components/AdminCatalogListToolbar";
 import { AdminPagination } from "../components/AdminPagination";
 import { InlineLoading } from "../components/InlineLoading";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
@@ -78,27 +78,25 @@ export function MovieManagementSection() {
             </button>
           </div>
         ) : null}
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <AdminCatalogSearchBar
-            className="flex-1"
-            maxWidthClassName=""
-            value={search}
-            onChange={setSearch}
-            placeholder="Search movies by title, genre, slug, or description…"
-            resultCount={entries.length}
-            totalCount={moviesOnly.length}
-            filterValue={listFilter}
-            filterOptions={filterOptions.map(({ key, label }) => ({
-              value: key,
-              label,
-            }))}
-            onFilterChange={(next) => setListFilter(next as ListFilter)}
-            filterLabel="Filter movies"
-          />
-          <Button href="/movie/new" className="shrink-0">
-            Add movie
-          </Button>
-        </div>
+        <AdminCatalogListToolbar
+          value={search}
+          onChange={setSearch}
+          placeholder="Search movies by title, genre, slug, or description…"
+          resultCount={entries.length}
+          totalCount={moviesOnly.length}
+          filterValue={listFilter}
+          filterOptions={filterOptions.map(({ key, label }) => ({
+            value: key,
+            label,
+          }))}
+          onFilterChange={(next) => setListFilter(next as ListFilter)}
+          filterLabel="Filter movies"
+          action={
+            <Button href="/movie/new" className="w-full sm:w-auto">
+              Add movie
+            </Button>
+          }
+        />
       </div>
 
       {isLoading && moviesOnly.length === 0 ? (

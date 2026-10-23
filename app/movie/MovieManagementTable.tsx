@@ -55,8 +55,7 @@ export function MovieManagementTable({
 
   return (
     <>
-      <section className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-        <div className="p-4 sm:p-5">
+      <section>
           {entries.length === 0 ? (
             <p className="py-12 text-center text-sm text-text-muted">{emptyHint}</p>
           ) : (
@@ -127,7 +126,6 @@ export function MovieManagementTable({
             </div>
           )}
           {footer}
-        </div>
       </section>
 
       {confirmDelete ? (

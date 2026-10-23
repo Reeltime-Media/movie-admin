@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
-import { AdminCatalogSearchBar } from "../components/AdminCatalogSearchBar";
+import { AdminCatalogListToolbar } from "../components/AdminCatalogListToolbar";
 import { AdminEmptyState } from "../components/AdminEmptyState";
 import { AdminErrorAlert } from "../components/AdminErrorAlert";
 import { AdminMediaThumb } from "../components/AdminMediaThumb";
@@ -68,19 +68,19 @@ export default function PodcastsPage() {
 
   return (
     <AdminShell title="Podcast management">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <AdminCatalogSearchBar
-          className="flex-1"
-          maxWidthClassName=""
+      <div className="mb-4">
+        <AdminCatalogListToolbar
           value={search}
           onChange={setSearch}
           placeholder="Search podcasts by title or description…"
           resultCount={filteredItems.length}
           totalCount={items.length}
+          action={
+            <Button href="/podcast/new" className="w-full sm:w-auto">
+              Add podcast
+            </Button>
+          }
         />
-        <Button href="/podcast/new" className="shrink-0">
-          Add podcast
-        </Button>
       </div>
 
       {error ? <AdminErrorAlert message={error} onRetry={() => void refetch()} /> : null}
@@ -105,8 +105,7 @@ export default function PodcastsPage() {
           description="Try a different search, or clear the filter."
         />
       ) : (
-        <section className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-          <div className="p-4 sm:p-5">
+        <section>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
               {filteredItems.map((item) => {
                 const uiStatus = toUiStatus(item.status);
@@ -188,7 +187,6 @@ export default function PodcastsPage() {
                 onPageChange={setPage}
               />
             ) : null}
-          </div>
         </section>
       )}
 

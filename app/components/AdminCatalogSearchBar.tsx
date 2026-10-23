@@ -49,13 +49,13 @@ export function AdminCatalogSearchBar({
     <div className={["space-y-1.5", className].filter(Boolean).join(" ")}>
       <div
         className={[
-          hasFilter ? "flex flex-col gap-3 sm:flex-row sm:items-stretch" : "",
-          hasFilter ? maxWidthClassName : "",
+          hasFilter ? "flex flex-col gap-3 sm:flex-row sm:items-stretch" : "relative",
+          maxWidthClassName,
         ]
           .filter(Boolean)
           .join(" ")}
       >
-        <div className={hasFilter ? "relative min-w-0 flex-1" : "relative max-w-md"}>
+        <div className={hasFilter ? "relative min-w-0 flex-1" : "relative w-full"}>
           <Search
             size={15}
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"

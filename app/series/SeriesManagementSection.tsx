@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AdminCard } from "../components/AdminCard";
-import { AdminCatalogSearchBar } from "../components/AdminCatalogSearchBar";
+import { AdminCatalogListToolbar } from "../components/AdminCatalogListToolbar";
 import { AdminPagination } from "../components/AdminPagination";
 import { InlineLoading } from "../components/InlineLoading";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
@@ -94,27 +94,25 @@ export function SeriesManagementSection({
             </button>
           </div>
         ) : null}
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <AdminCatalogSearchBar
-            className="flex-1"
-            maxWidthClassName=""
-            value={search}
-            onChange={setSearch}
-            placeholder={`Search ${noun} by title, genre, slug, episode, or description…`}
-            resultCount={entries.length}
-            totalCount={seriesOnly.length}
-            filterValue={listFilter}
-            filterOptions={filterOptions.map(({ key, label }) => ({
-              value: key,
-              label: key === "all" ? (shortForm ? "All short series" : "All series") : label,
-            }))}
-            onFilterChange={(next) => setListFilter(next as SeriesListFilter)}
-            filterLabel={`Filter ${noun}`}
-          />
-          <Button href={newHref} className="shrink-0">
-            {addLabel}
-          </Button>
-        </div>
+        <AdminCatalogListToolbar
+          value={search}
+          onChange={setSearch}
+          placeholder={`Search ${noun} by title, genre, slug, episode, or description…`}
+          resultCount={entries.length}
+          totalCount={seriesOnly.length}
+          filterValue={listFilter}
+          filterOptions={filterOptions.map(({ key, label }) => ({
+            value: key,
+            label: key === "all" ? (shortForm ? "All short series" : "All series") : label,
+          }))}
+          onFilterChange={(next) => setListFilter(next as SeriesListFilter)}
+          filterLabel={`Filter ${noun}`}
+          action={
+            <Button href={newHref} className="w-full sm:w-auto">
+              {addLabel}
+            </Button>
+          }
+        />
       </div>
 
       {isLoading && seriesOnly.length === 0 ? (
