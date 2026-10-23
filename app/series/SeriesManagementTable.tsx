@@ -52,13 +52,20 @@ export function SeriesManagementTable({
   const seriesCount = movies.filter(
     (m) => m.type === "Series" && Boolean(m.isShortMovie) === shortForm,
   ).length;
+  const otherHref = shortForm ? "/series" : "/short-series";
+  const otherLabel = shortForm ? "Series" : "Short series";
   const emptyHint =
     seriesCount === 0 ? (
       <>
-        No {noun} yet.{" "}
-        <Link href={newHref} className="font-semibold text-brand hover:underline">
-          Add {shortForm ? "a short series" : "a series"}
+        No {noun} yet. Regular and short titles are split in the sidebar — check{" "}
+        <Link href={otherHref} className="font-semibold text-brand hover:underline">
+          {otherLabel}
         </Link>
+        , or{" "}
+        <Link href={newHref} className="font-semibold text-brand hover:underline">
+          add {shortForm ? "a short series" : "a series"}
+        </Link>
+        .
       </>
     ) : listFilter === "drafts" ? (
       `No draft ${noun}. Change the filter or set a title to Draft when editing.`

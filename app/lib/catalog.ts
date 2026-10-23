@@ -134,21 +134,46 @@ export function apiSeriesToCatalogEntry(series: ApiSeries, apiSeasons: ApiSeason
   };
 }
 
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) return [];
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < items.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      results[index] = await mapper(items[index]!);
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker());
+  await Promise.all(workers);
+  return results;
+}
+
 export async function fetchCatalog(): Promise<CatalogEntry[]> {
   if (!getAdminToken()) {
     return [];
   }
 
+  // Do not swallow series failures — that made Series / Short series look empty
+  // while Movies still rendered.
   const [apiMovies, apiSeries] = await Promise.all([
     listAllAdminMovies(),
-    listAllAdminSeries().catch(() => [] as ApiSeries[]),
+    listAllAdminSeries(),
   ]);
-  const episodesBySeries = await Promise.all(
-    apiSeries.map((s) => listSeriesEpisodesApi(s.slug).catch(() => [] as ApiSeasonRead[])),
+  // Cap parallel episode fetches so a large catalog cannot stall the browser.
+  const episodesBySeries = await mapWithConcurrency(apiSeries, 6, (s) =>
+    listSeriesEpisodesApi(s.slug).catch(() => [] as ApiSeasonRead[]),
   );
   return [
     ...apiMovies.map(apiContentToCatalogEntry),
-    ...apiSeries.map((s, i) => apiSeriesToCatalogEntry(s, episodesBySeries[i])),
+    ...apiSeries.map((s, i) => apiSeriesToCatalogEntry(s, episodesBySeries[i] ?? [])),
   ];
 }
 
