@@ -43,6 +43,8 @@ export type CatalogEntry = {
   views: string;
   rating: string;
   status: Status;
+  /** UTC ISO go-live when status is Scheduled. */
+  publishAt?: string | null;
   genre: string;
   owner: string;
   /** Series only — shows up on /short-movies in addition to /series. */

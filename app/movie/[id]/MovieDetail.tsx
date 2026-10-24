@@ -12,6 +12,7 @@ import { AdminDownloadImageButton } from "../../components/AdminDownloadImageBut
 import { AdminDownloadSourceButton } from "../../components/AdminDownloadSourceButton";
 import { AdminSourceVideoPlayer } from "../../components/AdminSourceVideoPlayer";
 import { MovieCommentsAdmin } from "../MovieCommentsAdmin";
+import { formatIctLabel } from "../../lib/datetimeIct";
 import { formatMovieDate, youtubeEmbedUrl } from "../movieDetailUi";
 import { useAdminMovie } from "../../hooks/adminQueries";
 
@@ -129,6 +130,12 @@ export function MovieDetail({ movieId }: { movieId: string }) {
                 <FactChip label="English title" value={movie.title} />
                 <FactChip label="Khmer title" value={movie.titleKm} />
                 <FactChip label="Status" value={movie.status} />
+                {movie.status === "Scheduled" && movie.publishAt ? (
+                  <FactChip
+                    label="Goes live"
+                    value={formatIctLabel(movie.publishAt) ?? movie.publishAt}
+                  />
+                ) : null}
                 <FactChip label="Genre" value={movie.genre} />
                 <FactChip label="Price" value={movie.price} />
                 <FactChip label="Region" value={regionLabel(movie.region)} />

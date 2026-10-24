@@ -59,6 +59,7 @@ export function apiContentToCatalogEntry(content: ApiContent): CatalogEntry {
     purchaseCount: content.purchase_count,
     rating: content.rating ?? "-",
     status: toStatus(content.status),
+    publishAt: content.publish_at ?? null,
     genre: formatGenres(content.genres),
     owner: content.transcode_status === "ready" ? "API - ready" : `API - ${content.transcode_status}`,
     runtime: content.runtime,
@@ -233,6 +234,7 @@ export async function updateCatalogEntry(
     runtimeMinutes: entry.runtimeMinutes ?? null,
     releaseYear: entry.releaseYear ?? null,
     status: toApiStatus(entry.status as Status),
+    publishAt: entry.status === "Scheduled" ? (entry.publishAt ?? null) : null,
     trailerUrl: entry.trailerUrl,
   });
   const updatedEntry = apiContentToCatalogEntry({

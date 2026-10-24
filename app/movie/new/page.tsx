@@ -25,6 +25,7 @@ import {
 } from "../../lib/api";
 import { imageContentType } from "../../lib/media";
 import { useUploadProgress } from "../../components/UploadProgressContext";
+import { fromIctDatetimeLocalValue } from "../../lib/datetimeIct";
 import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../../lib/money";
 import { validateMoviePublishReady } from "../../lib/moviePublish";
 import { parseRuntimeMinutesInput } from "../../lib/runtime";
@@ -79,6 +80,7 @@ export default function NewMoviePage() {
   const { refreshMovies } = useMovieCatalog();
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState("Published");
+  const [publishAtLocal, setPublishAtLocal] = useState("");
   const [region, setRegion] = useState("");
   const [genres, setGenres] = useState<string[]>([]);
   const [showNewGenre, setShowNewGenre] = useState(false);
@@ -270,6 +272,12 @@ export default function NewMoviePage() {
     setDetailsError(null);
 
     const status: Status = parseStatus(String(fd.get("status")));
+    const publishAt =
+      status === "Scheduled" ? fromIctDatetimeLocalValue(publishAtLocal) : null;
+    if (status === "Scheduled" && !publishAt) {
+      failValidation("Pick a go-live date and time (Cambodia time) for Scheduled.", 0);
+      return;
+    }
 
     if (status === "Published") {
       const publishCheck = validateMoviePublishReady(
@@ -285,7 +293,15 @@ export default function NewMoviePage() {
       return;
     }
 
-    await uploadMovieWithStatus(fd, fields, video!, posterImage, bannerImage, status);
+    await uploadMovieWithStatus(
+      fd,
+      fields,
+      video!,
+      posterImage,
+      bannerImage,
+      status,
+      publishAt,
+    );
   };
 
   const handleSaveDraftClick = () => {
@@ -309,6 +325,7 @@ export default function NewMoviePage() {
     posterImage: File | null,
     bannerImage: File | null,
     status: Status,
+    publishAt: string | null = null,
   ) => {
     const movieJobId = `movie-${fields.title}-${Date.now()}`;
     setActiveJobId(movieJobId);
@@ -368,6 +385,7 @@ export default function NewMoviePage() {
           rating: fields.rating,
           runtimeMinutes: fields.runtimeMinutes,
           status: toApiStatus(status),
+          publishAt: status === "Scheduled" ? publishAt : null,
           posterKey: upload.poster_key,
           bannerKey: upload.banner_key,
           trailerUrl: fields.trailerUrl,
@@ -515,11 +533,14 @@ export default function NewMoviePage() {
 
               <Field
                 label="Status"
-                hint="Published requires a poster and video on Assets. Save draft does not."
+                hint="Published requires a poster and video on Assets. Scheduled can upload anytime and goes live later."
               >
                 <AdminSelect
                   value={status}
-                  onChange={setStatus}
+                  onChange={(v) => {
+                    setStatus(v);
+                    if (v !== "Scheduled") setPublishAtLocal("");
+                  }}
                   options={[
                     { value: "Draft", label: "Draft" },
                     { value: "Review", label: "Review" },
@@ -531,6 +552,21 @@ export default function NewMoviePage() {
                 />
                 <input type="hidden" name="status" value={status} />
               </Field>
+
+              {status === "Scheduled" ? (
+                <Field
+                  label="Go live (ICT)"
+                  hint="Cambodia time (UTC+7). Publishes automatically when ready."
+                >
+                  <input
+                    type="datetime-local"
+                    value={publishAtLocal}
+                    onChange={(e) => setPublishAtLocal(e.target.value)}
+                    className={textInputClass}
+                    required
+                  />
+                </Field>
+              ) : null}
 
               <Field label="Price (USD)" hint={ADMIN_PRICE_HINT}>
                 <input name="price" placeholder="0 or 2.99" className={textInputClass} />

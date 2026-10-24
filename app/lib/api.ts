@@ -125,6 +125,8 @@ export type ApiContent = {
   price_usd: string | null;
   status: string;
   is_published: boolean;
+  /** UTC go-live for scheduled movies. */
+  publish_at?: string | null;
   is_free?: boolean;
   transcode_status: string;
   watch_count: number;
@@ -721,6 +723,7 @@ export async function updateAdminMovie(
     runtimeMinutes?: number | null;
     releaseYear?: number | null;
     status: string;
+    publishAt?: string | null;
     trailerUrl?: string | null;
   },
 ) {
@@ -738,6 +741,7 @@ export async function updateAdminMovie(
       runtime_minutes: input.runtimeMinutes ?? null,
       release_year: input.releaseYear ?? null,
       status: input.status,
+      publish_at: input.publishAt ?? null,
       trailer_url: input.trailerUrl || null,
     }),
   });
@@ -913,6 +917,7 @@ export async function completeMovieUpload(input: {
   rating?: string;
   runtimeMinutes?: number;
   status: string;
+  publishAt?: string | null;
   posterKey?: string | null;
   bannerKey?: string | null;
   trailerUrl?: string | null;
@@ -939,6 +944,7 @@ export async function completeMovieUpload(input: {
       rating: input.rating || null,
       runtime_minutes: input.runtimeMinutes ?? null,
       status: input.status,
+      publish_at: input.publishAt ?? null,
       poster_key: input.posterKey ?? null,
       banner_key: input.bannerKey ?? null,
       trailer_url: input.trailerUrl || null,

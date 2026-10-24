@@ -20,6 +20,10 @@ import { uploadAdminMovieAssets } from "../lib/api";
 import type { CatalogEntry, Status } from "../lib/adminData";
 import { formatGenres, parseGenresFromStored } from "../lib/genres";
 import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../lib/money";
+import {
+  fromIctDatetimeLocalValue,
+  toIctDatetimeLocalValue,
+} from "../lib/datetimeIct";
 import { validateMoviePublishReady } from "../lib/moviePublish";
 import { REGION_OPTIONS } from "../lib/regions";
 import {
@@ -200,6 +204,15 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
       return;
     }
 
+    if (editDraft.status === "Scheduled") {
+      if (!editDraft.publishAt) {
+        const message = "Pick a go-live date and time (Cambodia time) for Scheduled.";
+        setEditSaveError(message);
+        toast.error(message, { toastId: "movie-edit-schedule" });
+        return;
+      }
+    }
+
     const isNewlyPublishing =
       editDraft.status === "Published" && movie.status !== "Published";
     if (isNewlyPublishing) {
@@ -357,11 +370,34 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
               <AdminSelect
                 className={compactSelectClass}
                 value={editDraft.status}
-                onChange={(v) => patchDraft({ status: v as Status })}
+                onChange={(v) => {
+                  const next = v as Status;
+                  patchDraft({
+                    status: next,
+                    publishAt: next === "Scheduled" ? editDraft.publishAt ?? null : null,
+                  });
+                }}
                 options={statuses.map((s) => ({ value: s, label: s }))}
                 aria-label="Status"
               />
             </EditField>
+            {editDraft.status === "Scheduled" ? (
+              <EditField label="Go live (ICT)" className="sm:col-span-2">
+                <input
+                  type="datetime-local"
+                  className={compactInputClass}
+                  value={toIctDatetimeLocalValue(editDraft.publishAt)}
+                  onChange={(e) =>
+                    patchDraft({ publishAt: fromIctDatetimeLocalValue(e.target.value) })
+                  }
+                  required
+                />
+                <p className="mt-1 text-2xs text-text-disabled">
+                  Cambodia time (UTC+7). Goes live when ready — retries if video is still
+                  processing.
+                </p>
+              </EditField>
+            ) : null}
             <EditField label="Genre" className="sm:col-span-2">
               <GenreMultiSelect
                 selected={parseGenresFromStored(editDraft.genre)}
