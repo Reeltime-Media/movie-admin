@@ -619,10 +619,44 @@ export default function NewMoviePage() {
 
         <div className={step === 1 ? "block" : "hidden"} aria-hidden={step !== 1}>
           <AdminCard title="Upload assets">
-            <p className="mb-5 text-sm text-text-muted">
-              Attach poster, banner, and main video. Video uploads go straight to R2, then
-              transcoding starts. You can save a draft without a video and finish later.
-            </p>
+            <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+              <p className="max-w-xl text-sm text-text-muted">
+                Attach poster, banner, and main video. Video uploads go straight to R2, then
+                transcoding starts. You can save a draft without a video and finish later.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span
+                  className={[
+                    "rounded-lg border px-3 py-1.5 text-xs font-bold",
+                    posterFile
+                      ? "border-success/40 bg-success/10 text-success"
+                      : "border-warning/40 bg-warning/10 text-warning",
+                  ].join(" ")}
+                >
+                  {posterFile ? "Poster ready" : "Needs poster"}
+                </span>
+                <span
+                  className={[
+                    "rounded-lg border px-3 py-1.5 text-xs font-bold",
+                    videoFile
+                      ? "border-success/40 bg-success/10 text-success"
+                      : "border-warning/40 bg-warning/10 text-warning",
+                  ].join(" ")}
+                >
+                  {videoFile ? "Video ready" : "Needs video"}
+                </span>
+                <span
+                  className={[
+                    "rounded-lg border px-3 py-1.5 text-xs font-bold",
+                    bannerFile
+                      ? "border-success/40 bg-success/10 text-success"
+                      : "border-border bg-bg text-text-muted",
+                  ].join(" ")}
+                >
+                  {bannerFile ? "Banner ready" : "Banner optional"}
+                </span>
+              </div>
+            </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
               <AssetPicker

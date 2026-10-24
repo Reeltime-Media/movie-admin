@@ -26,7 +26,9 @@ export type ApiSeries = {
   poster_key: string | null;
   banner_key: string | null;
   trailer_url: string | null;
+  status?: string;
   is_published: boolean;
+  publish_at?: string | null;
   is_short_movie: boolean;
   created_at: string;
   updated_at: string;
@@ -1165,6 +1167,8 @@ export async function createSeries(input: {
   rating?: string;
   trailerUrl?: string;
   isShortMovie?: boolean;
+  status?: string;
+  publishAt?: string | null;
 }): Promise<ApiSeries> {
   return apiFetch<ApiSeries>("/series/", {
     method: "POST",
@@ -1179,6 +1183,8 @@ export async function createSeries(input: {
       rating: input.rating ?? null,
       trailer_url: input.trailerUrl ?? null,
       is_short_movie: Boolean(input.isShortMovie),
+      status: input.status ?? "draft",
+      publish_at: input.publishAt ?? null,
     }),
   });
 }
@@ -1248,7 +1254,9 @@ export async function updateSeriesApi(
     genres: string[];
     rating: string | null;
     monthly_price_usd: string;
+    status: string;
     is_published: boolean;
+    publish_at: string | null;
     is_short_movie: boolean;
     poster_key: string | null;
     banner_key: string | null;

@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Episode, Season } from "../lib/adminData";
 import { AdminDownloadSourceButton } from "./AdminDownloadSourceButton";
 import { Button } from "./ui/Button";
@@ -16,54 +16,11 @@ const fileInputClass =
 type SeasonsEpisodesEditorProps = {
   seasons: Season[];
   onChange: (next: Season[]) => void;
-  /** When true, compact list + per-episode Edit popup with replace video/poster. */
+  /** When true, compact list + per-episode Edit popup with replace video. */
   allowAssetReplace?: boolean;
+  /** Create wizard: title + video on the same row. */
+  includeVideo?: boolean;
 };
-
-function EpisodePosterThumb({
-  posterFile,
-  posterUrl,
-  title,
-  size = "sm",
-}: {
-  posterFile?: File;
-  posterUrl?: string | null;
-  title: string;
-  size?: "sm" | "md";
-}) {
-  const localUrl = useMemo(
-    () => (posterFile ? URL.createObjectURL(posterFile) : null),
-    [posterFile],
-  );
-
-  useEffect(() => {
-    return () => {
-      if (localUrl) URL.revokeObjectURL(localUrl);
-    };
-  }, [localUrl]);
-
-  const box = size === "md" ? "aspect-2/3 w-28" : "aspect-2/3 w-10";
-
-  const src = localUrl ?? posterUrl ?? null;
-  if (!src) {
-    return (
-      <div
-        className={`grid ${box} shrink-0 place-items-center rounded-md border border-dashed border-border bg-bg text-center text-[9px] leading-tight text-text-disabled`}
-      >
-        —
-      </div>
-    );
-  }
-
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src}
-      alt={`${title} poster`}
-      className={`${box} shrink-0 rounded-md border border-border object-cover`}
-    />
-  );
-}
 
 function StatusDot({ tone, label }: { tone: "ok" | "warn" | "muted"; label: string }) {
   const color =
@@ -155,14 +112,44 @@ function EpisodeRowMenu({
   );
 }
 
+const EPISODE_COUNT_PRESETS = [4, 6, 8, 10, 12, 16, 20, 24] as const;
+const MAX_EPISODES_PER_SEASON = 100;
+
+function buildEpisodes(count: number, existing: Episode[] = []): Episode[] {
+  const n = Math.min(MAX_EPISODES_PER_SEASON, Math.max(1, Math.floor(count)));
+  const saved = existing.filter((ep) => Boolean(ep.slug));
+  const floor = saved.length;
+  const target = Math.max(n, floor);
+
+  const next: Episode[] = [];
+  for (let i = 0; i < target; i += 1) {
+    const prev = existing[i];
+    if (prev) {
+      next.push({ ...prev, number: i + 1 });
+    } else {
+      next.push({
+        id: newEpisodeId(),
+        number: i + 1,
+        title: `Episode ${i + 1}`,
+        runtime: "",
+      });
+    }
+  }
+  return next;
+}
+
 export function SeasonsEpisodesEditor({
   seasons,
   onChange,
   allowAssetReplace = false,
+  includeVideo = false,
 }: SeasonsEpisodesEditorProps) {
   const [editingEpisodeId, setEditingEpisodeId] = useState<string | null>(null);
   const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
   const [didInitSeason, setDidInitSeason] = useState(false);
+  /** Season id waiting for an episode-count choice (null = closed). */
+  const [episodeCountForSeasonId, setEpisodeCountForSeasonId] = useState<string | null>(null);
+  const [episodeCountInput, setEpisodeCountInput] = useState("12");
   const emit = (next: Season[]) => onChange(renumberSeasons(next));
 
   useEffect(() => {
@@ -221,25 +208,35 @@ export function SeasonsEpisodesEditor({
     );
   };
 
-  const setEpisodeAsset = (
-    seasonId: string,
-    episodeId: string,
-    kind: "video" | "poster",
-    files: FileList | null,
-  ) => {
+  const setEpisodeVideo = (seasonId: string, episodeId: string, files: FileList | null) => {
     const file = files?.[0] ?? null;
     const name = file?.name?.trim() ?? "";
-    if (kind === "video") {
-      updateEpisode(seasonId, episodeId, {
-        videoFileName: name || undefined,
-        videoFile: file ?? undefined,
-      });
-      return;
-    }
     updateEpisode(seasonId, episodeId, {
-      posterFileName: name || undefined,
-      posterFile: file ?? undefined,
+      videoFileName: name || undefined,
+      videoFile: file ?? undefined,
     });
+  };
+
+  const openEpisodeCountPrompt = (seasonId: string) => {
+    const season = seasons.find((s) => s.id === seasonId);
+    const current = season?.episodes.length ?? 12;
+    setEpisodeCountInput(String(Math.max(1, current)));
+    setEpisodeCountForSeasonId(seasonId);
+  };
+
+  const applyEpisodeCount = (raw: string | number) => {
+    if (!episodeCountForSeasonId) return;
+    const parsed = typeof raw === "number" ? raw : Number.parseInt(String(raw).trim(), 10);
+    if (!Number.isFinite(parsed) || parsed < 1) return;
+    const seasonId = episodeCountForSeasonId;
+    emit(
+      seasons.map((s) => {
+        if (s.id !== seasonId) return s;
+        return { ...s, episodes: buildEpisodes(parsed, s.episodes) };
+      }),
+    );
+    setEpisodeCountForSeasonId(null);
+    setActiveSeasonId(seasonId);
   };
 
   const addSeason = () => {
@@ -250,53 +247,23 @@ export function SeasonsEpisodesEditor({
         id,
         number: seasons.length + 1,
         title: `Season ${seasons.length + 1}`,
-        episodes: [
-          {
-            id: newEpisodeId(),
-            number: 1,
-            title: "Episode 1",
-            runtime: "",
-          },
-        ],
+        episodes: buildEpisodes(1),
       },
     ]);
     setActiveSeasonId(id);
+    setEpisodeCountInput("12");
+    setEpisodeCountForSeasonId(id);
   };
 
   const removeSeason = (seasonId: string) => {
-    if (seasons.length <= 1) return;
     const removed = seasons.find((s) => s.id === seasonId);
     if (removed?.episodes.some((ep) => ep.id === editingEpisodeId)) {
       setEditingEpisodeId(null);
     }
+    if (episodeCountForSeasonId === seasonId) setEpisodeCountForSeasonId(null);
     const next = seasons.filter((s) => s.id !== seasonId);
     emit(next);
     setActiveSeasonId(next[0]?.id ?? null);
-  };
-
-  const addEpisode = (seasonId: string) => {
-    const newId = newEpisodeId();
-    emit(
-      seasons.map((s) => {
-        if (s.id !== seasonId) return s;
-        const n = s.episodes.length + 1;
-        return {
-          ...s,
-          episodes: [
-            ...s.episodes,
-            {
-              id: newId,
-              number: n,
-              title: `Episode ${n}`,
-              runtime: "",
-            },
-          ],
-        };
-      }),
-    );
-    if (allowAssetReplace) {
-      setEditingEpisodeId(newId);
-    }
   };
 
   const removeEpisode = (seasonId: string, episodeId: string) => {
@@ -315,108 +282,316 @@ export function SeasonsEpisodesEditor({
     ? (seasons.find((s) => s.id === activeSeasonId) ?? null)
     : null;
 
-  // Compact create-wizard layout (inline fields)
+  const episodeCountPrompt =
+    episodeCountForSeasonId != null ? (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-[2px]"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="episode-count-title"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setEpisodeCountForSeasonId(null);
+        }}
+      >
+        <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-md">
+          <h2
+            id="episode-count-title"
+            className="text-base font-semibold tracking-[-0.02em] text-text"
+          >
+            How many episodes?
+          </h2>
+          <p className="mt-1 text-xs text-text-muted">
+            Pick a count — episode rows are created automatically (Episode 1, 2, …).
+            Saved episodes are kept if you go lower than what’s already uploaded.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {EPISODE_COUNT_PRESETS.map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => applyEpisodeCount(n)}
+                className="min-w-11 rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm font-bold tabular-nums text-text transition-colors hover:border-brand hover:bg-brand/10 hover:text-brand"
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+          <label className="mt-4 block">
+            <span className="mb-1.5 block text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
+              Or type a number
+            </span>
+            <input
+              type="number"
+              min={1}
+              max={MAX_EPISODES_PER_SEASON}
+              inputMode="numeric"
+              autoFocus
+              className={inputClass}
+              value={episodeCountInput}
+              onChange={(e) => setEpisodeCountInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  applyEpisodeCount(episodeCountInput);
+                }
+              }}
+            />
+          </label>
+          <div className="mt-4 flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setEpisodeCountForSeasonId(null)}
+            >
+              Cancel
+            </Button>
+            <Button type="button" size="sm" onClick={() => applyEpisodeCount(episodeCountInput)}>
+              Create episodes
+            </Button>
+          </div>
+        </div>
+      </div>
+    ) : null;
+
+  // Compact create-wizard layout (inline fields; optional video column)
   if (!allowAssetReplace) {
+    const gridCols = includeVideo
+      ? "sm:grid-cols-[44px_minmax(0,1.2fr)_88px_56px_minmax(140px,1fr)_72px]"
+      : "sm:grid-cols-[52px_minmax(0,1fr)_100px_72px_80px]";
+
     return (
       <div className="space-y-5">
-        {seasons.map((season) => (
-          <div key={season.id} className="rounded-xl border border-border bg-bg/40 p-4">
-            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-3">
-              <label className="block min-w-[200px] flex-1 sm:max-w-xs">
-                <span className="mb-1 block text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
-                  Season label
-                </span>
-                <input
-                  className={inputClass}
-                  value={season.title}
-                  onChange={(e) => updateSeason(season.id, { title: e.target.value })}
-                  placeholder="Season 1"
-                />
-              </label>
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="secondary" size="sm" onClick={() => addEpisode(season.id)}>
-                  Add episode
-                </Button>
-                <Button
-                  type="button"
-                  variant="danger-soft"
-                  size="sm"
-                  onClick={() => removeSeason(season.id)}
-                  disabled={seasons.length <= 1}
-                >
-                  Remove season
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-3 space-y-2">
-              <div className="hidden text-2xs font-bold uppercase tracking-widest text-text-disabled sm:grid sm:grid-cols-[52px_minmax(0,1fr)_100px_72px_80px] sm:gap-2 sm:px-1">
-                <span>Ep</span>
-                <span>Title</span>
-                <span>Runtime</span>
-                <span>Free</span>
-                <span className="text-right"> </span>
-              </div>
-
-              {season.episodes.map((ep) => (
-                <div
-                  key={ep.id}
-                  className="flex flex-col gap-2 rounded-lg border border-dashed border-border/80 bg-surface/50 p-3 sm:grid sm:grid-cols-[52px_minmax(0,1fr)_100px_72px_80px] sm:items-center sm:gap-2 sm:border-0 sm:bg-transparent sm:p-1"
-                >
-                  <div className="text-xs font-bold text-text-muted">E{ep.number}</div>
-                  <input
-                    className={inputClass}
-                    value={ep.title}
-                    onChange={(e) => updateEpisode(season.id, ep.id, { title: e.target.value })}
-                    placeholder="Episode title"
-                  />
-                  <input
-                    className={inputClass}
-                    value={ep.runtime}
-                    onChange={(e) => updateEpisode(season.id, ep.id, { runtime: e.target.value })}
-                    placeholder="45m"
-                  />
-                  <label className="flex items-center justify-center gap-2 text-xs font-semibold text-text-muted sm:justify-start">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(ep.isFree)}
-                      onChange={(e) =>
-                        updateEpisode(season.id, ep.id, { isFree: e.target.checked })
-                      }
-                      className="rounded border-border"
-                    />
-                    Free
-                  </label>
-                  <div className="flex justify-end sm:block">
-                    <Button
-                      type="button"
-                      variant="danger-soft"
-                      size="sm"
-                      onClick={() => removeEpisode(season.id, ep.id)}
-                      disabled={season.episodes.length <= 1}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+        {seasons.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border bg-bg/40 px-4 py-10 text-center">
+            <p className="text-sm font-semibold text-text">No seasons yet</p>
+            <p className="mt-1 text-xs text-text-muted">
+              Click Add season, then choose how many episodes.
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              className="mt-4"
+              onClick={addSeason}
+              icon={<Plus size={14} aria-hidden />}
+            >
+              Add season
+            </Button>
           </div>
-        ))}
+        ) : null}
+        {seasons.map((season) => {
+          const seasonReady = season.episodes.filter(
+            (ep) => Boolean(ep.videoFileName?.trim() || ep.videoFile),
+          ).length;
+          return (
+            <div key={season.id} className="rounded-xl border border-border bg-bg/40 p-4">
+              <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-3">
+                <label className="block min-w-[200px] flex-1 sm:max-w-xs">
+                  <span className="mb-1 block text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
+                    Season label
+                  </span>
+                  <input
+                    className={inputClass}
+                    value={season.title}
+                    onChange={(e) => updateSeason(season.id, { title: e.target.value })}
+                    placeholder="Season 1"
+                  />
+                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  {includeVideo && season.episodes.length > 0 ? (
+                    <span
+                      className={[
+                        "rounded-md px-2 py-1 text-2xs font-bold tabular-nums",
+                        seasonReady === season.episodes.length
+                          ? "bg-success/15 text-success"
+                          : "bg-warning/15 text-warning",
+                      ].join(" ")}
+                    >
+                      {seasonReady}/{season.episodes.length} videos
+                    </span>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => openEpisodeCountPrompt(season.id)}
+                  >
+                    Set episode count
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="danger-soft"
+                    size="sm"
+                    onClick={() => removeSeason(season.id)}
+                  >
+                    Remove season
+                  </Button>
+                </div>
+              </div>
 
-        <div className="flex justify-end">
-          <Button type="button" variant="secondary" size="sm" onClick={addSeason}>
-            Add season
-          </Button>
-        </div>
+              <div className="mt-3 space-y-2">
+                <div
+                  className={`hidden text-2xs font-bold uppercase tracking-widest text-text-disabled sm:grid sm:gap-2 sm:px-1 ${gridCols}`}
+                >
+                  <span>Ep</span>
+                  <span>Title</span>
+                  <span>Runtime</span>
+                  <span>Free</span>
+                  {includeVideo ? <span>Video</span> : null}
+                  <span className="text-right"> </span>
+                </div>
+
+                {season.episodes.map((ep) => {
+                  const hasVideo = Boolean(ep.videoFileName?.trim() || ep.videoFile);
+                  return (
+                    <div
+                      key={ep.id}
+                      className={`flex flex-col gap-2 rounded-lg border border-dashed border-border/80 bg-surface/50 p-3 sm:grid sm:items-center sm:gap-2 sm:border-0 sm:bg-transparent sm:p-1 ${gridCols}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-text-muted">E{ep.number}</span>
+                        {includeVideo ? (
+                          <span
+                            className={[
+                              "rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider sm:hidden",
+                              hasVideo
+                                ? "bg-success/15 text-success"
+                                : "bg-warning/15 text-warning",
+                            ].join(" ")}
+                          >
+                            {hasVideo ? "Video ✓" : "Needs video"}
+                          </span>
+                        ) : null}
+                      </div>
+                      <input
+                        className={inputClass}
+                        value={ep.title}
+                        onChange={(e) =>
+                          updateEpisode(season.id, ep.id, { title: e.target.value })
+                        }
+                        placeholder="Episode title"
+                      />
+                      <input
+                        className={inputClass}
+                        value={ep.runtime}
+                        onChange={(e) =>
+                          updateEpisode(season.id, ep.id, { runtime: e.target.value })
+                        }
+                        placeholder="45m"
+                      />
+                      <label className="flex items-center justify-center gap-2 text-xs font-semibold text-text-muted sm:justify-start">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(ep.isFree)}
+                          onChange={(e) =>
+                            updateEpisode(season.id, ep.id, { isFree: e.target.checked })
+                          }
+                          className="rounded border-border"
+                        />
+                        Free
+                      </label>
+                      {includeVideo ? (
+                        <div className="min-w-0">
+                          <div className="mb-1 hidden sm:block">
+                            <StatusDot
+                              tone={hasVideo ? "ok" : "warn"}
+                              label={hasVideo ? "Ready" : "Needs video"}
+                            />
+                          </div>
+                          <input
+                            type="file"
+                            accept="video/mp4,video/quicktime,application/x-mpegURL,video/*"
+                            className={fileInputClass}
+                            onChange={(e) => setEpisodeVideo(season.id, ep.id, e.target.files)}
+                          />
+                          {ep.videoFileName ? (
+                            <p className="mt-0.5 truncate text-[10px] text-text-muted">
+                              {ep.videoFileName}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
+                      <div className="flex justify-end sm:block">
+                        <Button
+                          type="button"
+                          variant="danger-soft"
+                          size="sm"
+                          onClick={() => removeEpisode(season.id, ep.id)}
+                          disabled={season.episodes.length <= 1}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+
+        {seasons.length > 0 ? (
+          <div className="flex justify-end">
+            <Button type="button" variant="secondary" size="sm" onClick={addSeason}>
+              Add season
+            </Button>
+          </div>
+        ) : null}
+        {episodeCountPrompt}
       </div>
     );
   }
 
   // Edit mode — season accordion; click a season to reveal episodes
+  const newEpisodes = seasons.flatMap((s) => s.episodes.filter((ep) => !ep.slug));
+  const newReady = newEpisodes.filter((ep) =>
+    Boolean(ep.videoFileName?.trim() || ep.videoFile),
+  ).length;
+  const existingNoHls = seasons
+    .flatMap((s) => s.episodes)
+    .filter((ep) => Boolean(ep.slug) && !ep.hlsMasterKey).length;
+
   return (
     <div className="space-y-3">
-      <div className="overflow-hidden rounded-lg border border-border">
+      {seasons.length > 0 && (newEpisodes.length > 0 || existingNoHls > 0) ? (
+        <div className="flex flex-wrap gap-2">
+          {newEpisodes.length > 0 ? (
+            <span
+              className={[
+                "rounded-lg border px-3 py-1.5 text-xs font-bold tabular-nums",
+                newReady === newEpisodes.length
+                  ? "border-success/40 bg-success/10 text-success"
+                  : "border-warning/40 bg-warning/10 text-warning",
+              ].join(" ")}
+            >
+              {newReady}/{newEpisodes.length} new videos ready
+            </span>
+          ) : null}
+          {existingNoHls > 0 ? (
+            <span className="rounded-lg border border-border bg-bg px-3 py-1.5 text-xs font-bold tabular-nums text-text-muted">
+              {existingNoHls} episode{existingNoHls === 1 ? "" : "s"} without HLS
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+      {seasons.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border px-4 py-10 text-center">
+          <p className="text-sm font-semibold text-text">No seasons yet</p>
+          <p className="mt-1 text-xs text-text-muted">
+            Click Add season, then choose how many episodes.
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            className="mt-4"
+            onClick={addSeason}
+            icon={<Plus size={14} aria-hidden />}
+          >
+            Add season
+          </Button>
+        </div>
+      ) : null}
+      <div className={`overflow-hidden rounded-lg border border-border ${seasons.length === 0 ? "hidden" : ""}`}>
         {seasons.map((season, seasonIndex) => {
           const open = season.id === activeSeason?.id;
           return (
@@ -466,17 +641,16 @@ export function SeasonsEpisodesEditor({
                     <Button
                       type="button"
                       size="sm"
-                      onClick={() => addEpisode(season.id)}
+                      onClick={() => openEpisodeCountPrompt(season.id)}
                       icon={<Plus size={14} aria-hidden />}
                     >
-                      Add episode
+                      Set episode count
                     </Button>
                     <Button
                       type="button"
                       variant="danger-soft"
                       size="sm"
                       onClick={() => removeSeason(season.id)}
-                      disabled={seasons.length <= 1}
                     >
                       Remove
                     </Button>
@@ -488,57 +662,79 @@ export function SeasonsEpisodesEditor({
                 <div className="divide-y divide-border/70 border-t border-border bg-bg/30">
                   {season.episodes.map((ep) => {
                     const isNewEpisode = !ep.slug;
-                    const hasPendingAssets = Boolean(ep.videoFile || ep.posterFile);
+                    const hasPendingAssets = Boolean(ep.videoFile);
+                    const hasVideo = Boolean(ep.videoFileName?.trim() || ep.videoFile);
                     const status = ep.hlsMasterKey
                       ? { tone: "ok" as const, label: "HLS ready" }
                       : ep.slug
                         ? { tone: "muted" as const, label: "No HLS yet" }
-                        : ep.videoFile
+                        : hasVideo
                           ? { tone: "ok" as const, label: "Video ready" }
                           : { tone: "warn" as const, label: "Needs video" };
 
                     return (
                       <div
                         key={ep.id}
-                        className="group flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-surface-elevated/50 sm:px-4"
+                        className="group flex flex-col gap-2 px-3 py-2.5 transition-colors hover:bg-surface-elevated/50 sm:flex-row sm:items-center sm:gap-3 sm:px-4"
                       >
-                        <div className="w-8 shrink-0 text-center text-2xs font-bold tabular-nums text-brand">
-                          E{ep.number}
-                        </div>
-                        <button
-                          type="button"
-                          className="min-w-0 flex-1 cursor-pointer text-left"
-                          onClick={() => setEditingEpisodeId(ep.id)}
-                        >
-                          <div className="truncate text-sm font-semibold text-text group-hover:text-brand">
-                            {ep.title || "Untitled episode"}
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <div className="w-8 shrink-0 text-center text-2xs font-bold tabular-nums text-brand">
+                            E{ep.number}
                           </div>
-                          <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                            <span className="text-2xs text-text-muted">
-                              {ep.runtime || "No runtime"}
-                            </span>
-                            {ep.isFree ? (
-                              <span className="rounded bg-success/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-success">
-                                Free
+                          <button
+                            type="button"
+                            className="min-w-0 flex-1 cursor-pointer text-left"
+                            onClick={() => setEditingEpisodeId(ep.id)}
+                          >
+                            <div className="truncate text-sm font-semibold text-text group-hover:text-brand">
+                              {ep.title || "Untitled episode"}
+                            </div>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                              <span className="text-2xs text-text-muted">
+                                {ep.runtime || "No runtime"}
                               </span>
-                            ) : null}
-                            <StatusDot tone={status.tone} label={status.label} />
-                            {hasPendingAssets ? (
-                              <span className="text-2xs font-semibold text-brand">Pending save</span>
-                            ) : null}
-                            {isNewEpisode ? (
-                              <span className="text-2xs font-semibold text-warning">New</span>
+                              {ep.isFree ? (
+                                <span className="rounded bg-success/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-success">
+                                  Free
+                                </span>
+                              ) : null}
+                              <StatusDot tone={status.tone} label={status.label} />
+                              {hasPendingAssets ? (
+                                <span className="text-2xs font-semibold text-brand">
+                                  Pending save
+                                </span>
+                              ) : null}
+                              {isNewEpisode ? (
+                                <span className="text-2xs font-semibold text-warning">New</span>
+                              ) : null}
+                            </div>
+                          </button>
+                          <EpisodeRowMenu
+                            canDownload={Boolean(ep.slug)}
+                            canRemove={season.episodes.length > 1}
+                            contentId={ep.slug ? ep.id : undefined}
+                            title={ep.title}
+                            onEdit={() => setEditingEpisodeId(ep.id)}
+                            onRemove={() => removeEpisode(season.id, ep.id)}
+                          />
+                        </div>
+                        {isNewEpisode ? (
+                          <div className="min-w-0 sm:w-56 sm:shrink-0">
+                            <input
+                              type="file"
+                              accept="video/mp4,video/quicktime,application/x-mpegURL,video/*"
+                              className={fileInputClass}
+                              onChange={(e) =>
+                                setEpisodeVideo(season.id, ep.id, e.target.files)
+                              }
+                            />
+                            {ep.videoFileName ? (
+                              <p className="mt-0.5 truncate text-[10px] text-text-muted">
+                                {ep.videoFileName}
+                              </p>
                             ) : null}
                           </div>
-                        </button>
-                        <EpisodeRowMenu
-                          canDownload={Boolean(ep.slug)}
-                          canRemove={season.episodes.length > 1}
-                          contentId={ep.slug ? ep.id : undefined}
-                          title={ep.title}
-                          onEdit={() => setEditingEpisodeId(ep.id)}
-                          onRemove={() => removeEpisode(season.id, ep.id)}
-                        />
+                        ) : null}
                       </div>
                     );
                   })}
@@ -549,17 +745,21 @@ export function SeasonsEpisodesEditor({
         })}
       </div>
 
-      <div className="flex justify-end">
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          onClick={addSeason}
-          icon={<Plus size={14} aria-hidden />}
-        >
-          Add season
-        </Button>
-      </div>
+      {seasons.length > 0 ? (
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={addSeason}
+            icon={<Plus size={14} aria-hidden />}
+          >
+            Add season
+          </Button>
+        </div>
+      ) : null}
+
+      {episodeCountPrompt}
 
       {editingContext ? (
         <div
@@ -642,77 +842,38 @@ export function SeasonsEpisodesEditor({
                 </label>
               </div>
 
-              <div className="grid gap-4 border-t border-border/60 pt-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start">
-                <EpisodePosterThumb
-                  posterFile={editingContext.episode.posterFile}
-                  posterUrl={editingContext.episode.posterUrl}
-                  title={editingContext.episode.title}
-                  size="md"
+              <div className="border-t border-border/60 pt-4">
+                <span className="block text-2xs font-semibold text-text-muted">
+                  {editingContext.episode.slug ? "Replace video" : "Video (required)"}
+                </span>
+                <input
+                  type="file"
+                  accept="video/mp4,video/quicktime,video/*"
+                  className={fileInputClass}
+                  onChange={(e) =>
+                    setEpisodeVideo(
+                      editingContext.season.id,
+                      editingContext.episode.id,
+                      e.target.files,
+                    )
+                  }
                 />
-                <div className="space-y-4">
-                  <div>
-                    <span className="block text-2xs font-semibold text-text-muted">
-                      {editingContext.episode.slug ? "Replace video" : "Video (required)"}
-                    </span>
-                    <input
-                      type="file"
-                      accept="video/mp4,video/quicktime,video/*"
-                      className={fileInputClass}
-                      onChange={(e) =>
-                        setEpisodeAsset(
-                          editingContext.season.id,
-                          editingContext.episode.id,
-                          "video",
-                          e.target.files,
-                        )
-                      }
-                    />
-                    {editingContext.episode.videoFile ? (
-                      <p className="mt-1 break-all text-2xs text-text-muted">
-                        {editingContext.episode.slug ? "New" : "Selected"}:{" "}
-                        {editingContext.episode.videoFile.name}
-                      </p>
-                    ) : editingContext.episode.hlsMasterKey ? (
-                      <p className="mt-1 text-2xs text-text-disabled">Current: HLS ready</p>
-                    ) : editingContext.episode.slug ? (
-                      <p className="mt-1 text-2xs text-text-disabled">
-                        Optional — leave empty to keep current
-                      </p>
-                    ) : (
-                      <p className="mt-1 text-2xs text-warning">
-                        Required — attach a video, then Save changes.
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <span className="block text-2xs font-semibold text-text-muted">
-                      {editingContext.episode.slug ? "Replace poster" : "Poster (optional)"}
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className={fileInputClass}
-                      onChange={(e) =>
-                        setEpisodeAsset(
-                          editingContext.season.id,
-                          editingContext.episode.id,
-                          "poster",
-                          e.target.files,
-                        )
-                      }
-                    />
-                    {editingContext.episode.posterFile ? (
-                      <p className="mt-1 break-all text-2xs text-text-muted">
-                        {editingContext.episode.slug ? "New" : "Selected"}:{" "}
-                        {editingContext.episode.posterFile.name}
-                      </p>
-                    ) : (
-                      <p className="mt-1 text-2xs text-text-disabled">
-                        Optional — leave empty to keep current
-                      </p>
-                    )}
-                  </div>
-                </div>
+                {editingContext.episode.videoFile ? (
+                  <p className="mt-1 break-all text-2xs text-text-muted">
+                    {editingContext.episode.slug ? "New" : "Selected"}:{" "}
+                    {editingContext.episode.videoFile.name}
+                  </p>
+                ) : editingContext.episode.hlsMasterKey ? (
+                  <p className="mt-1 text-2xs text-text-disabled">Current: HLS ready</p>
+                ) : editingContext.episode.slug ? (
+                  <p className="mt-1 text-2xs text-text-disabled">
+                    Optional — leave empty to keep current
+                  </p>
+                ) : (
+                  <p className="mt-1 text-2xs text-warning">
+                    Required — attach a video, then Save changes.
+                  </p>
+                )}
               </div>
             </div>
 

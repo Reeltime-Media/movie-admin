@@ -2,7 +2,7 @@
 
 import { ImageIcon, ImagePlus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminCard } from "../components/AdminCard";
 import { AdminShell } from "../components/AdminShell";
@@ -10,7 +10,6 @@ import { AssetPicker } from "../components/AssetPicker";
 import { BackButton } from "../components/BackButton";
 import { Button } from "../components/ui/Button";
 import { AdminSelect } from "../components/AdminSelect";
-import { EpisodeAssetsUploader } from "../components/EpisodeAssetsUploader";
 import { GenreMultiSelect } from "../components/GenreMultiSelect";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
 import { WizardSteps } from "../components/WizardSteps";
@@ -21,12 +20,15 @@ import {
   createSeries,
   EPISODE_UPLOAD_CONCURRENCY,
   runPool,
+  updateSeriesApi,
   uploadEpisodeWithAssets,
   uploadSeriesAssets,
 } from "../lib/api";
 import { useUploadProgress } from "../components/UploadProgressContext";
+import { fromIctDatetimeLocalValue } from "../lib/datetimeIct";
 import {
   defaultSeasons,
+  episodeVideoReadyCount,
   episodesAllHaveVideo,
   validateSeriesSeasons,
 } from "../lib/seriesHelpers";
@@ -37,7 +39,7 @@ const textInputClass =
 const selectClass =
   "w-full rounded-lg border border-border bg-surface-elevated px-3 py-2.5 text-sm text-text outline-none transition-colors hover:border-border-hover focus:border-brand/50 focus:bg-surface";
 
-const stepLabels = ["Details", "Seasons", "Episode media"] as const;
+const stepLabels = ["Details", "Seasons & media"] as const;
 
 function parseStatus(s: string): Status {
   if (s === "Published" || s === "Draft" || s === "Scheduled" || s === "Review") return s;
@@ -86,6 +88,7 @@ export function SeriesUploadWizard({
   const noun = isShortMovie ? "short series" : "series";
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState("Published");
+  const [publishAtLocal, setPublishAtLocal] = useState("");
   const [genres, setGenres] = useState<string[]>([]);
   const [seasons, setSeasons] = useState<Season[]>(() => defaultSeasons());
   const [seriesPosterFile, setSeriesPosterFile] = useState<File | null>(null);
@@ -96,6 +99,8 @@ export function SeriesUploadWizard({
   const createGenreMutation = useCreateGenre();
   const deleteGenreMutation = useDeleteGenre();
   const genreOptions = genreData?.map((g) => g.name);
+
+  const videoProgress = useMemo(() => episodeVideoReadyCount(seasons), [seasons]);
 
   const handleDeleteGenre = (name: string) => {
     const genre = genreData?.find((g) => g.name === name);
@@ -120,13 +125,12 @@ export function SeriesUploadWizard({
     setStep(next);
   };
 
-  const failValidation = (message: string, targetStep: 0 | 1 | 2) => {
+  const failValidation = (message: string, targetStep: 0 | 1) => {
     setDetailsError(null);
     setSeasonsError(null);
     setSubmitError(null);
     if (targetStep === 0) setDetailsError(message);
-    else if (targetStep === 1) setSeasonsError(message);
-    else setSubmitError(message);
+    else setSeasonsError(message);
     setStep(targetStep);
     toast.warning(message);
   };
@@ -152,7 +156,7 @@ export function SeriesUploadWizard({
 
     // Enter on earlier steps just advances — required fields are checked on Save/Upload.
     if (intent !== "draft" && intent !== "upload") {
-      if (step < 2) goToStep(step + 1);
+      if (step < 1) goToStep(step + 1);
       return;
     }
 
@@ -178,10 +182,20 @@ export function SeriesUploadWizard({
     }
 
     if (intent === "upload" && !episodesAllHaveVideo(seasons)) {
-      failValidation(
-        "Upload requires a video file for every episode. Poster per episode is optional.",
-        2,
-      );
+      failValidation("Upload requires a video file for every episode.", 1);
+      return;
+    }
+
+    const targetStatus: Status =
+      intent === "draft" ? "Draft" : parseStatus(String(fd.get("status")));
+    const publishAt =
+      targetStatus === "Scheduled" ? fromIctDatetimeLocalValue(publishAtLocal) : null;
+    if (targetStatus === "Scheduled" && !publishAt) {
+      failValidation("Pick a go-live date and time (Cambodia time) for Scheduled.", 0);
+      return;
+    }
+    if (targetStatus === "Published" && !seriesPosterFile) {
+      failValidation("A series poster is required before publishing.", 1);
       return;
     }
 
@@ -189,7 +203,6 @@ export function SeriesUploadWizard({
     setDetailsError(null);
     setSeasonsError(null);
 
-    const status: Status = intent === "draft" ? "Draft" : parseStatus(String(fd.get("status")));
     const seriesJobId = `series-${title}-${Date.now()}`;
     setActiveJobId(seriesJobId);
     startJob(seriesJobId, title, "Creating series…");
@@ -208,6 +221,7 @@ export function SeriesUploadWizard({
           rating: String(fd.get("rating") || "").trim() || undefined,
           trailerUrl: String(fd.get("trailerUrl") || "").trim() || undefined,
           isShortMovie,
+          status: "draft",
         });
 
         if (seriesPosterFile || seriesBannerFile) {
@@ -231,15 +245,23 @@ export function SeriesUploadWizard({
               seasonNumber: season.number,
               episodeNumber: ep.number,
               runtime: ep.runtime || undefined,
-              status: toApiStatus(status),
+              status: toApiStatus(targetStatus === "Scheduled" ? "Draft" : targetStatus),
               isFree: Boolean(ep.isFree),
             },
             ep.videoFile!,
-            ep.posterFile,
           );
           done += 1;
-          updateJob(seriesJobId, Math.round((done / episodesWithVideo.length) * 100));
+          updateJob(seriesJobId, Math.round((done / Math.max(episodesWithVideo.length, 1)) * 90));
         });
+
+        if (targetStatus !== "Draft") {
+          setJobLabel(seriesJobId, `Applying ${targetStatus.toLowerCase()} status…`);
+          await updateSeriesApi(series.slug, {
+            status: toApiStatus(targetStatus),
+            publish_at: publishAt,
+          });
+        }
+        updateJob(seriesJobId, 100);
 
         finishJob(seriesJobId);
         await refreshMovies();
@@ -281,8 +303,8 @@ export function SeriesUploadWizard({
         <div className={step === 0 ? "block" : "hidden"} aria-hidden={step !== 0}>
           <AdminCard title={isShortMovie ? "Short series details" : "Series details"}>
             <p className="mb-5 text-sm text-text-muted">
-              Set the title, genres, and listing fields first. Next you&apos;ll structure seasons,
-              then attach {noun} artwork and episode videos.
+              Set the title, genres, and listing fields first. Next you&apos;ll add seasons,
+              episode videos, and {noun} artwork.
             </p>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -366,11 +388,14 @@ export function SeriesUploadWizard({
 
               <Field
                 label="Status"
-                hint="Applies when you upload. Save draft always creates a draft."
+                hint="Published requires a poster. Scheduled can upload anytime and goes live later (ICT)."
               >
                 <AdminSelect
                   value={status}
-                  onChange={setStatus}
+                  onChange={(v) => {
+                    setStatus(v);
+                    if (v !== "Scheduled") setPublishAtLocal("");
+                  }}
                   options={[
                     { value: "Draft", label: "Draft" },
                     { value: "Review", label: "Review" },
@@ -382,6 +407,21 @@ export function SeriesUploadWizard({
                 />
                 <input type="hidden" name="status" value={status} />
               </Field>
+
+              {status === "Scheduled" ? (
+                <Field
+                  label="Go live (ICT)"
+                  hint="Cambodia time (UTC+7). Publishes automatically when a poster is ready."
+                >
+                  <input
+                    type="datetime-local"
+                    value={publishAtLocal}
+                    onChange={(e) => setPublishAtLocal(e.target.value)}
+                    className={textInputClass}
+                    required
+                  />
+                </Field>
+              ) : null}
 
               <div className="md:col-span-2">
                 <Field
@@ -414,37 +454,32 @@ export function SeriesUploadWizard({
 
             <div className="mt-6 flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
               <Button type="button" onClick={() => goToStep(1)}>
-                Continue to seasons
+                Continue to seasons & media
               </Button>
             </div>
           </AdminCard>
         </div>
 
         <div className={step === 1 ? "block" : "hidden"} aria-hidden={step !== 1}>
-          <AdminCard title="Seasons and episodes">
-            <p className="mb-5 text-sm text-text-muted">
-              Create every season and episode title here. You&apos;ll attach video and poster
-              files for each episode in the next step.
-            </p>
-            <SeasonsEpisodesEditor seasons={seasons} onChange={setSeasons} />
-            {seasonsError ? (
-              <p className="mt-4 text-xs font-semibold text-warning">{seasonsError}</p>
-            ) : null}
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-              <BackButton label="Back" onClick={() => goToStep(0)} />
-              <Button type="button" onClick={() => goToStep(2)}>
-                Continue to media
-              </Button>
+          <AdminCard title="Seasons & media">
+            <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+              <p className="max-w-xl text-sm text-text-muted">
+                Add seasons, set episode count, name episodes, and attach each video here.
+                Series poster and banner are optional.
+              </p>
+              {videoProgress.total > 0 ? (
+                <div
+                  className={[
+                    "shrink-0 rounded-lg border px-3 py-2 text-xs font-bold tabular-nums",
+                    videoProgress.ready === videoProgress.total
+                      ? "border-success/40 bg-success/10 text-success"
+                      : "border-warning/40 bg-warning/10 text-warning",
+                  ].join(" ")}
+                >
+                  {videoProgress.ready}/{videoProgress.total} videos ready
+                </div>
+              ) : null}
             </div>
-          </AdminCard>
-        </div>
-
-        <div className={step === 2 ? "block" : "hidden"} aria-hidden={step !== 2}>
-          <AdminCard title="Episode media">
-            <p className="mb-5 text-sm text-text-muted">
-              Add series poster and banner (optional), then attach each episode&apos;s video
-              (required for Upload) and episode poster (optional).
-            </p>
 
             <div className="mb-8 grid gap-4 md:grid-cols-2">
               <AssetPicker
@@ -467,8 +502,15 @@ export function SeriesUploadWizard({
               />
             </div>
 
-            <EpisodeAssetsUploader seasons={seasons} onChange={setSeasons} />
+            <SeasonsEpisodesEditor
+              seasons={seasons}
+              onChange={setSeasons}
+              includeVideo
+            />
 
+            {seasonsError ? (
+              <p className="mt-4 text-xs font-semibold text-warning">{seasonsError}</p>
+            ) : null}
             {submitError ? (
               <p className="mt-4 text-xs font-semibold text-warning">{submitError}</p>
             ) : null}
@@ -491,7 +533,7 @@ export function SeriesUploadWizard({
             ) : null}
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-              <BackButton label="Back" onClick={() => goToStep(1)} />
+              <BackButton label="Back" onClick={() => goToStep(0)} />
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="submit"

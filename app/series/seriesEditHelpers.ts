@@ -13,6 +13,7 @@ export function toSeriesDraft(entry: CatalogEntry): Omit<CatalogEntry, "id"> {
     runtimeMinutes: entry.runtimeMinutes,
     releaseYear: entry.releaseYear,
     status: entry.status,
+    publishAt: entry.publishAt ?? null,
     genre: entry.genre,
     owner: entry.owner,
     isShortMovie: entry.isShortMovie ?? false,

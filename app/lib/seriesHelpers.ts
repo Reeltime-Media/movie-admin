@@ -8,22 +8,9 @@ export function newEpisodeId() {
   return `e-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+/** Start with no seasons — admin clicks “Add season” to create the first one. */
 export function defaultSeasons(): Season[] {
-  return [
-    {
-      id: newSeasonId(),
-      number: 1,
-      title: "Season 1",
-      episodes: [
-        {
-          id: newEpisodeId(),
-          number: 1,
-          title: "Episode 1",
-          runtime: "",
-        },
-      ],
-    },
-  ];
+  return [];
 }
 
 export function renumberSeasons(seasons: Season[]): Season[] {
@@ -60,6 +47,18 @@ export function validateSeriesSeasons(seasons: Season[]): boolean {
 
 export function episodesAllHaveVideo(seasons: Season[]): boolean {
   return seasons.every((s) =>
-    s.episodes.every((e) => Boolean(e.videoFileName?.trim())),
+    s.episodes.every((e) => Boolean(e.videoFileName?.trim() || e.videoFile)),
   );
+}
+
+export function episodeVideoReadyCount(seasons: Season[]): { ready: number; total: number } {
+  let ready = 0;
+  let total = 0;
+  for (const season of seasons) {
+    for (const ep of season.episodes) {
+      total += 1;
+      if (ep.videoFileName?.trim() || ep.videoFile) ready += 1;
+    }
+  }
+  return { ready, total };
 }

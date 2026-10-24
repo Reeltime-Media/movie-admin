@@ -26,6 +26,7 @@ import type { CatalogEntry, Status } from "../lib/adminData";
 import { formatGenres, parseGenresFromStored } from "../lib/genres";
 import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../lib/money";
 import { mapApiSeasons } from "../lib/catalog";
+import { fromIctDatetimeLocalValue, toIctDatetimeLocalValue } from "../lib/datetimeIct";
 import { validateSeriesSeasons } from "../lib/seriesHelpers";
 import { pickAssetFile, pickFileFromInput } from "../movie/movieEditHelpers";
 import {
@@ -215,8 +216,18 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
   const saveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!series || !editDraft || !series.slug) return;
-    if (!editDraft.title.trim()) return;
-    if (!editDraft.genre.trim()) return;
+    if (!editDraft.title.trim()) {
+      const message = "Enter a title to save.";
+      setEditSaveError(message);
+      toast.error(message);
+      return;
+    }
+    if (!editDraft.genre.trim()) {
+      const message = "Select at least one genre.";
+      setEditSaveError(message);
+      toast.error(message);
+      return;
+    }
 
     if (!validateSeriesSeasons(editDraft.seasons)) {
       const message = "Series needs at least one season, and every episode needs a title.";
@@ -230,6 +241,29 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
       setEditSaveError(priceResult.message);
       toast.error(priceResult.message);
       return;
+    }
+
+    if (editDraft.status === "Scheduled" && !editDraft.publishAt) {
+      const message = "Pick a go-live date and time (Cambodia time) for Scheduled.";
+      setEditSaveError(message);
+      toast.error(message);
+      return;
+    }
+
+    const isNewlyPublishing =
+      editDraft.status === "Published" && series.status !== "Published";
+    if (isNewlyPublishing) {
+      const hasPoster =
+        Boolean(series.posterKey) ||
+        Boolean(editDraft.posterKey) ||
+        Boolean(pickAssetFile(editPosterFile));
+      if (!hasPoster) {
+        const message = "A poster is required before publishing.";
+        setEditSaveError(message);
+        toast.error(message);
+        setTab("media");
+        return;
+      }
     }
 
     const newEpisodes = editDraft.seasons.flatMap((season) =>
@@ -278,39 +312,25 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
             isFree: Boolean(episode.isFree),
           },
           episode.videoFile!,
-          episode.posterFile instanceof File && episode.posterFile.size > 0
-            ? episode.posterFile
-            : undefined,
         );
       }
 
       const episodeAssetJobs = editDraft.seasons.flatMap((season) =>
         season.episodes
-          .filter(
-            (ep) =>
-              Boolean(ep.slug) &&
-              ((ep.videoFile instanceof File && ep.videoFile.size > 0) ||
-                (ep.posterFile instanceof File && ep.posterFile.size > 0)),
-          )
+          .filter((ep) => Boolean(ep.slug) && ep.videoFile instanceof File && ep.videoFile.size > 0)
           .map((ep) => ({
             seasonNumber: season.number,
             episodeNumber: ep.number,
             episodeSlug: ep.slug!,
-            video: ep.videoFile instanceof File && ep.videoFile.size > 0 ? ep.videoFile : null,
-            poster: ep.posterFile instanceof File && ep.posterFile.size > 0 ? ep.posterFile : null,
+            video: ep.videoFile as File,
           })),
       );
 
       for (const job of episodeAssetJobs) {
         const label = `S${job.seasonNumber}E${job.episodeNumber}`;
-        setUploadProgressLabel(
-          job.video
-            ? `Uploading ${label} video…`
-            : `Uploading ${label} poster…`,
-        );
+        setUploadProgressLabel(`Uploading ${label} video…`);
         await uploadEpisodeAssets(series.slug, job.episodeSlug, {
           video: job.video,
-          poster: job.poster,
         });
       }
 
@@ -362,7 +382,10 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
     return (
       <AdminCard title="Series not found">
         <p className="text-sm text-text-muted">This series is not in the admin catalog.</p>
-        <BackButton href="/series" label="Back to series" className="mt-4" size="md" />
+        <div className="mt-4 flex flex-wrap gap-2">
+          <BackButton href="/series" label="Back to series" size="md" />
+          <BackButton href="/short-series" label="Back to short series" size="md" />
+        </div>
       </AdminCard>
     );
   }
@@ -370,17 +393,18 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
   const tabs = [
     { key: "overview", label: "Overview" },
     { key: "media", label: "Media" },
-    { key: "episodes", label: "Seasons" },
+    { key: "episodes", label: "Seasons & episodes" },
   ];
 
   const listHref = editDraft.isShortMovie ? "/short-series" : "/series";
+  const noun = editDraft.isShortMovie ? "short series" : "series";
 
   return (
     <form onSubmit={saveEdit} className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border">
         <div className="flex min-w-0 flex-wrap items-end gap-3">
           <div className="pb-2">
-            <BackButton href={listHref} label="Back" />
+            <BackButton href={listHref} label={`Back to ${noun}`} />
           </div>
           <AdminSectionTabs
             tabs={tabs}
@@ -425,11 +449,39 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
                     <AdminSelect
                       className={movieEditSelectClass}
                       value={editDraft.status}
-                      onChange={(v) => patchDraft({ status: v as Status })}
+                      onChange={(v) => {
+                        const next = v as Status;
+                        patchDraft({
+                          status: next,
+                          publishAt: next === "Scheduled" ? editDraft.publishAt ?? null : null,
+                        });
+                      }}
                       options={statuses.map((s) => ({ value: s, label: s }))}
                       aria-label="Status"
                     />
+                    <p className="mt-1 text-2xs text-text-disabled">
+                      Published requires a poster. Scheduled goes live automatically (ICT).
+                    </p>
                   </EditRow>
+                  {editDraft.status === "Scheduled" ? (
+                    <EditRow label="Go live (ICT)">
+                      <input
+                        type="datetime-local"
+                        className={movieEditInputClass}
+                        value={toIctDatetimeLocalValue(editDraft.publishAt)}
+                        onChange={(e) =>
+                          patchDraft({
+                            publishAt: fromIctDatetimeLocalValue(e.target.value),
+                          })
+                        }
+                        required
+                      />
+                      <p className="mt-1 text-2xs text-text-disabled">
+                        Cambodia time (UTC+7). Publishes when a poster is ready — retries if
+                        artwork is still missing.
+                      </p>
+                    </EditRow>
+                  ) : null}
                   <EditRow label="Monthly price (USD)">
                     <input
                       className={movieEditInputClass}

@@ -14,6 +14,7 @@ import { InlineLoading } from "../../components/InlineLoading";
 import { TrailerPreview } from "../../components/TrailerPreview";
 import type { Episode } from "../../lib/adminData";
 import { statusClasses } from "../../lib/adminData";
+import { formatIctLabel } from "../../lib/datetimeIct";
 import { seriesStructureSummary, totalEpisodesInEntry } from "../../lib/seriesHelpers";
 import { useAdminSeries } from "../../hooks/adminQueries";
 
@@ -128,31 +129,42 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
         <p className="text-sm text-text-muted">
           This series is not in the current admin catalog.
         </p>
-        <BackButton href="/series" label="Back to series" className="mt-4" size="md" />
+        <div className="mt-4 flex flex-wrap gap-2">
+          <BackButton href="/series" label="Back to series" size="md" />
+          <BackButton href="/short-series" label="Back to short series" size="md" />
+        </div>
       </AdminCard>
     );
   }
 
+  const isShort = Boolean(series.isShortMovie);
+  const listHref = isShort ? "/short-series" : "/series";
+  const noun = isShort ? "short series" : "series";
   const episodeCount = totalEpisodesInEntry(series);
   const tabs = [
     { key: "overview", label: "Overview" },
     { key: "media", label: "Media" },
-    { key: "episodes", label: "Episodes", badge: episodeCount },
+    { key: "episodes", label: "Seasons & episodes", badge: episodeCount },
   ];
 
   return (
     <div className="space-y-5">
       {/* Tabs + actions */}
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border">
-        <AdminSectionTabs
-          tabs={tabs}
-          active={tab}
-          onChange={(k) => setTab(k as SeriesTab)}
-          bare
-        />
+        <div className="flex min-w-0 flex-wrap items-end gap-3">
+          <div className="pb-2">
+            <BackButton href={listHref} label={`Back to ${noun}`} />
+          </div>
+          <AdminSectionTabs
+            tabs={tabs}
+            active={tab}
+            onChange={(k) => setTab(k as SeriesTab)}
+            bare
+          />
+        </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2 pb-2">
           <Button href={`/series/${series.id}/edit`} size="sm">
-            Edit series
+            Edit {noun}
           </Button>
         </div>
       </div>
@@ -176,6 +188,12 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
                       <span className={statusClasses(series.status)}>{series.status}</span>
                     </td>
                   </tr>
+                  {series.status === "Scheduled" && series.publishAt ? (
+                    <InfoRow
+                      label="Go live (ICT)"
+                      value={formatIctLabel(series.publishAt) ?? series.publishAt}
+                    />
+                  ) : null}
                   <InfoRow label="Structure" value={seriesStructureSummary(series)} />
                   <InfoRow label="Episodes" value={episodeCount} />
                   <InfoRow label="Genre" value={series.genre} />

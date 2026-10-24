@@ -102,6 +102,11 @@ export function mapApiSeasons(apiSeasons: ApiSeasonRead[]): Season[] {
 }
 
 export function apiSeriesToCatalogEntry(series: ApiSeries, apiSeasons: ApiSeasonRead[] = []): CatalogEntry {
+  const status = series.status
+    ? toStatus(series.status)
+    : series.is_published
+      ? "Published"
+      : "Draft";
   return {
     id: series.id,
     slug: series.slug,
@@ -115,7 +120,8 @@ export function apiSeriesToCatalogEntry(series: ApiSeries, apiSeasons: ApiSeason
         : "Free",
     views: "-",
     rating: series.rating ?? "-",
-    status: series.is_published ? "Published" : "Draft",
+    status,
+    publishAt: series.publish_at ?? null,
     genre: formatGenres(series.genres),
     owner: "API",
     isShortMovie: series.is_short_movie,
@@ -171,7 +177,8 @@ export async function updateCatalogEntry(
       title_km: entry.titleKm?.trim() || null,
       description: entry.description ?? null,
       genres: parseGenresFromStored(entry.genre),
-      is_published: entry.status === "Published",
+      status: toApiStatus(entry.status),
+      publish_at: entry.status === "Scheduled" ? (entry.publishAt ?? null) : null,
       is_short_movie: Boolean(entry.isShortMovie),
       trailer_url: entry.trailerUrl ?? null,
       release_year: entry.releaseYear ?? null,

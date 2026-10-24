@@ -334,9 +334,34 @@ export default function NewPodcastPage() {
 
         <div className={step === 1 ? "block" : "hidden"} aria-hidden={step !== 1}>
           <AdminCard title="Upload assets">
-            <p className="mb-5 text-sm text-text-muted">
-              Attach cover art and the audio file. Runtime is detected from the audio automatically.
-            </p>
+            <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+              <p className="max-w-xl text-sm text-text-muted">
+                Attach cover art and the audio file. Runtime is detected from the audio
+                automatically.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span
+                  className={[
+                    "rounded-lg border px-3 py-1.5 text-xs font-bold",
+                    posterFile
+                      ? "border-success/40 bg-success/10 text-success"
+                      : "border-warning/40 bg-warning/10 text-warning",
+                  ].join(" ")}
+                >
+                  {posterFile ? "Cover ready" : "Needs cover"}
+                </span>
+                <span
+                  className={[
+                    "rounded-lg border px-3 py-1.5 text-xs font-bold",
+                    audioFile
+                      ? "border-success/40 bg-success/10 text-success"
+                      : "border-warning/40 bg-warning/10 text-warning",
+                  ].join(" ")}
+                >
+                  {audioFile ? "Audio ready" : "Needs audio"}
+                </span>
+              </div>
+            </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
               <AssetPicker

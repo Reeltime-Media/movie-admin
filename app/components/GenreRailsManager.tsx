@@ -214,13 +214,33 @@ export function GenreRailsManager() {
     );
   };
 
-  const handleReorderAutomatic = async (next: ApiContent[]) => {
+  const handleReorderAutomatic = (next: ApiContent[]) => {
+    // Local draft only — pin explicitly so a casual drag does not curate the site.
     setDraftAutomatic(next);
-    // Reordering the live automatic rail pins it so the website keeps this order.
-    await pinMoviesInOrder(
-      next,
-      `Order saved for ${selectedGenre} — this rail is now curated.`,
-    );
+  };
+
+  const handleResetToAutomatic = async () => {
+    if (!items.length) return;
+    if (
+      !window.confirm(
+        `Reset ${selectedGenre} to the automatic website order? This removes ${items.length} curated pin${items.length === 1 ? "" : "s"}.`,
+      )
+    ) {
+      return;
+    }
+    setIsSaving(true);
+    try {
+      for (const item of items) {
+        await deleteAdminGenreRail(item.id);
+      }
+      invalidate();
+      toast.success(`${selectedGenre} rail reset to automatic.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not reset the rail.");
+      invalidate();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleRemove = async (item: ApiGenreRailItem) => {
@@ -328,7 +348,7 @@ export function GenreRailsManager() {
                     On the website now · {draftAutomatic.length} titles
                   </p>
                   <p className="mt-0.5 text-xs text-text-muted">
-                    Drag to change order (saves to the site). Or pin as-is, then keep editing.
+                    Drag to preview a new order. Pin to save it on the site as a curated rail.
                   </p>
                 </div>
                 <button
@@ -337,7 +357,7 @@ export function GenreRailsManager() {
                   disabled={isSaving}
                   className={`${adminPrimaryButtonClass} disabled:opacity-40`}
                 >
-                  Pin these to rail
+                  Pin this order to rail
                 </button>
               </div>
               <SortableList
@@ -363,31 +383,52 @@ export function GenreRailsManager() {
             </div>
           )
         ) : (
-          <SortableList
-            items={items}
-            disabled={isSaving}
-            onReorder={handleReorder}
-            renderItem={(item, index) => (
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex min-w-0 flex-1 items-center gap-2">
-                  <span className="rounded-md bg-surface-elevated px-1.5 py-0.5 font-mono text-2xs font-semibold tabular-nums text-text-muted">
-                    #{index + 1}
-                  </span>
-                  <h3 className="truncate text-sm font-bold text-text">
-                    {item.content_title ?? "Unknown title"}
-                  </h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void handleRemove(item)}
-                  disabled={isSaving}
-                  className={adminDeleteButtonClassWide}
-                >
-                  Remove
-                </button>
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface-elevated/40 px-3 py-2.5">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-text">
+                  Curated rail · {items.length}/{MAX_PICKS}
+                </p>
+                <p className="mt-0.5 text-xs text-text-muted">
+                  Drag to reorder (saves immediately). Reset clears pins and restores the automatic
+                  website list.
+                </p>
               </div>
-            )}
-          />
+              <button
+                type="button"
+                onClick={() => void handleResetToAutomatic()}
+                disabled={isSaving}
+                className={`${adminDeleteButtonClassWide} disabled:opacity-40`}
+              >
+                Reset to automatic
+              </button>
+            </div>
+            <SortableList
+              items={items}
+              disabled={isSaving}
+              onReorder={handleReorder}
+              renderItem={(item, index) => (
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <span className="rounded-md bg-surface-elevated px-1.5 py-0.5 font-mono text-2xs font-semibold tabular-nums text-text-muted">
+                      #{index + 1}
+                    </span>
+                    <h3 className="truncate text-sm font-bold text-text">
+                      {item.content_title ?? "Unknown title"}
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleRemove(item)}
+                    disabled={isSaving}
+                    className={adminDeleteButtonClassWide}
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+            />
+          </div>
         )}
       </AdminCard>
 

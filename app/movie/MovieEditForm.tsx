@@ -194,8 +194,18 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
   const saveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!movie || !editDraft) return;
-    if (!editDraft.title.trim()) return;
-    if (!editDraft.genre.trim()) return;
+    if (!editDraft.title.trim()) {
+      const message = "Enter a title to save.";
+      setEditSaveError(message);
+      toast.error(message, { toastId: "movie-edit-title" });
+      return;
+    }
+    if (!editDraft.genre.trim()) {
+      const message = "Select at least one genre.";
+      setEditSaveError(message);
+      toast.error(message, { toastId: "movie-edit-genre" });
+      return;
+    }
 
     const priceResult = validateAdminPriceUsd(editDraft.price);
     if (!priceResult.ok) {
