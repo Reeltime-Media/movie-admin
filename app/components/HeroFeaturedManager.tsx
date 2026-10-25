@@ -8,7 +8,7 @@ import { AdminCard } from "./AdminCard";
 import { AdminCatalogSearchBar } from "./AdminCatalogSearchBar";
 import { AdminMediaThumb } from "./AdminMediaThumb";
 import { InlineLoading } from "./InlineLoading";
-import { HeroVideoField } from "./HeroSlideMediaFields";
+import { HeroBannerField, HeroVideoField } from "./HeroSlideMediaFields";
 import { SortableList, persistReorderedSort } from "./SortableList";
 import {
   createAdminHeroFeatured,
@@ -37,7 +37,22 @@ type CatalogEntry = {
   isPublished: boolean;
 };
 
-type SlideMode = "catalog" | "custom";
+// "video" and "image" are both content_type "custom" in the API.
+type SlideMode = "catalog" | "video" | "image";
+
+/** Custom slides without a video are image-only. */
+function customSlideMode(item: ApiHeroFeaturedItem): SlideMode {
+  return item.video_key || item.youtube_url ? "video" : "image";
+}
+
+function customSlideLabel(item: ApiHeroFeaturedItem): string {
+  return customSlideMode(item) === "video" ? "Custom video" : "Image slide";
+}
+
+/** Mirrors the API rule: an on-site path ("/pricing") or an http(s) URL. */
+function isValidSlideLink(value: string): boolean {
+  return (value.startsWith("/") && !value.startsWith("//")) || /^https?:\/\//.test(value);
+}
 
 type ItemFormState = {
   slideMode: SlideMode;
@@ -208,7 +223,7 @@ export function HeroFeaturedManager() {
     setEditingItem(item);
     const isCustom = item.content_type === "custom";
     setForm({
-      slideMode: isCustom ? "custom" : "catalog",
+      slideMode: isCustom ? customSlideMode(item) : "catalog",
       contentType: item.content_type === "series" ? "series" : "movie",
       contentId: item.content_id ?? "",
       startsAt: toDatetimeLocalValue(item.starts_at),
@@ -247,9 +262,20 @@ export function HeroFeaturedManager() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    const isCustom = form.slideMode === "custom";
-    if (isCustom && !form.videoKey && !form.youtubeUrl.trim()) {
+    const isVideo = form.slideMode === "video";
+    const isImage = form.slideMode === "image";
+    const isCustom = isVideo || isImage;
+    const linkUrl = form.linkUrl.trim();
+    if (isVideo && !form.videoKey && !form.youtubeUrl.trim()) {
       toast.error("Upload a video file or paste a YouTube URL.");
+      return;
+    }
+    if (isImage && !form.bannerKey) {
+      toast.error("Upload an image for this slide.");
+      return;
+    }
+    if (isImage && linkUrl && !isValidSlideLink(linkUrl)) {
+      toast.error("The link must be a site page starting with / or a full https:// link.");
       return;
     }
     if (!isCustom && !form.contentId) {
@@ -270,10 +296,10 @@ export function HeroFeaturedManager() {
         endsAt: fromDatetimeLocalValue(form.endsAt),
         title: isCustom ? form.title.trim() || null : null,
         description: null,
-        bannerKey: null,
-        linkUrl: null,
-        videoKey: form.videoKey || null,
-        youtubeUrl: form.videoKey ? null : form.youtubeUrl.trim() || null,
+        bannerKey: isImage ? form.bannerKey : null,
+        linkUrl: isImage ? linkUrl || null : null,
+        videoKey: isImage ? null : form.videoKey || null,
+        youtubeUrl: isImage || form.videoKey ? null : form.youtubeUrl.trim() || null,
         videoEnabled: isCustom ? true : (form.videoEnabled ?? true),
       };
 
@@ -298,7 +324,7 @@ export function HeroFeaturedManager() {
     const label =
       item.content_title ??
       item.title ??
-      (item.content_type === "custom" ? "Custom video" : item.content_id ?? "this slide");
+      (item.content_type === "custom" ? customSlideLabel(item) : item.content_id ?? "this slide");
     if (!window.confirm(`Remove "${label}" from the home hero?`)) return;
     setIsSaving(true);
     try {
@@ -379,7 +405,7 @@ export function HeroFeaturedManager() {
           <div className="rounded-lg border border-dashed border-border py-8 text-center">
             <p className="text-sm text-text-muted">No hero slides yet.</p>
             <p className="mt-1 text-xs text-text-disabled">
-              Click &ldquo;Add slide&rdquo; — feature a movie or series, or add a video-only slide.
+              Click &ldquo;Add slide&rdquo; — feature a movie or series, or add a video or image slide.
             </p>
             <Button type="button" className="mt-4" onClick={openCreateForm}>
               Add slide
@@ -405,10 +431,12 @@ export function HeroFeaturedManager() {
                       </span>
                       <h3 className="text-sm font-bold">
                         {item.content_title ??
-                          (item.content_type === "custom" ? "Custom video" : "Unknown title")}
+                          (item.content_type === "custom" ? customSlideLabel(item) : "Unknown title")}
                       </h3>
                       <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-text-muted">
-                        {item.content_type === "custom" ? "video only" : item.content_type}
+                        {item.content_type === "custom"
+                          ? `${customSlideMode(item)} only`
+                          : item.content_type}
                       </span>
                       {item.video_key || item.youtube_url ? (
                         <span className={adminBadgeClass("brand")}>Video</span>
@@ -421,6 +449,8 @@ export function HeroFeaturedManager() {
                     </div>
                     {item.content_slug ? (
                       <p className="mt-1 text-2xs text-text-muted">{item.content_slug}</p>
+                    ) : item.link_url ? (
+                      <p className="mt-1 truncate text-2xs text-text-muted">Links to {item.link_url}</p>
                     ) : null}
                   </div>
                   <div className="flex shrink-0 gap-2">
@@ -484,7 +514,7 @@ export function HeroFeaturedManager() {
               <div className="min-h-0 flex-1 overflow-y-auto">
                 {/* ── Section: Slide type ── */}
                 <div className="border-b border-border px-6 py-4">
-                  <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="grid gap-2 sm:grid-cols-3">
                     {(
                       [
                         [
@@ -493,9 +523,14 @@ export function HeroFeaturedManager() {
                           "Feature a title from your catalog. Its trailer plays automatically.",
                         ],
                         [
-                          "custom",
+                          "video",
                           "Video only",
                           "Just a video — upload a file or paste a YouTube link.",
+                        ],
+                        [
+                          "image",
+                          "Image only",
+                          "Just a picture — upload an image and optionally link it to a page.",
                         ],
                       ] as const
                     ).map(([mode, label, hint]) => {
@@ -749,7 +784,7 @@ export function HeroFeaturedManager() {
                   ) : null}
                 </div>
                 </>
-                ) : (
+                ) : form.slideMode === "video" ? (
                 <div className="px-6 py-5 space-y-5">
                   <div>
                     <div className="mb-3 flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
@@ -779,6 +814,53 @@ export function HeroFeaturedManager() {
                     />
                     <p className="mt-1 text-2xs text-text-disabled">
                       Leave empty to show just the video.
+                    </p>
+                  </div>
+                </div>
+                ) : (
+                <div className="px-6 py-5 space-y-5">
+                  <div>
+                    <div className="mb-3 flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2.5" width="10" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.3"/><circle cx="5" cy="5.5" r="1" fill="currentColor"/><path d="M2.5 10l3-3 2.5 2.5L10 7.5l1.5 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      The image
+                    </div>
+                    <HeroBannerField
+                      bannerKey={form.bannerKey}
+                      onChange={(key) => setForm((prev) => ({ ...prev, bannerKey: key }))}
+                      disabled={isSaving}
+                      onUploadingChange={setMediaUploading}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-2xs font-semibold text-text-muted">
+                      Title (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={form.title}
+                      onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+                      placeholder="Shown in big text over the image"
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                    />
+                    <p className="mt-1 text-2xs text-text-disabled">
+                      Leave empty when the image already has its own text.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-2xs font-semibold text-text-muted">
+                      Link (optional)
+                    </label>
+                    {/* type="text": browsers reject site paths like /pricing in type="url" */}
+                    <input
+                      type="text"
+                      value={form.linkUrl}
+                      onChange={(e) => setForm((prev) => ({ ...prev, linkUrl: e.target.value }))}
+                      placeholder="/pricing or https://…"
+                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                    />
+                    <p className="mt-1 text-2xs text-text-disabled">
+                      Clicking the slide opens this — a site page like /pricing, or a full https:// link
+                      (opens in a new tab). Leave empty for a picture with no click.
                     </p>
                   </div>
                 </div>
@@ -869,7 +951,9 @@ export function HeroFeaturedManager() {
                     mediaUploading ||
                     (form.slideMode === "catalog"
                       ? !form.contentId
-                      : !form.videoKey && !form.youtubeUrl.trim())
+                      : form.slideMode === "video"
+                        ? !form.videoKey && !form.youtubeUrl.trim()
+                        : !form.bannerKey)
                   }
                 >
                   {isSaving ? "Saving…" : editingItem ? "Save changes" : "Add to hero"}
