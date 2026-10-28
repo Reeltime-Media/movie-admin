@@ -100,7 +100,8 @@ export function HomeSectionsManager() {
   const [newType, setNewType] = useState<ApiHomeSectionType>("custom");
   const [newTitle, setNewTitle] = useState("");
   const [newGenre, setNewGenre] = useState("Horror");
-  const [titleDraft, setTitleDraft] = useState("");
+  /** Per-section title edits — avoids syncing draft via useEffect. */
+  const [titleBySection, setTitleBySection] = useState<Record<string, string>>({});
   const [showPicker, setShowPicker] = useState(false);
   const [search, setSearch] = useState("");
   const [movies, setMovies] = useState<ApiContent[]>([]);
@@ -109,15 +110,20 @@ export function HomeSectionsManager() {
   const [catalogLoading, setCatalogLoading] = useState(false);
 
   const sections = useMemo(() => sectionsQuery.data ?? [], [sectionsQuery.data]);
+  const activeSectionId = selectedId ?? sections[0]?.id ?? null;
 
   const detailQuery = useQuery({
-    queryKey: queryKeys.homeSection(selectedId ?? ""),
-    queryFn: () => getAdminHomeSection(selectedId!),
-    enabled: Boolean(selectedId),
+    queryKey: queryKeys.homeSection(activeSectionId ?? ""),
+    queryFn: () => getAdminHomeSection(activeSectionId!),
+    enabled: Boolean(activeSectionId),
   });
 
   const selected = detailQuery.data ?? null;
-  const items = selected?.items ?? [];
+  const items = useMemo(() => selected?.items ?? [], [selected?.items]);
+  const titleDraft =
+    selected != null
+      ? (titleBySection[selected.id] ?? selected.title ?? "")
+      : "";
 
   const genreOptions = useMemo(() => {
     const fromApi = (genreRows ?? []).map((g) => g.name).filter(Boolean);
@@ -126,16 +132,6 @@ export function HomeSectionsManager() {
     );
     return merged.map((name) => ({ value: name, label: name }));
   }, [genreRows]);
-
-  useEffect(() => {
-    if (!selectedId && sections.length) {
-      setSelectedId(sections[0]!.id);
-    }
-  }, [sections, selectedId]);
-
-  useEffect(() => {
-    setTitleDraft(selected?.title ?? "");
-  }, [selected?.id, selected?.title]);
 
   useEffect(() => {
     if (!showPicker) return;
@@ -153,8 +149,10 @@ export function HomeSectionsManager() {
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.homeSections });
-    if (selectedId) {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.homeSection(selectedId) });
+    if (activeSectionId) {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.homeSection(activeSectionId),
+      });
     }
   };
 
@@ -440,7 +438,7 @@ export function HomeSectionsManager() {
                     onClick={() => setSelectedId(section.id)}
                     className={[
                       "min-w-0 flex-1 rounded-lg px-2 py-1.5 text-left transition-colors",
-                      selectedId === section.id
+                      activeSectionId === section.id
                         ? "bg-brand/15 text-text"
                         : "hover:bg-surface-elevated",
                     ].join(" ")}
@@ -484,7 +482,7 @@ export function HomeSectionsManager() {
             ) : null
           }
         >
-          {!selectedId ? (
+          {!activeSectionId ? (
             <p className="py-8 text-center text-sm text-text-muted">Select a section</p>
           ) : detailQuery.isLoading ? (
             <InlineLoading label="Loading section" />
@@ -497,7 +495,12 @@ export function HomeSectionsManager() {
                   Display title
                   <input
                     value={titleDraft}
-                    onChange={(e) => setTitleDraft(e.target.value)}
+                    onChange={(e) =>
+                      setTitleBySection((prev) => ({
+                        ...prev,
+                        [selected.id]: e.target.value,
+                      }))
+                    }
                     placeholder={TYPE_LABELS[selected.type] ?? "Default website label"}
                     className={`mt-1 w-full ${adminInputClass}`}
                   />
