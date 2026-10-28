@@ -2010,6 +2010,136 @@ export async function deleteAdminGenreRail(id: string): Promise<void> {
   await apiFetch<void>(`/admin/genre-rails/${id}`, { method: "DELETE" });
 }
 
+export type ApiHomeSectionType =
+  | "hero"
+  | "banners"
+  | "tv"
+  | "free_today"
+  | "trending"
+  | "most_watched"
+  | "coming_soon"
+  | "series"
+  | "genre"
+  | "custom"
+  | "plans";
+
+export type ApiHomeSectionItem = {
+  id: string;
+  section_id: string;
+  item_kind: string;
+  ref_id: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  label: string | null;
+  poster_key: string | null;
+  slug: string | null;
+};
+
+export type ApiHomeSection = {
+  id: string;
+  type: ApiHomeSectionType | string;
+  title: string | null;
+  genre_name: string | null;
+  is_visible: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  item_count: number;
+  items: ApiHomeSectionItem[];
+};
+
+export async function listAdminHomeSections(): Promise<ApiHomeSection[]> {
+  return apiFetch<ApiHomeSection[]>("/admin/home-sections");
+}
+
+export async function getAdminHomeSection(id: string): Promise<ApiHomeSection> {
+  return apiFetch<ApiHomeSection>(`/admin/home-sections/${id}`);
+}
+
+export async function createAdminHomeSection(input: {
+  type: ApiHomeSectionType;
+  title?: string | null;
+  genreName?: string | null;
+  isVisible?: boolean;
+  sortOrder?: number;
+}): Promise<ApiHomeSection> {
+  return apiFetch<ApiHomeSection>("/admin/home-sections", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: input.type,
+      title: input.title ?? null,
+      genre_name: input.genreName ?? null,
+      is_visible: input.isVisible ?? true,
+      sort_order: input.sortOrder ?? 0,
+    }),
+  });
+}
+
+export async function updateAdminHomeSection(
+  id: string,
+  input: {
+    title?: string | null;
+    genreName?: string | null;
+    isVisible?: boolean;
+    sortOrder?: number;
+  },
+): Promise<ApiHomeSection> {
+  return apiFetch<ApiHomeSection>(`/admin/home-sections/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...(input.title !== undefined ? { title: input.title } : {}),
+      ...(input.genreName !== undefined ? { genre_name: input.genreName } : {}),
+      ...(input.isVisible !== undefined ? { is_visible: input.isVisible } : {}),
+      ...(input.sortOrder !== undefined ? { sort_order: input.sortOrder } : {}),
+    }),
+  });
+}
+
+export async function deleteAdminHomeSection(id: string): Promise<void> {
+  await apiFetch<void>(`/admin/home-sections/${id}`, { method: "DELETE" });
+}
+
+export async function reorderAdminHomeSections(ids: string[]): Promise<ApiHomeSection[]> {
+  return apiFetch<ApiHomeSection[]>("/admin/home-sections/reorder", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+}
+
+export async function createAdminHomeSectionItem(
+  sectionId: string,
+  input: { itemKind: string; refId: string; sortOrder?: number },
+): Promise<ApiHomeSectionItem> {
+  return apiFetch<ApiHomeSectionItem>(`/admin/home-sections/${sectionId}/items`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      item_kind: input.itemKind,
+      ref_id: input.refId,
+      sort_order: input.sortOrder ?? 0,
+    }),
+  });
+}
+
+export async function updateAdminHomeSectionItem(
+  itemId: string,
+  input: { sortOrder: number },
+): Promise<ApiHomeSectionItem> {
+  return apiFetch<ApiHomeSectionItem>(`/admin/home-sections/items/${itemId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sort_order: input.sortOrder }),
+  });
+}
+
+export async function deleteAdminHomeSectionItem(itemId: string): Promise<void> {
+  await apiFetch<void>(`/admin/home-sections/items/${itemId}`, { method: "DELETE" });
+}
+
 export type ApiComingSoonItem = {
   id: string;
   content_id: string;
