@@ -50,10 +50,10 @@ export default function PinPage() {
           <div className="mx-auto flex justify-center">
             <BrandLogo variant="mark" height={48} priority />
           </div>
-          <p className="mt-4 text-2xs font-semibold uppercase tracking-[0.16em] text-text-disabled">
+          <p className="mt-4 text-xs font-medium text-text-muted">
             Security check
           </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-[-0.03em] text-text">Enter admin PIN</h1>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-text">Enter admin PIN</h1>
           <p className="mt-2 text-sm leading-relaxed text-text-muted">
             Required before opening the sign-in page.
           </p>

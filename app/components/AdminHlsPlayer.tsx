@@ -137,7 +137,7 @@ export function AdminHlsPlayer({ src, title }: AdminHlsPlayerProps) {
 
           {showQuality ? (
             <div className="absolute right-0 top-full mt-1 min-w-32 overflow-hidden rounded-lg border border-border bg-surface py-1 shadow-lg">
-              <div className="px-3 pb-1 pt-2 text-2xs font-bold uppercase tracking-widest text-text-muted">
+              <div className="px-3 pb-1 pt-2 text-xs font-medium text-text-muted">
                 Quality
               </div>
 

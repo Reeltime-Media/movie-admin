@@ -45,7 +45,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
+      <span className="mb-1.5 block text-xs font-medium text-text-muted">
         {label}
       </span>
       {children}
@@ -342,7 +342,7 @@ export default function NewPodcastPage() {
               <div className="flex flex-wrap gap-2">
                 <span
                   className={[
-                    "rounded-lg border px-3 py-1.5 text-xs font-bold",
+                    "rounded-lg border px-3 py-1.5 text-xs font-semibold",
                     posterFile
                       ? "border-success/40 bg-success/10 text-success"
                       : "border-warning/40 bg-warning/10 text-warning",
@@ -352,7 +352,7 @@ export default function NewPodcastPage() {
                 </span>
                 <span
                   className={[
-                    "rounded-lg border px-3 py-1.5 text-xs font-bold",
+                    "rounded-lg border px-3 py-1.5 text-xs font-semibold",
                     audioFile
                       ? "border-success/40 bg-success/10 text-success"
                       : "border-warning/40 bg-warning/10 text-warning",
@@ -393,7 +393,7 @@ export default function NewPodcastPage() {
               <p className="mt-4 text-xs font-semibold text-warning">{submitError}</p>
             ) : null}
             {currentJob && currentJob.status !== "done" ? (
-              <div className="mt-4 rounded-lg border border-border bg-bg p-3">
+              <div className="mt-4 rounded-lg bg-surface-soft p-3">
                 <div className="mb-2 flex items-center justify-between text-xs font-semibold text-text-muted">
                   <span>{currentJob.label}</span>
                   <span className="tabular-nums">{currentJob.percent}%</span>
@@ -420,7 +420,6 @@ export default function NewPodcastPage() {
                 </Button>
                 <Button
                   type="submit"
-                  variant="success"
                   loading={isSubmitting}
                   disabled={isSubmitting}
                 >

@@ -175,7 +175,7 @@ export function TvAccessCodeManager() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead>
-                <tr className="border-b border-border text-2xs uppercase tracking-wide text-text-disabled">
+                <tr className="border-b border-border text-xs text-text-muted">
                   <th className="pb-2 pr-3 font-semibold">TV ID</th>
                   <th className="pb-2 pr-3 font-semibold">Label</th>
                   <th className="pb-2 pr-3 font-semibold">Expires</th>
@@ -197,7 +197,7 @@ export function TvAccessCodeManager() {
                       <span
                         className={
                           statusLabel(row) === "Active"
-                            ? "text-emerald-600"
+                            ? "text-success"
                             : "text-text-muted"
                         }
                       >
@@ -250,7 +250,7 @@ export function TvAccessCodeManager() {
               <label className="block text-sm">
                 <span className="mb-1 block text-text-muted">Label (optional)</span>
                 <input
-                  className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm"
                   value={form.label}
                   onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
                   placeholder="Hotel lobby TV"
@@ -262,7 +262,7 @@ export function TvAccessCodeManager() {
                     Custom TV ID (optional — auto-generated if empty)
                   </span>
                   <input
-                    className="w-full rounded-lg border border-border bg-bg px-3 py-2 font-mono text-sm uppercase"
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm uppercase"
                     value={form.code}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))
@@ -281,7 +281,7 @@ export function TvAccessCodeManager() {
                 <input
                   type="datetime-local"
                   required
-                  className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm"
                   value={form.expiresAt}
                   onChange={(e) => setForm((f) => ({ ...f, expiresAt: e.target.value }))}
                 />

@@ -8,72 +8,87 @@
 
 /* ─────────────────────────────────────────────────────────────
    Reeltime Admin — dual theme
-   Dark default (cinema). Light via data-theme="light".
-   Brand red is the only accent in both modes.
+   Dark by default, light via data-theme="light". Hues live here only.
+   Petrol is the single accent. Red, amber and green mean failure,
+   caution and success, and are never used for decoration.
    ───────────────────────────────────────────────────────────── */
 
 :root {
   color-scheme: dark;
 
-  --rt-bg: #0a0a0c;
-  --rt-surface: #121214;
-  --rt-surface-elevated: #1a1a1f;
-  --rt-surface-soft: #0e0e10;
-  --rt-sidebar: #070709;
+  --rt-bg: #0f1214;
+  --rt-surface: #15191c;
+  --rt-surface-elevated: #1c2124;
+  --rt-surface-soft: #191d20;
+  --rt-sidebar: #0f1214;
 
-  --rt-border: #27272a;
-  --rt-border-hover: #3f3f46;
+  --rt-border: #262c30;
+  --rt-border-hover: #384045;
 
-  --rt-text: #f4f4f5;
-  --rt-text-muted: #a1a1aa;
-  --rt-text-disabled: #71717a;
+  --rt-text: #e9edef;
+  --rt-text-muted: #9ba6ad;
+  --rt-text-disabled: #727d84;
 
-  --rt-brand: #e50914;
-  --rt-brand-hover: #ff1f2d;
-  --rt-brand-soft: rgba(229, 9, 20, 0.14);
+  --rt-brand: #5cc0d3;
+  --rt-brand-hover: #7bcfde;
+  --rt-brand-soft: rgba(92, 192, 211, 0.12);
+  --rt-on-brand: #06262d;
 
-  --rt-success: #2ee06a;
-  --rt-warning: #f5a524;
-  --rt-danger: #ff4d4f;
+  --rt-success: #4fc48d;
+  --rt-warning: #e5aa52;
+  --rt-danger: #f2706f;
+
+  /* Sales mix categories. Validated for colour-blind separation per theme. */
+  --rt-chart-1: #1e9db8;
+  --rt-chart-2: #c9803f;
+  --rt-chart-3: #8c78da;
 
   --rt-overlay: rgba(0, 0, 0, 0.6);
-  --rt-glow: rgba(229, 9, 20, 0.12);
 
   --background: var(--rt-bg);
   --foreground: var(--rt-text);
-  --toastify-toast-shadow: none;
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --rt-bg: #f1f5f9;
+  --rt-bg: #f6f7f7;
   --rt-surface: #ffffff;
-  --rt-surface-elevated: #f8fafc;
-  --rt-surface-soft: #e2e8f0;
+  --rt-surface-elevated: #f1f3f3;
+  --rt-surface-soft: #f6f7f7;
   --rt-sidebar: #ffffff;
 
-  --rt-border: #cbd5e1;
-  --rt-border-hover: #94a3b8;
+  --rt-border: #e4e7e8;
+  --rt-border-hover: #cfd5d7;
 
-  --rt-text: #0f172a;
-  --rt-text-muted: #475569;
-  --rt-text-disabled: #94a3b8;
+  --rt-text: #15191c;
+  --rt-text-muted: #5b666e;
+  --rt-text-disabled: #7d878f;
 
-  --rt-brand: #e50914;
-  --rt-brand-hover: #c40812;
-  --rt-brand-soft: rgba(229, 9, 20, 0.1);
+  --rt-brand: #0e6377;
+  --rt-brand-hover: #0a4f60;
+  --rt-brand-soft: rgba(14, 99, 119, 0.08);
+  --rt-on-brand: #ffffff;
 
-  --rt-success: #16a34a;
-  --rt-warning: #d97706;
-  --rt-danger: #dc2626;
+  --rt-success: #17794f;
+  --rt-warning: #94590a;
+  --rt-danger: #c62a2f;
 
-  --rt-overlay: rgba(15, 23, 42, 0.45);
-  --rt-glow: rgba(229, 9, 20, 0.06);
+  --rt-chart-1: #007c9e;
+  --rt-chart-2: #c4793a;
+  --rt-chart-3: #7a63c4;
+
+  --rt-overlay: rgba(21, 25, 28, 0.4);
 
   --background: var(--rt-bg);
   --foreground: var(--rt-text);
 }
+
+/* Theme-only styling for the light mode (e.g. the white logo asset). */
+@custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
+
+/* Screens tall enough for the dashboard to fit without page scroll. */
+@custom-variant fit (@media (min-width: 1024px) and (min-height: 760px));
 
 @theme inline {
   --color-bg: var(--rt-bg);
@@ -89,6 +104,7 @@
   --color-brand: var(--rt-brand);
   --color-brand-hover: var(--rt-brand-hover);
   --color-brand-soft: var(--rt-brand-soft);
+  --color-on-brand: var(--rt-on-brand);
   --color-success: var(--rt-success);
   --color-warning: var(--rt-warning);
   --color-danger: var(--rt-danger);
@@ -96,8 +112,8 @@
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-fira-sans);
-  --font-mono: var(--font-fira-code);
+  --font-sans: var(--font-hanken-grotesk);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
 @theme {
@@ -118,23 +134,28 @@
   --text-stat: 30px;
   --text-stat--line-height: 1.05;
 
-  /* Sharper corners — default Tailwind radii feel too soft for this console. */
-  --radius-xs: 0.125rem; /* 2px */
-  --radius-sm: 0.125rem; /* 2px */
-  --radius-md: 0.1875rem; /* 3px */
-  --radius-lg: 0.25rem; /* 4px — buttons, inputs */
-  --radius-xl: 0.375rem; /* 6px — cards, panels */
-  --radius-2xl: 0.5rem; /* 8px */
-  --radius-3xl: 0.625rem; /* 10px */
-  --radius-4xl: 0.75rem; /* 12px */
+  --tracking-tight: -0.012em;
+
+  --radius-xs: 0.1875rem; /* 3px */
+  --radius-sm: 0.25rem; /* 4px */
+  --radius-md: 0.3125rem; /* 5px */
+  --radius-lg: 0.4375rem; /* 7px — buttons, inputs */
+  --radius-xl: 0.625rem; /* 10px — cards, panels */
+  --radius-2xl: 0.75rem; /* 12px */
+  --radius-3xl: 0.875rem; /* 14px */
+  --radius-4xl: 1rem; /* 16px */
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-md: 0 4px 16px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 8px 28px rgb(0 0 0 / 0.14);
+  --shadow-xl: 0 12px 40px rgb(0 0 0 / 0.18);
+  --shadow-2xl: 0 16px 48px rgb(0 0 0 / 0.22);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   min-height: 100vh;
-  background-image: radial-gradient(900px 420px at 10% -12%, var(--rt-glow), transparent 55%);
-  background-attachment: fixed;
 }
 
 ::placeholder {
@@ -154,7 +175,7 @@ input[type="file"] {
 }
 
 input[type="file"]::file-selector-button {
-  color: #ffffff;
+  color: var(--rt-text);
 }
 
 * {
@@ -162,22 +183,49 @@ input[type="file"]::file-selector-button {
   scrollbar-color: var(--rt-border-hover) transparent;
 }
 
-/* Keep keyboard focus obvious on controls — not a thick red “error” ring on fields. */
+/* Keep keyboard focus obvious on controls. */
 button:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--rt-brand);
   outline-offset: 2px;
 }
 
-input:focus-visible,
+input:not([type="checkbox"], [type="radio"]):focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   outline: none;
+  border-color: var(--rt-brand);
+  box-shadow: 0 0 0 3px var(--rt-brand-soft);
+}
+
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 2px solid var(--rt-brand);
+  outline-offset: 2px;
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--rt-brand) 40%, transparent);
-  color: #ffffff;
+  background: color-mix(in srgb, var(--rt-brand) 28%, transparent);
+}
+
+/* Doubled selector: react-toastify's stylesheet loads after this one. */
+:root:root {
+  --toastify-toast-shadow: var(--shadow-md);
+  --toastify-toast-bd-radius: var(--radius-xl);
+  --toastify-font-family: var(--font-sans);
+  --toastify-color-light: var(--rt-surface);
+  --toastify-color-dark: var(--rt-surface);
+  --toastify-text-color-light: var(--rt-text);
+  --toastify-text-color-dark: var(--rt-text);
+  --toastify-color-info: var(--rt-brand);
+  --toastify-color-success: var(--rt-success);
+  --toastify-color-warning: var(--rt-warning);
+  --toastify-color-error: var(--rt-danger);
+}
+
+.Toastify__toast {
+  border: 1px solid var(--rt-border);
+  font-size: 13px;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -16,13 +16,13 @@ export function isFreeFromPodcastAccess(access: PodcastAccess): boolean {
 }
 
 export const podcastTextInputClass =
-  "w-full rounded-lg border border-border bg-surface-elevated px-3 py-2.5 text-sm text-text outline-none transition-colors placeholder:text-text-disabled hover:border-border-hover focus:border-brand/50 focus:bg-surface";
+  "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-colors placeholder:text-text-disabled hover:border-border-hover focus:border-brand";
 
 export const podcastSelectClass =
-  "w-full rounded-lg border border-border bg-surface-elevated px-3 py-2.5 text-sm text-text outline-none transition-colors hover:border-border-hover focus:border-brand/50 focus:bg-surface";
+  "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-colors hover:border-border-hover focus:border-brand";
 
 export const podcastFileInputClass =
-  "w-full rounded-lg border border-dashed border-border bg-surface-elevated px-3 py-4 text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:border-border-hover";
+  "w-full rounded-lg border border-dashed border-border bg-surface px-3 py-4 text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-surface-elevated file:px-3 file:py-2 file:text-xs file:font-medium file:text-text hover:border-border-hover";
 
 export function toUiStatus(status: string): Status {
   const normalized = status.trim().toLowerCase();

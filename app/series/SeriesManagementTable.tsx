@@ -79,11 +79,11 @@ export function SeriesManagementTable({
           {entries.length === 0 ? (
             <p className="py-12 text-center text-sm text-text-muted">{emptyHint}</p>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {entries.map((item) => (
                 <article
                   key={item.id}
-                  className="group flex flex-col overflow-hidden rounded-xl border border-border bg-bg/40 transition-colors hover:border-border-hover hover:bg-surface-elevated/50"
+                  className="group flex min-w-0 flex-col"
                 >
                   <button
                     type="button"
@@ -94,16 +94,16 @@ export function SeriesManagementTable({
                       objectKey={item.posterKey}
                       srcUrl={item.posterUrl}
                       alt={`${item.title} poster`}
-                      className="aspect-2/3 w-full rounded-none border-0 border-b border-border"
+                      className="aspect-2/3 w-full rounded-lg border-0"
                       emptyLabel="No poster"
                     />
                     <span className="absolute left-2 top-2">
                       <span className={statusClasses(item.status)}>{item.status}</span>
                     </span>
-                    <span className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/55 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                    <span className="pointer-events-none absolute inset-0 bg-linear-to-t rounded-lg from-black/30 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                   </button>
 
-                  <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
+                  <div className="flex min-h-0 flex-1 flex-col gap-1.5 pt-2.5">
                     <button
                       type="button"
                       className="min-w-0 cursor-pointer text-left"
@@ -154,11 +154,11 @@ export function SeriesManagementTable({
           aria-labelledby="delete-series-title"
         >
           <div className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-md">
-            <h2 id="delete-series-title" className="text-lg font-bold tracking-[-0.02em]">
+            <h2 id="delete-series-title" className="text-lg font-semibold tracking-tight">
               Delete {noun}
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-text-muted">
-              Remove <span className="font-bold text-text">{confirmDelete.title}</span> and all its
+              Remove <span className="font-semibold text-text">{confirmDelete.title}</span> and all its
               seasons and episodes? This cannot be undone from the console.
             </p>
             <div className="mt-6 flex flex-wrap justify-end gap-2">

@@ -79,9 +79,9 @@ function ArtworkField({
   const placeholderClass = isBanner ? "aspect-video w-full" : "aspect-2/3 w-40";
 
   return (
-    <div className="rounded-lg border border-border bg-bg p-4">
+    <div className="rounded-lg bg-surface-soft p-4">
       <div className="mb-1 flex items-start justify-between gap-2">
-        <div className="text-base font-bold tracking-[-0.02em]">{label}</div>
+        <div className="text-base font-semibold tracking-tight">{label}</div>
         {!newFile && previewUrl ? (
           <AdminDownloadImageButton
             url={previewUrl}
@@ -370,7 +370,7 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
         <button
           type="button"
           onClick={() => void refreshMovies()}
-          className="mt-3 text-xs font-bold text-brand hover:underline"
+          className="mt-3 text-xs font-semibold text-brand hover:underline"
         >
           Retry
         </button>
@@ -417,7 +417,7 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
           <Button href={`/series/${series.id}`} variant="secondary" size="sm">
             Cancel
           </Button>
-          <Button type="submit" variant="success" size="sm" loading={isSaving}>
+          <Button type="submit" size="sm" loading={isSaving}>
             {isSaving ? uploadProgressLabel || "Saving…" : "Save changes"}
           </Button>
         </div>
@@ -583,8 +583,8 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
                     `${series.slug || series.id}-banner.jpg`
                   }
                 />
-                <div className="rounded-lg border border-border bg-bg p-4">
-                  <div className="mb-1 text-base font-bold tracking-[-0.02em]">Trailer</div>
+                <div className="rounded-lg bg-surface-soft p-4">
+                  <div className="mb-1 text-base font-semibold tracking-tight">Trailer</div>
                   <p className="mb-3 text-xs text-text-muted">Paste a YouTube URL.</p>
                   <input
                     className={movieEditInputClass}
@@ -603,7 +603,7 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
             <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
               <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
                 <div>
-                  <h3 className="text-base font-bold tracking-[-0.02em]">Seasons</h3>
+                  <h3 className="text-base font-semibold tracking-tight">Seasons</h3>
                   <p className="mt-1 text-sm text-text-muted">
                     Expand a season to see its episodes. Edit an episode to change title, assets,
                     or free access.

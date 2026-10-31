@@ -12,7 +12,7 @@ export default function ForgotPasswordPage() {
           <BrandWordmark href="/login" subtitle="Admin console" />
         </div>
 
-        <div className="text-2xs font-bold uppercase tracking-[0.16em] text-text-muted">
+        <div className="text-xs font-medium text-text-muted">
           Account recovery
         </div>
         <h1 className={["mt-2", pageTitleClassName].join(" ")}>

@@ -6,7 +6,7 @@ import { AdminMediaThumb } from "./AdminMediaThumb";
 import { uploadAdminHeroMedia } from "../lib/api";
 
 const inputClass =
-  "w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10";
+  "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10";
 
 type HeroBannerFieldProps = {
   bannerKey: string;
@@ -46,7 +46,7 @@ export function HeroBannerField({
   return (
     <div className="space-y-3">
       <label className="block text-2xs font-semibold text-text-muted">
-        Hero image<span className="text-brand"> *</span>
+        Hero image<span className="text-danger"> *</span>
       </label>
       <p className="text-2xs text-text-disabled">
         Ultrawide 12:5 artwork (1920×800) fills the carousel; other shapes get cropped.
@@ -62,7 +62,7 @@ export function HeroBannerField({
             accept="image/jpeg,image/png,image/webp"
             disabled={disabled || uploading}
             onChange={(e) => void handleFile(e.target.files?.[0] ?? null)}
-            className="block w-full text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-surface-elevated file:px-3 file:py-1.5 file:text-2xs file:font-semibold file:text-text"
+            className="block w-full text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-surface-elevated file:px-3 file:py-1.5 file:text-2xs file:font-medium file:text-text"
           />
           {uploading ? (
             <div>
@@ -135,7 +135,7 @@ export function HeroVideoField({
   return (
     <div className="space-y-3">
       <label className="block text-2xs font-semibold text-text-muted">
-        Hero video{required ? <span className="text-brand"> *</span> : " (optional)"}
+        Hero video{required ? <span className="text-danger"> *</span> : " (optional)"}
       </label>
       <p className="text-2xs text-text-disabled">
         Autoplays muted in the hero. Short clips work best (≤ 30s, ≤ 50 MB, MP4 or
@@ -148,7 +148,7 @@ export function HeroVideoField({
           accept="video/mp4,video/webm"
           disabled={disabled || uploading}
           onChange={(e) => void handleFile(e.target.files?.[0] ?? null)}
-          className="block w-full text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-surface-elevated file:px-3 file:py-1.5 file:text-2xs file:font-semibold file:text-text"
+          className="block w-full text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-surface-elevated file:px-3 file:py-1.5 file:text-2xs file:font-medium file:text-text"
         />
         {uploading ? (
           <div className="mt-2">

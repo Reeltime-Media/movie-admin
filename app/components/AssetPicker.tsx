@@ -43,7 +43,7 @@ export function AssetPicker({
 
   return (
     <label className="block cursor-pointer">
-      <span className="mb-1.5 block text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
+      <span className="mb-1.5 block text-xs font-medium text-text-muted">
         {label}
       </span>
       <div

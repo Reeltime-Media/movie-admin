@@ -12,7 +12,7 @@ export function FormSection({
   return (
     <section className="border-t border-border pt-6 first:border-t-0 first:pt-0">
       <div className="mb-4">
-        <h3 className="text-base font-bold tracking-[-0.01em] text-text">{title}</h3>
+        <h3 className="text-sm font-semibold text-text">{title}</h3>
         {description ? <p className="mt-0.5 text-xs text-text-muted">{description}</p> : null}
       </div>
       <div className="grid gap-4 md:grid-cols-2">{children}</div>

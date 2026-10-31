@@ -184,6 +184,12 @@ function CandleShape(props: {
   );
 }
 
+/** Short axis labels ($1.2k) so ticks never clip against the chart edge. */
+function axisUsdLabel(value: number) {
+  if (value >= 1000) return `$${Number((value / 1000).toFixed(1))}k`;
+  return `$${value}`;
+}
+
 function RevenueTooltip({
   active,
   payload,
@@ -196,14 +202,12 @@ function RevenueTooltip({
   if (!row) return null;
   return (
     <div className="rounded-lg border border-border bg-surface px-3 py-2 shadow-lg">
-      <p className="text-2xs font-semibold uppercase tracking-wide text-text-muted">
-        {row.label}
-      </p>
-      <p className="mt-0.5 text-sm font-bold tabular-nums text-text">
+      <p className="text-xs text-text-muted">{row.label}</p>
+      <p className="mt-0.5 text-sm font-semibold tabular-nums text-text">
         ${formatUsdDisplay(row.revenue)}
       </p>
       {row.payment_count > 0 ? (
-        <p className="text-2xs text-text-muted">
+        <p className="text-xs text-text-muted">
           {row.payment_count} payment{row.payment_count === 1 ? "" : "s"}
         </p>
       ) : null}
@@ -241,7 +245,7 @@ export function RevenuePanel({
   const showDateFilters = Boolean(onDateFromChange && onDateToChange);
 
   const chartToggle = (
-    <div className="flex gap-1 rounded-lg border border-border bg-surface p-0.5">
+    <div className="flex gap-0.5 rounded-lg bg-surface-soft p-0.5">
       {(
         [
           { id: "line", label: "Line" },
@@ -253,9 +257,9 @@ export function RevenuePanel({
           type="button"
           onClick={() => setChartStyle(option.id)}
           className={[
-            "rounded-md px-2.5 py-1 text-2xs font-semibold transition-colors",
+            "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
             chartStyle === option.id
-              ? "bg-brand text-white"
+              ? "bg-surface-elevated text-text"
               : "text-text-muted hover:text-text",
           ].join(" ")}
         >
@@ -267,18 +271,16 @@ export function RevenuePanel({
 
   const summaryBlock = (
     <div>
-      <p className="text-2xs font-semibold uppercase tracking-[0.14em] text-text-muted">
-        Total revenue
-      </p>
+      <p className="text-xs font-medium text-text-muted">Total revenue</p>
       <p
         className={[
-          "mt-1 font-extrabold tracking-[-0.03em] text-text",
-          bare ? "text-[42px]" : fillHeight || splitSections ? "text-[28px] leading-none" : "text-[36px]",
+          "mt-1 font-semibold tracking-tight tabular-nums text-text",
+          bare ? "text-[32px] leading-tight" : "text-[26px] leading-tight",
         ].join(" ")}
       >
         ${formatUsdDisplay(timeline?.period_revenue_usd ?? "0")}
       </p>
-      <p className="mt-2 text-2xs font-medium text-text-muted">
+      <p className="mt-1 text-xs text-text-muted">
         {periodDescription(timeline, days, hasCustomRange)}
         {timeline && timeline.succeeded_payments > 0
           ? ` · ${timeline.succeeded_payments} payment${timeline.succeeded_payments === 1 ? "" : "s"}`
@@ -326,48 +328,40 @@ export function RevenuePanel({
             <AreaChart data={data} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id={areaGradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={brand} stopOpacity={0.35} />
-                  <stop offset="100%" stopColor={brand} stopOpacity={0.02} />
+                  <stop offset="0%" stopColor={brand} stopOpacity={0.14} />
+                  <stop offset="100%" stopColor={brand} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid
-                stroke={axisStroke}
-                strokeDasharray="3 6"
-                vertical={false}
-              />
+              <CartesianGrid stroke={axisStroke} vertical={false} />
               <XAxis
                 dataKey="date"
                 ticks={xTicks}
                 tickFormatter={shortDateLabel}
-                tick={{ fill: tickFill, fontSize: 11, fontWeight: 600 }}
-                axisLine={{ stroke: axisStroke }}
+                tick={{ fill: tickFill, fontSize: 11 }}
+                axisLine={false}
                 tickLine={false}
                 minTickGap={24}
               />
               <YAxis
-                tickFormatter={(v: number) => `$${formatUsdDisplay(v)}`}
-                tick={{ fill: tickFill, fontSize: 11, fontWeight: 600 }}
+                tickFormatter={axisUsdLabel}
+                tick={{ fill: tickFill, fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
-                width={52}
+                width={40}
               />
               <Tooltip
                 content={<RevenueTooltip />}
-                cursor={{
-                  stroke: brand,
-                  strokeWidth: 1,
-                  strokeDasharray: "4 4",
-                }}
+                cursor={{ stroke: "var(--rt-border-hover)", strokeWidth: 1 }}
               />
               <Area
                 type="monotone"
                 dataKey="revenue"
                 stroke={brand}
-                strokeWidth={2.5}
+                strokeWidth={2}
                 fill={`url(#${areaGradientId})`}
                 activeDot={{
                   r: 5,
-                  stroke: "var(--rt-bg)",
+                  stroke: "var(--rt-surface)",
                   strokeWidth: 2,
                   fill: brand,
                 }}
@@ -377,26 +371,22 @@ export function RevenuePanel({
             </AreaChart>
           ) : (
             <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid
-                stroke={axisStroke}
-                strokeDasharray="3 6"
-                vertical={false}
-              />
+              <CartesianGrid stroke={axisStroke} vertical={false} />
               <XAxis
                 dataKey="date"
                 ticks={xTicks}
                 tickFormatter={shortDateLabel}
-                tick={{ fill: tickFill, fontSize: 11, fontWeight: 600 }}
-                axisLine={{ stroke: axisStroke }}
+                tick={{ fill: tickFill, fontSize: 11 }}
+                axisLine={false}
                 tickLine={false}
                 minTickGap={24}
               />
               <YAxis
-                tickFormatter={(v: number) => `$${formatUsdDisplay(v)}`}
-                tick={{ fill: tickFill, fontSize: 11, fontWeight: 600 }}
+                tickFormatter={axisUsdLabel}
+                tick={{ fill: tickFill, fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
-                width={52}
+                width={40}
                 domain={[0, "auto"]}
               />
               <Tooltip content={<RevenueTooltip />} cursor={{ fill: "transparent" }} />
@@ -481,16 +471,9 @@ export function RevenuePanel({
         {summaryBlock}
       </div>
 
-      <div
-        className={[
-          "rounded-xl border border-border bg-bg p-3 sm:p-4",
-          fillHeight ? "flex min-h-0 flex-1 flex-col" : "",
-        ].join(" ")}
-      >
+      <div className={fillHeight ? "flex min-h-0 flex-1 flex-col" : undefined}>
         <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2">
-          <p className="text-2xs font-semibold uppercase tracking-[0.14em] text-text-muted">
-            Daily revenue ({periodDescription(timeline, days, hasCustomRange)})
-          </p>
+          <p className="text-xs font-medium text-text-muted">Daily revenue</p>
           {chartToggle}
         </div>
         {chartBody}
@@ -521,47 +504,46 @@ export function RevenuePanel({
         </div>
       );
     }
-    const periodLabel = periodDescription(timeline, days, hasCustomRange);
     const pairedChart = (
       <div className="min-h-[140px] w-full flex-1">
         <ResponsiveContainer width="100%" height="100%" minHeight={140}>
           <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id={areaGradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={brand} stopOpacity={0.35} />
-                <stop offset="100%" stopColor={brand} stopOpacity={0.02} />
+                <stop offset="0%" stopColor={brand} stopOpacity={0.14} />
+                <stop offset="100%" stopColor={brand} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid stroke={axisStroke} strokeDasharray="3 6" vertical={false} />
+            <CartesianGrid stroke={axisStroke} vertical={false} />
             <XAxis
               dataKey="date"
               ticks={xTicks}
               tickFormatter={shortDateLabel}
-              tick={{ fill: tickFill, fontSize: 10, fontWeight: 600 }}
-              axisLine={{ stroke: axisStroke }}
+              tick={{ fill: tickFill, fontSize: 11 }}
+              axisLine={false}
               tickLine={false}
               minTickGap={20}
             />
             <YAxis
-              tickFormatter={(v: number) => `$${formatUsdDisplay(v)}`}
-              tick={{ fill: tickFill, fontSize: 10, fontWeight: 600 }}
+              tickFormatter={axisUsdLabel}
+              tick={{ fill: tickFill, fontSize: 11 }}
               axisLine={false}
               tickLine={false}
-              width={44}
+              width={40}
             />
             <Tooltip
               content={<RevenueTooltip />}
-              cursor={{ stroke: brand, strokeWidth: 1, strokeDasharray: "4 4" }}
+              cursor={{ stroke: "var(--rt-border-hover)", strokeWidth: 1 }}
             />
             <Area
               type="monotone"
               dataKey="revenue"
               stroke={brand}
-              strokeWidth={2.25}
+              strokeWidth={2}
               fill={`url(#${areaGradientId})`}
               activeDot={{
                 r: 4,
-                stroke: "var(--rt-bg)",
+                stroke: "var(--rt-surface)",
                 strokeWidth: 2,
                 fill: brand,
               }}
@@ -573,44 +555,33 @@ export function RevenuePanel({
       </div>
     );
 
-    const dailyCard = (
+    return (
       <AdminCard
-        title="Daily revenue"
-        headerAction={hideChartToggle ? undefined : chartToggle}
-        fillHeight
+        title={cardTitle}
+        action={cardAction?.label}
+        actionHref={cardAction?.href}
+        actionOnClick={cardAction?.onClick}
+        fillHeight={fillHeight}
       >
-        <div className="flex h-full min-h-0 flex-col">
-          <p className="mb-2 shrink-0 text-2xs font-medium text-text-muted">{periodLabel}</p>
-          {data.length === 0 ? (
-            <div className="flex min-h-[140px] flex-1 items-center justify-center text-sm text-text-muted">
-              No payments yet.
+        <div className={fillHeight ? "flex h-full min-h-0 flex-col gap-4" : "space-y-4"}>
+          <div className="shrink-0">{summaryBlock}</div>
+          <div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_13rem] fit:min-h-0 fit:flex-1">
+            <div className="flex min-h-[160px] min-w-0 flex-col">
+              <p className="mb-2 shrink-0 text-xs font-medium text-text-muted">Daily revenue</p>
+              {data.length === 0 ? (
+                <div className="flex flex-1 items-center justify-center text-sm text-text-muted">
+                  No payments yet.
+                </div>
+              ) : (
+                pairedChart
+              )}
             </div>
-          ) : (
-            pairedChart
-          )}
+            {splitAside ? (
+              <div className="min-w-0 sm:border-l sm:border-border sm:pl-6">{splitAside}</div>
+            ) : null}
+          </div>
         </div>
       </AdminCard>
-    );
-
-    return (
-      <div className="flex h-full min-h-0 flex-col gap-3">
-        <AdminCard
-          title={cardTitle}
-          action={cardAction?.label}
-          actionHref={cardAction?.href}
-          actionOnClick={cardAction?.onClick}
-        >
-          {summaryBlock}
-        </AdminCard>
-        {splitAside ? (
-          <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-2 lg:items-stretch">
-            <div className="min-h-0 h-full">{dailyCard}</div>
-            <div className="min-h-0 h-full">{splitAside}</div>
-          </div>
-        ) : (
-          <div className="min-h-0 flex-1">{dailyCard}</div>
-        )}
-      </div>
     );
   }
 

@@ -91,7 +91,7 @@ export default function UsersPage() {
 
   return (
     <AdminShell title="User management">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border">
         {stats.map((stat) => (
           <AdminStatCard
             key={stat.label}
@@ -191,12 +191,12 @@ export default function UsersPage() {
           aria-labelledby="delete-user-title"
         >
           <div className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-md">
-            <h2 id="delete-user-title" className="text-lg font-bold tracking-[-0.02em]">
+            <h2 id="delete-user-title" className="text-lg font-semibold tracking-tight">
               Delete user
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-text-muted">
               Permanently delete{" "}
-              <span className="font-bold text-text">
+              <span className="font-semibold text-text">
                 {confirmDelete.full_name || confirmDelete.email}
               </span>
               ? This cannot be undone. Users with payments or purchases can&rsquo;t be deleted —

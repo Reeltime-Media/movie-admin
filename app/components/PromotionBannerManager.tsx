@@ -18,6 +18,7 @@ import {
   type ApiPromotionBanner,
 } from "../lib/api";
 import { Button } from "./ui/Button";
+import { adminBadgeClass } from "../lib/adminUi";
 import { mediaUrl } from "../lib/media";
 import { queryKeys } from "../lib/queryKeys";
 
@@ -268,7 +269,7 @@ export function PromotionBannerManager() {
             <button
               type="button"
               onClick={() => void bannersQuery.refetch()}
-              className="mt-2 font-bold hover:underline"
+              className="mt-2 font-semibold hover:underline"
             >
               Retry
             </button>
@@ -307,17 +308,11 @@ export function PromotionBannerManager() {
                       <span className="rounded-md bg-surface-elevated px-1.5 py-0.5 font-mono text-2xs font-semibold tabular-nums text-text-muted">
                         #{index + 1}
                       </span>
-                      <h3 className="text-sm font-bold">{banner.title}</h3>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wider ${
-                          banner.is_active
-                            ? "bg-success/15 text-success"
-                            : "bg-text-disabled/25 text-text-muted"
-                        }`}
-                      >
+                      <h3 className="text-sm font-semibold">{banner.title}</h3>
+                      <span className={adminBadgeClass(banner.is_active ? "success" : "muted")}>
                         {banner.is_active ? "Active" : "Inactive"}
                       </span>
-                      <span className="text-2xs font-semibold uppercase text-text-disabled">
+                      <span className="text-xs font-medium capitalize text-text-muted">
                         {banner.placement}
                       </span>
                     </div>
@@ -357,7 +352,7 @@ export function PromotionBannerManager() {
 
       {showForm ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 sm:p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 sm:p-6"
           role="dialog"
           aria-modal="true"
           onClick={() => {
@@ -367,14 +362,13 @@ export function PromotionBannerManager() {
           <form
             onSubmit={(e) => void handleSubmit(e)}
             onClick={(e) => e.stopPropagation()}
-            className="flex h-[min(90vh,920px)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-2xl shadow-black/50"
+            className="flex h-[min(90vh,920px)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-2xl"
           >
             {/* ── Header ── */}
             <div className="relative border-b border-border px-6 py-5">
-              <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-brand via-brand-hover to-brand/60" />
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-[17px] font-bold tracking-[-0.02em]">
+                  <h2 className="text-[17px] font-semibold tracking-tight">
                     {editingBanner ? "Edit banner" : "New promotion banner"}
                   </h2>
                   <p className="mt-1 text-xs leading-relaxed text-text-muted">
@@ -397,20 +391,20 @@ export function PromotionBannerManager() {
             <div className="min-h-0 flex-1 overflow-y-auto">
               {/* Section: Content */}
               <div className="px-6 py-5 space-y-4">
-                <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
+                <div className="flex items-center gap-2 text-xs font-medium text-text-muted">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M4.5 5h5M4.5 7.5h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
                   Content
                 </div>
                 <div>
                   <label className="mb-1.5 block text-2xs font-semibold text-text-muted">
-                    Title <span className="text-brand">*</span>
+                    Title <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
                     value={form.title}
                     onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                     placeholder="Enter banner title…"
-                    className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-white focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand focus:ring-2 focus:ring-brand/10"
                     required
                   />
                 </div>
@@ -423,14 +417,14 @@ export function PromotionBannerManager() {
                     onChange={(e) => setForm((f) => ({ ...f, subtitle: e.target.value }))}
                     rows={2}
                     placeholder="Optional supporting text…"
-                    className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-white focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10 resize-none"
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand focus:ring-2 focus:ring-brand/10 resize-none"
                   />
                 </div>
               </div>
 
               {/* Section: Banner Image */}
               <div className="border-t border-border px-6 py-5 space-y-3">
-                <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
+                <div className="flex items-center gap-2 text-xs font-medium text-text-muted">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2.5" width="11" height="9" rx="2" stroke="currentColor" strokeWidth="1.4"/><circle cx="5" cy="6" r="1.25" stroke="currentColor" strokeWidth="1.2"/><path d="M1.5 9.5l2.5-2.5 2 2 3-3 3.5 3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   Banner Image
                 </div>
@@ -445,7 +439,7 @@ export function PromotionBannerManager() {
                     <div className="relative h-28 w-full overflow-hidden rounded-lg border border-border">
                       <Image src={previewSrc} alt="" fill className="object-cover" sizes="400px" />
                       <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                        <span className="rounded-lg bg-white/90 px-3 py-1.5 text-2xs font-bold text-text">
+                        <span className="rounded-lg bg-white/90 px-3 py-1.5 text-2xs font-semibold text-text">
                           Change image
                         </span>
                       </div>
@@ -468,7 +462,7 @@ export function PromotionBannerManager() {
 
               {/* Section: Call-to-Action */}
               <div className="border-t border-border px-6 py-5 space-y-4">
-                <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
+                <div className="flex items-center gap-2 text-xs font-medium text-text-muted">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7h6M11.5 7l-3-3m3 3l-3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   Call to Action
                 </div>
@@ -480,7 +474,7 @@ export function PromotionBannerManager() {
                       value={form.ctaLabel}
                       onChange={(e) => setForm((f) => ({ ...f, ctaLabel: e.target.value }))}
                       placeholder="e.g. Subscribe now"
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-white focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand focus:ring-2 focus:ring-brand/10"
                     />
                   </div>
                   <div>
@@ -490,7 +484,7 @@ export function PromotionBannerManager() {
                       value={form.ctaHref}
                       onChange={(e) => setForm((f) => ({ ...f, ctaHref: e.target.value }))}
                       placeholder="/pricing"
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-white focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand focus:ring-2 focus:ring-brand/10"
                     />
                   </div>
                 </div>
@@ -498,7 +492,7 @@ export function PromotionBannerManager() {
 
               {/* Section: Display Settings */}
               <div className="border-t border-border px-6 py-5 space-y-4">
-                <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
+                <div className="flex items-center gap-2 text-xs font-medium text-text-muted">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4"/><path d="M7 4.5v3l2 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   Display Settings
                 </div>
@@ -510,7 +504,7 @@ export function PromotionBannerManager() {
                       type="number"
                       value={form.sortOrder}
                       onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))}
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all placeholder:text-white focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-all placeholder:text-text-disabled focus:border-brand focus:ring-2 focus:ring-brand/10"
                     />
                   </div>
                   <div className="flex items-end pb-1">
@@ -553,7 +547,7 @@ export function PromotionBannerManager() {
                       type="datetime-local"
                       value={form.startsAt}
                       onChange={(e) => setForm((f) => ({ ...f, startsAt: e.target.value }))}
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10"
                     />
                   </div>
                   <div>
@@ -567,7 +561,7 @@ export function PromotionBannerManager() {
                       type="datetime-local"
                       value={form.endsAt}
                       onChange={(e) => setForm((f) => ({ ...f, endsAt: e.target.value }))}
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10"
                     />
                   </div>
                 </div>

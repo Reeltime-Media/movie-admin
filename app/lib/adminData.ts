@@ -71,13 +71,14 @@ export type CatalogEntry = {
 };
 
 export function statusClasses(status: Status) {
+  // Sits on top of poster art as well as on cards, so it carries its own surface.
   const base =
-    "inline-flex items-center rounded-md px-1.5 py-0.5 text-2xs font-bold uppercase tracking-[0.08em] shadow-md";
+    "inline-flex items-center gap-1.5 rounded-md bg-surface/95 px-2 py-0.5 text-xs font-medium text-text ring-1 ring-black/5 before:size-1.5 before:shrink-0 before:rounded-full";
   const tones = {
-    Published: "bg-success text-white",
-    Draft: "bg-zinc-800 text-white",
-    Scheduled: "bg-warning text-white",
-    Review: "bg-warning text-white",
+    Published: "before:bg-success",
+    Draft: "before:bg-text-disabled",
+    Scheduled: "before:bg-brand",
+    Review: "before:bg-warning",
   };
 
   return `${base} ${tones[status]}`;

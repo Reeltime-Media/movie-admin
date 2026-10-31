@@ -252,7 +252,7 @@ export function TvChannelDetail({ channelId }: { channelId: string }) {
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-4">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-bold tracking-[-0.02em]">{channel.name}</h2>
+            <h2 className="text-lg font-semibold tracking-tight">{channel.name}</h2>
             <span className={adminBadgeClass(statusTone(channel.status))}>{channel.status}</span>
           </div>
           <p className="mt-1 font-mono text-2xs text-text-muted">{channel.slug}</p>
@@ -409,7 +409,7 @@ export function TvChannelDetail({ channelId }: { channelId: string }) {
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
-                className="w-full rounded-lg border border-dashed border-border bg-bg px-3 py-4 text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:border-border-hover"
+                className="w-full rounded-lg border border-dashed border-border bg-bg px-3 py-4 text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-surface-elevated file:px-3 file:py-2 file:text-xs file:font-medium file:text-text hover:border-border-hover"
               />
               <p className="mt-1.5 text-2xs text-text-disabled">
                 JPG, PNG or WebP. Uploaded when you save changes.
@@ -421,7 +421,7 @@ export function TvChannelDetail({ channelId }: { channelId: string }) {
         {saveError ? <p className="text-xs font-semibold text-warning">{saveError}</p> : null}
 
         <div className="flex flex-wrap justify-end gap-2">
-          <Button type="submit" variant="success" loading={isSaving}>
+          <Button type="submit" loading={isSaving}>
             {isSaving ? "Saving…" : "Save changes"}
           </Button>
         </div>
@@ -435,11 +435,11 @@ export function TvChannelDetail({ channelId }: { channelId: string }) {
           aria-labelledby="delete-channel-title"
         >
           <div className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-md">
-            <h2 id="delete-channel-title" className="text-lg font-bold tracking-[-0.02em]">
+            <h2 id="delete-channel-title" className="text-lg font-semibold tracking-tight">
               Delete channel
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-text-muted">
-              Permanently delete <span className="font-bold text-text">{channel.name}</span>? If
+              Permanently delete <span className="font-semibold text-text">{channel.name}</span>? If
               the stream is live it will be stopped first. This cannot be undone.
             </p>
             <div className="mt-6 flex flex-wrap justify-end gap-2">

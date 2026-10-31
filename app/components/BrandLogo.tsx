@@ -13,7 +13,7 @@ type BrandLogoProps = {
   priority?: boolean;
 };
 
-/** Official REELTIME logo asset — never use a letter “R” placeholder. */
+/** Official REELTIME logo asset (white PNG, darkened in the light theme) — never use a letter “R” placeholder. */
 export function BrandLogo({
   variant = "mark",
   height = 36,
@@ -30,37 +30,27 @@ export function BrandLogo({
       width={width}
       height={height}
       priority={priority}
-      className={["object-contain", className].filter(Boolean).join(" ")}
+      className={["object-contain light:brightness-0", className].filter(Boolean).join(" ")}
       style={{ height, width: "auto" }}
     />
   );
 }
 
-/** Sidebar / auth lockup: official mark + Cinema console label. */
+/** Sidebar lockup: official mark + product name. */
 export function BrandWordmark({
   href = "/",
   onNavigate,
-  subtitle = "Cinema console",
+  subtitle = "Admin",
 }: {
   href?: string;
   onNavigate?: () => void;
   subtitle?: string;
 }) {
   return (
-    <Link href={href} onClick={onNavigate} className="group block leading-none">
-      <div className="flex items-center gap-3">
-        <BrandLogo variant="mark" height={36} priority className="shrink-0" />
-        <div className="min-w-0">
-          <div className="truncate text-[15px] font-bold tracking-[0.18em] text-text">
-            REELTIME
-          </div>
-          {subtitle ? (
-            <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-brand">
-              {subtitle}
-            </div>
-          ) : null}
-        </div>
-      </div>
+    <Link href={href} onClick={onNavigate} className="flex items-center gap-2.5 leading-none">
+      <BrandLogo variant="mark" height={22} priority className="shrink-0" />
+      <span className="truncate text-sm font-semibold text-text">Reeltime</span>
+      {subtitle ? <span className="text-sm text-text-muted">{subtitle}</span> : null}
     </Link>
   );
 }

@@ -225,25 +225,21 @@ export default function TranscodePage() {
               type="button"
               onClick={() => setFilterAndResetPage(filter === key ? "all" : key)}
               className={[
-                "rounded-lg border px-4 py-3 text-left transition-colors",
-                filter === key
-                  ? "border-brand bg-brand/10"
-                  : "border-border bg-surface hover:border-border-hover",
+                "rounded-xl border bg-surface px-5 py-3 text-left transition-colors",
+                filter === key ? "border-brand" : "border-border hover:border-border-hover",
               ].join(" ")}
             >
-              <div className="text-2xs font-bold uppercase tracking-widest text-text-muted">
+              <div className="text-xs font-medium capitalize text-text-muted">
                 {key === "running" ? "Processing" : key}
               </div>
               <div
                 className={[
-                  "mt-1 text-[28px] font-extrabold tabular-nums leading-none",
+                  "mt-1 text-xl font-semibold tabular-nums",
                   key === "success"
                     ? "text-success"
-                    : key === "running"
-                      ? "text-brand"
-                      : key === "failed"
-                        ? "text-danger"
-                        : "text-text",
+                    : key === "failed"
+                      ? "text-danger"
+                      : "text-text",
                 ].join(" ")}
               >
                 {counts[key]}

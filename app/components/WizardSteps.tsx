@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 
 type WizardStepsProps = {
@@ -17,45 +18,33 @@ export function WizardSteps({ labels, step, onStepChange, leading }: WizardSteps
       className="mb-6 flex flex-wrap items-center gap-3"
     >
       {leading ? <div className="shrink-0">{leading}</div> : null}
-      <ol className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+      <ol className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
         {labels.map((label, i) => {
           const active = i === step;
           const done = i < step;
           return (
-            <li key={label} className="flex items-center gap-2">
-              {i > 0 ? (
-                <span
-                  className={[
-                    "hidden h-px w-6 sm:block",
-                    done || active ? "bg-brand/50" : "bg-border",
-                  ].join(" ")}
-                  aria-hidden
-                />
-              ) : null}
+            <li key={label} className="flex items-center gap-1">
+              {i > 0 ? <span className="hidden h-px w-5 bg-border sm:block" aria-hidden /> : null}
               <button
                 type="button"
                 onClick={() => onStepChange(i)}
                 aria-current={active ? "step" : undefined}
                 className={[
-                  "inline-flex h-10 items-center gap-2 rounded-lg border px-3.5 text-sm font-semibold transition-colors",
-                  active
-                    ? "border-brand/45 bg-brand-soft text-text"
-                    : done
-                      ? "border-border bg-surface-elevated text-text-muted hover:border-border-hover hover:text-text"
-                      : "border-border bg-surface text-text-disabled hover:border-border-hover hover:text-text-muted",
+                  "inline-flex h-8 items-center gap-2 rounded-lg px-2 text-sm transition-colors hover:bg-surface-elevated",
+                  active ? "font-medium text-text" : "text-text-muted hover:text-text",
                 ].join(" ")}
               >
                 <span
                   className={[
-                    "grid h-6 w-6 place-items-center rounded-full text-2xs font-bold",
+                    "grid h-5 w-5 place-items-center rounded-full text-xs font-medium tabular-nums",
                     active
-                      ? "bg-brand text-white"
+                      ? "bg-brand text-on-brand"
                       : done
-                        ? "bg-success/20 text-success"
-                        : "bg-surface-elevated text-text-disabled",
+                        ? "bg-brand-soft text-brand"
+                        : "bg-surface-elevated text-text-muted",
                   ].join(" ")}
                 >
-                  {done ? "✓" : i + 1}
+                  {done ? <Check size={12} strokeWidth={2.5} aria-hidden /> : i + 1}
                 </span>
                 {label}
               </button>
@@ -63,7 +52,7 @@ export function WizardSteps({ labels, step, onStepChange, leading }: WizardSteps
           );
         })}
       </ol>
-      <p className="w-full text-2xs text-text-muted sm:ml-auto sm:w-auto">
+      <p className="w-full text-xs text-text-muted sm:ml-auto sm:w-auto">
         Step {step + 1} of {labels.length}
       </p>
     </nav>

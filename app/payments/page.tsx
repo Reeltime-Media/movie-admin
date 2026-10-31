@@ -38,10 +38,10 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-function paymentStatusTone(status: string): "success" | "warning" | "brand" | "muted" {
+function paymentStatusTone(status: string): "success" | "warning" | "danger" | "muted" {
   if (status === "succeeded") return "success";
   if (status === "pending") return "warning";
-  if (status === "failed") return "brand";
+  if (status === "failed") return "danger";
   return "muted";
 }
 
@@ -236,7 +236,7 @@ export default function PaymentsPage() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="text-xs font-bold text-brand hover:underline"
+                  className="text-xs font-semibold text-brand hover:underline"
                 >
                   Clear filters
                 </button>
@@ -285,7 +285,7 @@ export default function PaymentsPage() {
                               type="button"
                               disabled={fulfillingId === p.intent_id}
                               onClick={() => void markPaid(p)}
-                              className="rounded-md bg-brand px-2.5 py-1 text-xs font-bold text-white transition-colors hover:bg-brand-hover disabled:opacity-60"
+                              className="rounded-md bg-brand px-2.5 py-1 text-xs font-semibold text-on-brand transition-colors hover:bg-brand-hover disabled:opacity-60"
                             >
                               {fulfillingId === p.intent_id ? "Saving…" : "Mark paid"}
                             </button>

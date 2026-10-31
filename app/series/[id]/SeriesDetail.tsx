@@ -115,7 +115,7 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
         <button
           type="button"
           onClick={() => void refetch()}
-          className="mt-3 font-bold hover:underline"
+          className="mt-3 font-semibold hover:underline"
         >
           Retry
         </button>
@@ -288,7 +288,7 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
           {tab === "episodes" ? (
             <div className="space-y-6 rounded-xl border border-border bg-surface p-6">
               <div>
-                <div className="mb-3 text-base font-bold tracking-[-0.02em]">Episode preview</div>
+                <div className="mb-3 text-base font-semibold tracking-tight">Episode preview</div>
                 {selected ? (
                   <>
                     <p className="mb-3 text-xs font-semibold text-text-muted">
@@ -337,7 +337,7 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
               </div>
 
               <div className="border-t border-border pt-6">
-                <div className="mb-3 text-base font-bold tracking-[-0.02em]">Seasons and episodes</div>
+                <div className="mb-3 text-base font-semibold tracking-tight">Seasons and episodes</div>
                 {series.seasons.length === 0 ? (
                   <p className="text-sm text-text-muted">No seasons configured yet.</p>
                 ) : (
@@ -359,7 +359,7 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
                             ) : (
                               <ChevronRight size={14} className="text-text-muted" />
                             )}
-                            <span className="text-base font-bold">
+                            <span className="text-base font-semibold">
                               Season {season.number} · {season.episodes.length} episode
                               {season.episodes.length !== 1 ? "s" : ""}
                             </span>
@@ -383,7 +383,7 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
                                       onClick={() => setSelectedEpisodeId(ep.id)}
                                       className="flex min-w-0 flex-1 items-center gap-3 text-left"
                                     >
-                                      <span className="w-5 shrink-0 text-center text-sm font-bold tabular-nums text-brand">
+                                      <span className="w-5 shrink-0 text-center text-sm tabular-nums text-text-muted">
                                         {ep.number}
                                       </span>
                                       <span className="min-w-0 flex-1 truncate text-sm font-medium">
@@ -395,7 +395,7 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
                                         </span>
                                       ) : null}
                                       {ep.isFree ? (
-                                        <span className="shrink-0 rounded-full bg-success/15 px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-success">
+                                        <span className="shrink-0 text-xs font-medium text-success">
                                           Free
                                         </span>
                                       ) : null}

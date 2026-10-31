@@ -46,7 +46,7 @@ export function TrailerPreview({
               <path d="M2 1.5l6 3.5-6 3.5V1.5z" />
             </svg>
           </div>
-          <span className="text-2xs font-bold uppercase tracking-[0.12em] text-white">
+          <span className="text-xs font-medium text-white">
             Trailer preview
           </span>
         </div>

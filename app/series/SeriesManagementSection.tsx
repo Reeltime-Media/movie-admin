@@ -89,7 +89,7 @@ export function SeriesManagementSection({
         {error ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs text-warning">
             <span>{error}</span>
-            <button type="button" onClick={refreshMovies} className="font-bold hover:underline">
+            <button type="button" onClick={refreshMovies} className="font-semibold hover:underline">
               Retry
             </button>
           </div>
@@ -128,6 +128,7 @@ export function SeriesManagementSection({
             footer={
               entries.length > 0 ? (
                 <AdminPagination
+                  inset="none"
                   page={currentPage}
                   pages={pages}
                   total={entries.length}

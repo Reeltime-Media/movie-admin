@@ -21,8 +21,8 @@ type MovieTab = "overview" | "media" | "comments";
 function FactChip({ label, value }: { label: string; value?: string | number | null }) {
   if (value == null || value === "") return null;
   return (
-    <div className="rounded-lg border border-border bg-bg/70 px-3 py-2">
-      <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-text-muted">{label}</p>
+    <div className="rounded-lg bg-surface-soft px-3 py-2">
+      <p className="text-xs font-medium text-text-muted">{label}</p>
       <p className="mt-0.5 text-sm font-semibold text-text">{value}</p>
     </div>
   );
@@ -38,9 +38,9 @@ function MediaBlock({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-bg/40 p-4">
+    <div className="rounded-lg bg-surface-soft p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="text-2xs font-semibold uppercase tracking-[0.14em] text-text-muted">
+        <h3 className="text-xs font-medium text-text-muted">
           {title}
         </h3>
         {action}
@@ -76,7 +76,7 @@ export function MovieDetail({ movieId }: { movieId: string }) {
         <button
           type="button"
           onClick={() => void refetch()}
-          className="mt-3 font-bold hover:underline"
+          className="mt-3 font-semibold hover:underline"
         >
           Retry
         </button>
@@ -151,29 +151,29 @@ export function MovieDetail({ movieId }: { movieId: string }) {
           <div className="space-y-4 lg:col-span-2">
             <AdminCard title="Performance">
               <div className="grid gap-3">
-                <div className="rounded-lg border border-border bg-bg/70 px-4 py-3">
-                  <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-text-muted">
+                <div className="rounded-lg bg-surface-soft px-4 py-3">
+                  <p className="text-xs font-medium text-text-muted">
                     Watchers
                   </p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums text-text">
+                  <p className="mt-1 text-2xl font-semibold tabular-nums text-text">
                     {(movie.watchCount ?? 0).toLocaleString()}
                   </p>
                 </div>
-                <div className="rounded-lg border border-border bg-bg/70 px-4 py-3">
-                  <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-text-muted">
+                <div className="rounded-lg bg-surface-soft px-4 py-3">
+                  <p className="text-xs font-medium text-text-muted">
                     Purchases
                   </p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums text-text">
+                  <p className="mt-1 text-2xl font-semibold tabular-nums text-text">
                     {movie.purchaseCount != null
                       ? movie.purchaseCount.toLocaleString()
                       : "—"}
                   </p>
                 </div>
-                <div className="rounded-lg border border-border bg-bg/70 px-4 py-3">
-                  <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-text-muted">
+                <div className="rounded-lg bg-surface-soft px-4 py-3">
+                  <p className="text-xs font-medium text-text-muted">
                     Views (catalog)
                   </p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums text-text">
+                  <p className="mt-1 text-2xl font-semibold tabular-nums text-text">
                     {movie.views || "—"}
                   </p>
                 </div>

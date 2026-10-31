@@ -4,11 +4,11 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "danger-soft" | "success";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "danger-soft";
 type Size = "sm" | "md";
 
 const base =
-  "inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg font-medium transition-all duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-45";
+  "inline-flex cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg font-medium transition-colors duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-45";
 
 const sizeClass: Record<Size, string> = {
   sm: "h-7 px-2.5 text-xs",
@@ -16,17 +16,13 @@ const sizeClass: Record<Size, string> = {
 };
 
 const variantClass: Record<Variant, string> = {
-  primary:
-    "bg-brand font-semibold text-white hover:bg-brand-hover active:translate-y-px",
+  primary: "bg-brand text-on-brand hover:bg-brand-hover",
   secondary:
-    "border border-border bg-surface-elevated text-text-muted hover:border-border-hover hover:bg-surface hover:text-text",
-  ghost:
-    "text-text-muted hover:bg-surface-elevated hover:text-text",
-  danger: "bg-danger font-semibold text-white hover:brightness-110 active:translate-y-px",
-  "danger-soft":
-    "border border-danger/35 bg-danger/10 text-danger hover:border-danger/50 hover:bg-danger/20",
-  success:
-    "bg-success font-semibold text-black hover:brightness-110 active:translate-y-px",
+    "border border-border bg-surface text-text hover:border-border-hover hover:bg-surface-soft",
+  ghost: "text-text-muted hover:bg-surface-elevated hover:text-text",
+  danger: "bg-danger text-white hover:bg-danger/90",
+  // Quiet until hovered: a page of Delete buttons should not read as a page of alarms.
+  "danger-soft": "text-text-muted hover:bg-danger/10 hover:text-danger",
 };
 
 function content(loading: boolean, icon: ReactNode | undefined, children: ReactNode) {

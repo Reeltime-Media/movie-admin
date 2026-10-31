@@ -12,7 +12,7 @@ type BackButtonProps = {
   className?: string;
 };
 
-/** Back control with arrow + label — sized to match wizard/step chrome. */
+/** Back control with arrow + label. */
 export function BackButton({
   href,
   onClick,
@@ -20,20 +20,13 @@ export function BackButton({
   size = "md",
   className = "",
 }: BackButtonProps) {
-  const iconSize = size === "sm" ? 16 : 18;
-  // Important height so we beat Button’s built-in h-7 / h-9.
-  const sizing =
-    size === "sm"
-      ? "!h-9 gap-2 px-3 text-xs font-semibold"
-      : "!h-10 gap-2 px-3.5 text-sm font-semibold";
-
   const shared = {
     variant: "secondary" as const,
     size,
-    className: [sizing, "shrink-0", className].filter(Boolean).join(" "),
+    className: ["shrink-0", className].filter(Boolean).join(" "),
     "aria-label": label,
     title: label,
-    icon: <ArrowLeft size={iconSize} strokeWidth={2.5} aria-hidden />,
+    icon: <ArrowLeft size={15} aria-hidden />,
   };
 
   if (href) {

@@ -396,7 +396,7 @@ export function HeroFeaturedManager() {
             <button
               type="button"
               onClick={() => void itemsQuery.refetch()}
-              className="mt-2 font-bold hover:underline"
+              className="mt-2 font-semibold hover:underline"
             >
               Retry
             </button>
@@ -429,11 +429,11 @@ export function HeroFeaturedManager() {
                       <span className="rounded-md bg-surface-elevated px-1.5 py-0.5 font-mono text-2xs font-semibold tabular-nums text-text-muted">
                         #{index + 1}
                       </span>
-                      <h3 className="text-sm font-bold">
+                      <h3 className="text-sm font-semibold">
                         {item.content_title ??
                           (item.content_type === "custom" ? customSlideLabel(item) : "Unknown title")}
                       </h3>
-                      <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-text-muted">
+                      <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-xs font-medium text-text-muted">
                         {item.content_type === "custom"
                           ? `${customSlideMode(item)} only`
                           : item.content_type}
@@ -442,7 +442,7 @@ export function HeroFeaturedManager() {
                         <span className={adminBadgeClass("brand")}>Video</span>
                       ) : null}
                       {item.content_type !== "custom" && item.video_enabled === false ? (
-                        <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-text-muted">
+                        <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-xs font-medium text-text-muted">
                           Banner only
                         </span>
                       ) : null}
@@ -481,14 +481,13 @@ export function HeroFeaturedManager() {
       </AdminCard>
 
       {showForm ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 sm:p-6">
-          <div className="flex h-[min(90vh,920px)] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-2xl shadow-black/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 sm:p-6">
+          <div className="flex h-[min(90vh,920px)] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-2xl">
             {/* ── Header ── */}
             <div className="relative border-b border-border px-6 py-5">
-              <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-brand via-brand-hover to-brand/60" />
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-[17px] font-bold tracking-[-0.02em]">
+                  <h2 className="text-[17px] font-semibold tracking-tight">
                     {editingItem ? "Edit hero slide" : "Add hero slide"}
                   </h2>
                   <p className="mt-1 text-xs leading-relaxed text-text-muted">
@@ -559,7 +558,7 @@ export function HeroFeaturedManager() {
                               ) : null}
                             </span>
                             <span
-                              className={`text-sm font-bold ${isActive ? "text-text" : "text-text-muted"}`}
+                              className={`text-sm font-semibold ${isActive ? "text-text" : "text-text-muted"}`}
                             >
                               {label}
                             </span>
@@ -577,14 +576,14 @@ export function HeroFeaturedManager() {
                 <>
                 {/* ── Section: Select Content ── */}
                 <div className="px-6 py-5">
-                  <div className="mb-4 flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
+                  <div className="mb-4 flex items-center gap-2 text-xs font-medium text-text-muted">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7.5l2.5 2.5L11 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     Pick the title
                   </div>
 
                   {/* Selected entry preview */}
                   {selectedEntry ? (
-                    <div className="mb-5 flex items-center gap-3 rounded-xl border border-brand/25 bg-gradient-to-r from-brand/[0.04] to-transparent p-3.5">
+                    <div className="mb-5 flex items-center gap-3 rounded-lg bg-surface-soft p-3.5">
                       <AdminMediaThumb
                         objectKey={selectedEntry.posterKey}
                         alt={selectedEntry.title}
@@ -592,7 +591,7 @@ export function HeroFeaturedManager() {
                         emptyLabel=""
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-bold">{selectedEntry.title}</p>
+                        <p className="truncate text-sm font-semibold">{selectedEntry.title}</p>
                         <p className="text-2xs text-text-muted">
                           {selectedEntry.contentType === "movie" ? "Movie" : "Series"}
                           {!selectedEntry.isPublished ? " · Draft (won't show until published)" : ""}
@@ -635,7 +634,7 @@ export function HeroFeaturedManager() {
                           className={[
                             "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all duration-150",
                             isActive
-                              ? "border-brand bg-brand text-white shadow-[0_1px_4px_rgba(229,9,20,0.25)]"
+                              ? "border-brand bg-brand text-on-brand"
                               : "border-border bg-bg text-text-muted hover:border-border-hover hover:bg-surface-elevated hover:text-text",
                           ].join(" ")}
                         >
@@ -695,7 +694,7 @@ export function HeroFeaturedManager() {
                               {entry.title}
                             </span>
                             {!entry.isPublished ? (
-                              <span className="shrink-0 rounded-full bg-warning/10 px-2 py-0.5 text-2xs font-bold text-warning">
+                              <span className="shrink-0 rounded-full bg-warning/10 px-2 py-0.5 text-2xs font-semibold text-warning">
                                 Draft
                               </span>
                             ) : null}
@@ -715,7 +714,7 @@ export function HeroFeaturedManager() {
 
                 {/* ── Section: Video (catalog) ── */}
                 <div className="border-t border-border px-6 py-5">
-                  <div className="mb-3 flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
+                  <div className="mb-3 flex items-center gap-2 text-xs font-medium text-text-muted">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 3.5A1.5 1.5 0 014 2h6a1.5 1.5 0 011.5 1.5v7A1.5 1.5 0 0110 12H4a1.5 1.5 0 01-1.5-1.5v-7z" stroke="currentColor" strokeWidth="1.3"/><path d="M6 5.5l2.5 1.5L6 8.5v-3z" fill="currentColor"/></svg>
                     Video
                   </div>
@@ -787,7 +786,7 @@ export function HeroFeaturedManager() {
                 ) : form.slideMode === "video" ? (
                 <div className="px-6 py-5 space-y-5">
                   <div>
-                    <div className="mb-3 flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
+                    <div className="mb-3 flex items-center gap-2 text-xs font-medium text-text-muted">
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 3.5A1.5 1.5 0 014 2h6a1.5 1.5 0 011.5 1.5v7A1.5 1.5 0 0110 12H4a1.5 1.5 0 01-1.5-1.5v-7z" stroke="currentColor" strokeWidth="1.3"/><path d="M6 5.5l2.5 1.5L6 8.5v-3z" fill="currentColor"/></svg>
                       The video
                     </div>
@@ -810,7 +809,7 @@ export function HeroFeaturedManager() {
                       value={form.title}
                       onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
                       placeholder="Shown in big text over the video"
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10"
                     />
                     <p className="mt-1 text-2xs text-text-disabled">
                       Leave empty to show just the video.
@@ -820,7 +819,7 @@ export function HeroFeaturedManager() {
                 ) : (
                 <div className="px-6 py-5 space-y-5">
                   <div>
-                    <div className="mb-3 flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
+                    <div className="mb-3 flex items-center gap-2 text-xs font-medium text-text-muted">
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2.5" width="10" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.3"/><circle cx="5" cy="5.5" r="1" fill="currentColor"/><path d="M2.5 10l3-3 2.5 2.5L10 7.5l1.5 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       The image
                     </div>
@@ -840,7 +839,7 @@ export function HeroFeaturedManager() {
                       value={form.title}
                       onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
                       placeholder="Shown in big text over the image"
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10"
                     />
                     <p className="mt-1 text-2xs text-text-disabled">
                       Leave empty when the image already has its own text.
@@ -856,7 +855,7 @@ export function HeroFeaturedManager() {
                       value={form.linkUrl}
                       onChange={(e) => setForm((prev) => ({ ...prev, linkUrl: e.target.value }))}
                       placeholder="/pricing or https://…"
-                      className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10"
                     />
                     <p className="mt-1 text-2xs text-text-disabled">
                       Clicking the slide opens this — a site page like /pricing, or a full https:// link
@@ -868,7 +867,7 @@ export function HeroFeaturedManager() {
 
                 {/* ── Section: Display Settings ── */}
                 <div className="border-t border-border px-6 py-5 space-y-4">
-                  <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-[0.1em] text-text-muted">
+                  <div className="flex items-center gap-2 text-xs font-medium text-text-muted">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4"/><path d="M7 4.5v3l2 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     Display
                   </div>
@@ -887,7 +886,7 @@ export function HeroFeaturedManager() {
                             type="datetime-local"
                             value={form.startsAt}
                             onChange={(e) => setForm((prev) => ({ ...prev, startsAt: e.target.value }))}
-                            className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10"
                           />
                         </div>
                         <div>
@@ -901,7 +900,7 @@ export function HeroFeaturedManager() {
                             type="datetime-local"
                             value={form.endsAt}
                             onChange={(e) => setForm((prev) => ({ ...prev, endsAt: e.target.value }))}
-                            className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-all focus:border-brand/40 focus:bg-surface focus:ring-2 focus:ring-brand/10"
+                            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10"
                           />
                         </div>
                       </div>

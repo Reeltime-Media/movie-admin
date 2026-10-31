@@ -44,7 +44,7 @@ export function PodcastDetail({ podcastId }: { podcastId: string }) {
     return (
       <div className="rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm text-warning">
         <p>{error}</p>
-        <button type="button" onClick={() => void refetch()} className="mt-3 font-bold hover:underline">
+        <button type="button" onClick={() => void refetch()} className="mt-3 font-semibold hover:underline">
           Retry
         </button>
       </div>

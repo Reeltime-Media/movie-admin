@@ -36,7 +36,7 @@ import { formatMovieDate, movieEditInputClass, movieFileInputClass, youtubeEmbed
 const statuses: Status[] = ["Published", "Draft", "Scheduled", "Review"];
 
 const compactInputClass =
-  "w-full rounded-lg border border-border bg-surface-elevated px-2 py-1.5 text-xs font-medium text-text outline-none transition-colors placeholder:text-text-disabled hover:border-border-hover focus:border-brand/50";
+  "w-full rounded-lg border border-border bg-surface px-2 py-1.5 text-xs font-medium text-text outline-none transition-colors placeholder:text-text-disabled hover:border-border-hover focus:border-brand";
 
 const compactSelectClass =
   "w-full rounded-lg border border-border bg-surface px-2 py-1.5 text-xs font-semibold text-text outline-none transition-colors focus:border-border-hover";
@@ -52,7 +52,7 @@ function EditField({
 }) {
   return (
     <label className={`block min-w-0 ${className}`.trim()}>
-      <span className="mb-1 block text-2xs font-semibold uppercase tracking-[0.1em] text-text-disabled">
+      <span className="mb-1 block text-xs font-medium text-text-muted">
         {label}
       </span>
       {children}
@@ -286,7 +286,7 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
         <button
           type="button"
           onClick={() => void refreshMovies()}
-          className="mt-3 text-xs font-bold text-brand hover:underline"
+          className="mt-3 text-xs font-semibold text-brand hover:underline"
         >
           Retry
         </button>
@@ -326,7 +326,7 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
           <Button href={`/movie/${movie.id}`} variant="secondary" size="sm">
             Cancel
           </Button>
-          <Button type="submit" variant="success" size="sm" loading={isSaving}>
+          <Button type="submit" size="sm" loading={isSaving}>
             {isSaving ? "Saving…" : "Save changes"}
           </Button>
         </div>

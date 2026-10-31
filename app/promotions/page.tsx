@@ -9,8 +9,8 @@ export default function PromotionsPage() {
     <AdminShell title="Home page">
       <div className={adminPageStackClass}>
         <p className="text-sm text-text-muted">
-          Drag sections to set landing-page order. Open a section to rename it, toggle
-          visibility, and curate movies, series, or TV channels.
+          Pick a section tab to curate it. Use Earlier / Later and Visible in the header to
+          set home order and visibility.
         </p>
         <HomeSectionsManager />
       </div>

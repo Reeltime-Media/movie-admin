@@ -31,31 +31,40 @@ export function AdminCard({
   // Everything else (Refresh, Full report, All transactions) is navigational.
   const isCreate = actionIcon === "plus";
   const icon = isCreate ? <Plus size={14} aria-hidden /> : undefined;
-  const actionVariant = isCreate ? "primary" : "secondary";
+  const actionVariant = isCreate ? "primary" : "ghost";
+  // Ghost text sits on the card's right edge, in line with the content below it.
+  const actionClass = isCreate ? undefined : "-mr-2.5";
   return (
     <section
       className={[
-        "overflow-hidden rounded-xl border border-border bg-surface shadow-sm",
+        "overflow-hidden rounded-xl border border-border bg-surface",
         fillHeight ? "flex h-full min-h-0 flex-col" : "",
       ].join(" ")}
     >
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-surface-elevated/50 px-5 py-2.5">
-        <h2 className="text-sm font-semibold tracking-[-0.01em] text-text">{title}</h2>
+      <div className="flex min-h-12 shrink-0 items-center justify-between gap-3 px-5 pt-3">
+        <h2 className="text-sm font-semibold text-text">{title}</h2>
         {headerAction ? (
           headerAction
         ) : action && actionHref ? (
-          <Button href={actionHref} variant={actionVariant} size="sm" icon={icon}>
+          <Button href={actionHref} variant={actionVariant} size="sm" icon={icon} className={actionClass}>
             {action}
           </Button>
         ) : action ? (
-          <Button type="button" onClick={actionOnClick} variant={actionVariant} size="sm" icon={icon}>
+          <Button
+            type="button"
+            onClick={actionOnClick}
+            variant={actionVariant}
+            size="sm"
+            icon={icon}
+            className={actionClass}
+          >
             {action}
           </Button>
         ) : null}
       </div>
       <div
         className={[
-          flush ? "px-5 pb-4 pt-3" : "p-4",
+          flush ? "px-5 pb-4 pt-2" : "px-5 pb-5 pt-2",
           fillHeight ? "flex min-h-0 flex-1 flex-col overflow-hidden" : "",
         ].join(" ")}
       >

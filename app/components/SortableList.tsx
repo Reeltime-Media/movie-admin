@@ -95,9 +95,9 @@ export function SortableList<T extends Identifiable>({
               "flex items-stretch gap-3 rounded-lg border bg-bg p-4 transition-[border-color,opacity,box-shadow]",
               disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing",
               isDragging
-                ? "border-brand/50 opacity-50 shadow-lg shadow-black/40"
+                ? "border-brand/50 opacity-50 shadow-lg"
                 : isOver
-                  ? "border-brand shadow-[inset_0_0_0_1px_rgba(229,9,20,0.35)]"
+                  ? "border-brand shadow-[inset_0_0_0_1px_var(--rt-brand)]"
                   : "border-border hover:border-border-hover",
             ].join(" ")}
           >

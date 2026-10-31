@@ -8,10 +8,10 @@ import { Button } from "./ui/Button";
 import { newEpisodeId, newSeasonId, renumberSeasons } from "../lib/seriesHelpers";
 
 const inputClass =
-  "w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-text outline-none transition-colors placeholder:text-text-disabled hover:border-border-hover focus:border-brand/50 focus:bg-surface";
+  "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-colors placeholder:text-text-disabled hover:border-border-hover focus:border-brand";
 
 const fileInputClass =
-  "mt-1 w-full rounded-lg border border-dashed border-border bg-surface-elevated px-3 py-2.5 text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-white hover:border-border-hover";
+  "mt-1 w-full rounded-lg border border-dashed border-border bg-surface px-3 py-2.5 text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-surface-elevated file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-text hover:border-border-hover";
 
 type SeasonsEpisodesEditorProps = {
   seasons: Season[];
@@ -285,7 +285,7 @@ export function SeasonsEpisodesEditor({
   const episodeCountPrompt =
     episodeCountForSeasonId != null ? (
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-[2px]"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
         role="dialog"
         aria-modal="true"
         aria-labelledby="episode-count-title"
@@ -296,7 +296,7 @@ export function SeasonsEpisodesEditor({
         <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-md">
           <h2
             id="episode-count-title"
-            className="text-base font-semibold tracking-[-0.02em] text-text"
+            className="text-base font-semibold tracking-tight text-text"
           >
             How many episodes?
           </h2>
@@ -310,14 +310,14 @@ export function SeasonsEpisodesEditor({
                 key={n}
                 type="button"
                 onClick={() => applyEpisodeCount(n)}
-                className="min-w-11 rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm font-bold tabular-nums text-text transition-colors hover:border-brand hover:bg-brand/10 hover:text-brand"
+                className="min-w-11 rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm font-semibold tabular-nums text-text transition-colors hover:border-brand hover:bg-brand/10 hover:text-brand"
               >
                 {n}
               </button>
             ))}
           </div>
           <label className="mt-4 block">
-            <span className="mb-1.5 block text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
+            <span className="mb-1.5 block text-xs font-medium text-text-muted">
               Or type a number
             </span>
             <input
@@ -384,10 +384,10 @@ export function SeasonsEpisodesEditor({
             (ep) => Boolean(ep.videoFileName?.trim() || ep.videoFile),
           ).length;
           return (
-            <div key={season.id} className="rounded-xl border border-border bg-bg/40 p-4">
+            <div key={season.id} className="rounded-lg bg-surface-soft p-4">
               <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-3">
                 <label className="block min-w-[200px] flex-1 sm:max-w-xs">
-                  <span className="mb-1 block text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
+                  <span className="mb-1 block text-xs font-medium text-text-muted">
                     Season label
                   </span>
                   <input
@@ -401,7 +401,7 @@ export function SeasonsEpisodesEditor({
                   {includeVideo && season.episodes.length > 0 ? (
                     <span
                       className={[
-                        "rounded-md px-2 py-1 text-2xs font-bold tabular-nums",
+                        "rounded-md px-2 py-1 text-2xs font-semibold tabular-nums",
                         seasonReady === season.episodes.length
                           ? "bg-success/15 text-success"
                           : "bg-warning/15 text-warning",
@@ -431,7 +431,7 @@ export function SeasonsEpisodesEditor({
 
               <div className="mt-3 space-y-2">
                 <div
-                  className={`hidden text-2xs font-bold uppercase tracking-widest text-text-disabled sm:grid sm:gap-2 sm:px-1 ${gridCols}`}
+                  className={`hidden text-xs font-medium text-text-muted sm:grid sm:gap-2 sm:px-1 ${gridCols}`}
                 >
                   <span>Ep</span>
                   <span>Title</span>
@@ -449,11 +449,11 @@ export function SeasonsEpisodesEditor({
                       className={`flex flex-col gap-2 rounded-lg border border-dashed border-border/80 bg-surface/50 p-3 sm:grid sm:items-center sm:gap-2 sm:border-0 sm:bg-transparent sm:p-1 ${gridCols}`}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-text-muted">E{ep.number}</span>
+                        <span className="text-xs font-semibold text-text-muted">E{ep.number}</span>
                         {includeVideo ? (
                           <span
                             className={[
-                              "rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider sm:hidden",
+                              "rounded px-1.5 py-0.5 text-xs font-medium sm:hidden",
                               hasVideo
                                 ? "bg-success/15 text-success"
                                 : "bg-warning/15 text-warning",
@@ -505,7 +505,7 @@ export function SeasonsEpisodesEditor({
                             onChange={(e) => setEpisodeVideo(season.id, ep.id, e.target.files)}
                           />
                           {ep.videoFileName ? (
-                            <p className="mt-0.5 truncate text-[10px] text-text-muted">
+                            <p className="mt-0.5 truncate text-2xs text-text-muted">
                               {ep.videoFileName}
                             </p>
                           ) : null}
@@ -558,7 +558,7 @@ export function SeasonsEpisodesEditor({
           {newEpisodes.length > 0 ? (
             <span
               className={[
-                "rounded-lg border px-3 py-1.5 text-xs font-bold tabular-nums",
+                "rounded-lg border px-3 py-1.5 text-xs font-semibold tabular-nums",
                 newReady === newEpisodes.length
                   ? "border-success/40 bg-success/10 text-success"
                   : "border-warning/40 bg-warning/10 text-warning",
@@ -568,7 +568,7 @@ export function SeasonsEpisodesEditor({
             </span>
           ) : null}
           {existingNoHls > 0 ? (
-            <span className="rounded-lg border border-border bg-bg px-3 py-1.5 text-xs font-bold tabular-nums text-text-muted">
+            <span className="rounded-lg border border-border bg-bg px-3 py-1.5 text-xs font-semibold tabular-nums text-text-muted">
               {existingNoHls} episode{existingNoHls === 1 ? "" : "s"} without HLS
             </span>
           ) : null}
@@ -678,7 +678,7 @@ export function SeasonsEpisodesEditor({
                         className="group flex flex-col gap-2 px-3 py-2.5 transition-colors hover:bg-surface-elevated/50 sm:flex-row sm:items-center sm:gap-3 sm:px-4"
                       >
                         <div className="flex min-w-0 flex-1 items-center gap-3">
-                          <div className="w-8 shrink-0 text-center text-2xs font-bold tabular-nums text-brand">
+                          <div className="w-8 shrink-0 text-center text-xs tabular-nums text-text-muted">
                             E{ep.number}
                           </div>
                           <button
@@ -694,7 +694,7 @@ export function SeasonsEpisodesEditor({
                                 {ep.runtime || "No runtime"}
                               </span>
                               {ep.isFree ? (
-                                <span className="rounded bg-success/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-success">
+                                <span className="text-xs font-medium text-success">
                                   Free
                                 </span>
                               ) : null}
@@ -729,7 +729,7 @@ export function SeasonsEpisodesEditor({
                               }
                             />
                             {ep.videoFileName ? (
-                              <p className="mt-0.5 truncate text-[10px] text-text-muted">
+                              <p className="mt-0.5 truncate text-2xs text-text-muted">
                                 {ep.videoFileName}
                               </p>
                             ) : null}
@@ -763,7 +763,7 @@ export function SeasonsEpisodesEditor({
 
       {editingContext ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-[2px]"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="episode-edit-title"
@@ -774,12 +774,12 @@ export function SeasonsEpisodesEditor({
           <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-xl border border-border bg-surface shadow-md">
             <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4 sm:px-6">
               <div>
-                <p className="text-2xs font-semibold uppercase tracking-[0.14em] text-text-disabled">
+                <p className="text-xs font-medium text-text-muted">
                   {editingContext.season.title} · Episode {editingContext.episode.number}
                 </p>
                 <h2
                   id="episode-edit-title"
-                  className="mt-1 line-clamp-2 text-lg font-semibold tracking-[-0.02em] text-text"
+                  className="mt-1 line-clamp-2 text-lg font-semibold tracking-tight text-text"
                 >
                   {editingContext.episode.title || `Episode ${editingContext.episode.number}`}
                 </h2>
@@ -797,7 +797,7 @@ export function SeasonsEpisodesEditor({
             <div className="space-y-4 px-5 py-5 sm:px-6">
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block sm:col-span-2">
-                  <span className="mb-1.5 block text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
+                  <span className="mb-1.5 block text-xs font-medium text-text-muted">
                     Title
                   </span>
                   <input
@@ -813,7 +813,7 @@ export function SeasonsEpisodesEditor({
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1.5 block text-2xs font-semibold uppercase tracking-[0.12em] text-text-disabled">
+                  <span className="mb-1.5 block text-xs font-medium text-text-muted">
                     Runtime
                   </span>
                   <input

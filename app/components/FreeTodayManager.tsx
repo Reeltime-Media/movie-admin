@@ -170,7 +170,7 @@ export function FreeTodayManager() {
             <button
               type="button"
               onClick={() => void itemsQuery.refetch()}
-              className="mt-2 font-bold hover:underline"
+              className="mt-2 font-semibold hover:underline"
             >
               Retry
             </button>
@@ -193,7 +193,7 @@ export function FreeTodayManager() {
                   <span className="rounded-md bg-surface-elevated px-1.5 py-0.5 font-mono text-2xs font-semibold tabular-nums text-text-muted">
                     #{index + 1}
                   </span>
-                  <h3 className="truncate text-sm font-bold text-text">
+                  <h3 className="truncate text-sm font-semibold text-text">
                     {item.content_title ?? "Unknown title"}
                   </h3>
                 </div>
@@ -212,13 +212,12 @@ export function FreeTodayManager() {
       </AdminCard>
 
       {showPicker ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 sm:p-6">
-          <div className="flex h-[min(90vh,920px)] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-2xl shadow-black/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 sm:p-6">
+          <div className="flex h-[min(90vh,920px)] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-2xl">
             <div className="relative border-b border-border px-6 py-5">
-              <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-brand via-brand-hover to-brand/60" />
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-[17px] font-bold tracking-[-0.02em]">Add a free movie</h2>
+                  <h2 className="text-[17px] font-semibold tracking-tight">Add a free movie</h2>
                   <p className="mt-1 text-xs leading-relaxed text-text-muted">
                     The movie becomes free to watch for everyone the moment you add it.
                     {" "}{items.length}/{MAX_PICKS} picked.
@@ -266,12 +265,12 @@ export function FreeTodayManager() {
                           {movie.title}
                         </span>
                         {!movie.is_published ? (
-                          <span className="shrink-0 rounded-full bg-warning/10 px-2 py-0.5 text-2xs font-bold text-warning">
+                          <span className="shrink-0 rounded-full bg-warning/10 px-2 py-0.5 text-2xs font-semibold text-warning">
                             Draft
                           </span>
                         ) : null}
                         {listed ? (
-                          <span className="shrink-0 rounded-full bg-success/15 px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-success">
+                          <span className="shrink-0 text-xs font-medium text-success">
                             Free
                           </span>
                         ) : (

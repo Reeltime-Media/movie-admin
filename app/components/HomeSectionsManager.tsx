@@ -1,11 +1,12 @@
 "use client";
 
-import { Eye, EyeOff, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, EyeOff, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { AdminCard } from "./AdminCard";
 import { AdminCatalogSearchBar } from "./AdminCatalogSearchBar";
+import { AdminSectionTabs } from "./AdminSectionTabs";
 import { AdminSelect } from "./AdminSelect";
 import { Button } from "./ui/Button";
 import { HeroFeaturedManager } from "./HeroFeaturedManager";
@@ -36,6 +37,7 @@ import { useGenres } from "../hooks/adminQueries";
 import { GENRE_OPTIONS } from "../lib/genres";
 import {
   adminDeleteButtonClassWide,
+  adminGhostButtonClass,
   adminInputClass,
   adminPrimaryButtonClass,
 } from "../lib/adminUi";
@@ -170,6 +172,17 @@ export function HomeSectionsManager() {
       setIsSaving(false);
       invalidate();
     }
+  };
+
+  const moveActiveSection = async (direction: -1 | 1) => {
+    if (!activeSectionId) return;
+    const index = sections.findIndex((s) => s.id === activeSectionId);
+    const nextIndex = index + direction;
+    if (index < 0 || nextIndex < 0 || nextIndex >= sections.length) return;
+    const next = [...sections];
+    const [row] = next.splice(index, 1);
+    next.splice(nextIndex, 0, row!);
+    await handleReorderSections(next);
   };
 
   const handleToggleVisible = async (section: ApiHomeSection) => {
@@ -393,92 +406,109 @@ export function HomeSectionsManager() {
   const usesEmbeddedHero = selected?.type === "hero";
   const usesEmbeddedBanners = selected?.type === "banners";
   const isPlans = selected?.type === "plans";
+  const activeIndex = activeSectionId
+    ? sections.findIndex((s) => s.id === activeSectionId)
+    : -1;
+
+  const sectionTabs = useMemo(
+    () =>
+      sections.map((section) => ({
+        key: section.id,
+        label: section.is_visible
+          ? sectionLabel(section)
+          : `${sectionLabel(section)} · hidden`,
+        badge: section.item_count,
+      })),
+    [sections],
+  );
 
   return (
     <>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-        <AdminCard
-          title={`Landing sections · ${sections.length}`}
-          headerAction={
-            <button
-              type="button"
-              onClick={() => setShowAddSection(true)}
-              className={`inline-flex items-center gap-1.5 ${adminPrimaryButtonClass}`}
-            >
-              <Plus size={14} strokeWidth={2.5} aria-hidden />
-              Add section
-            </button>
-          }
-        >
-          {sectionsQuery.isLoading ? (
-            <InlineLoading label="Loading sections" />
-          ) : sectionsQuery.error ? (
-            <div className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-4 text-xs text-warning">
-              {sectionsQuery.error instanceof Error
-                ? sectionsQuery.error.message
-                : "Could not load sections."}
-              <p className="mt-2 text-2xs">
-                Run: cd movie-api && alembic upgrade head
-              </p>
-            </div>
-          ) : sections.length === 0 ? (
-            <p className="py-6 text-center text-sm text-text-muted">
-              No sections yet. Add one or run the API migration.
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-text-muted">
+            Landing sections · {sections.length}
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowAddSection(true)}
+            className={`inline-flex items-center gap-1.5 ${adminPrimaryButtonClass}`}
+          >
+            <Plus size={14} strokeWidth={2.5} aria-hidden />
+            Add section
+          </button>
+        </div>
+
+        {sectionsQuery.isLoading ? (
+          <InlineLoading label="Loading sections" />
+        ) : sectionsQuery.error ? (
+          <div className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-4 text-xs text-warning">
+            {sectionsQuery.error instanceof Error
+              ? sectionsQuery.error.message
+              : "Could not load sections."}
+            <p className="mt-2 text-2xs">
+              Run: cd movie-api && alembic upgrade head
             </p>
-          ) : (
-            <SortableList
-              items={sections}
-              disabled={isSaving}
-              onReorder={handleReorderSections}
-              renderItem={(section) => (
-                <div className="flex w-full items-center gap-2">
-                  <button
-                    type="button"
-                    data-no-drag
-                    onClick={() => setSelectedId(section.id)}
-                    className={[
-                      "min-w-0 flex-1 rounded-lg px-2 py-1.5 text-left transition-colors",
-                      activeSectionId === section.id
-                        ? "bg-brand/15 text-text"
-                        : "hover:bg-surface-elevated",
-                    ].join(" ")}
-                  >
-                    <div className="truncate text-sm font-semibold">{sectionLabel(section)}</div>
-                    <div className="mt-0.5 text-2xs text-text-muted">
-                      {TYPE_LABELS[section.type] ?? section.type}
-                      {" · "}
-                      {section.item_count} items
-                      {!section.is_visible ? " · hidden" : ""}
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    data-no-drag
-                    title={section.is_visible ? "Hide" : "Show"}
-                    onClick={() => void handleToggleVisible(section)}
-                    disabled={isSaving}
-                    className="rounded-lg border border-border p-1.5 text-text-muted hover:bg-surface-elevated hover:text-text"
-                  >
-                    {section.is_visible ? <Eye size={14} /> : <EyeOff size={14} />}
-                  </button>
-                </div>
-              )}
-            />
-          )}
-        </AdminCard>
+          </div>
+        ) : sections.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-text-muted">
+            No sections yet. Add one or run the API migration.
+          </p>
+        ) : (
+          <AdminSectionTabs
+            tabs={sectionTabs}
+            active={activeSectionId ?? ""}
+            onChange={setSelectedId}
+            label="Landing sections"
+          />
+        )}
 
         <AdminCard
           title={selected ? sectionLabel(selected) : "Section"}
           headerAction={
-            selected && ["genre", "custom"].includes(selected.type) ? (
-              <button
-                type="button"
-                onClick={() => void handleDeleteSection(selected)}
-                disabled={isSaving}
-                className={adminDeleteButtonClassWide}
-              >
-                Delete
-              </button>
+            selected ? (
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <button
+                  type="button"
+                  title="Move earlier on home"
+                  onClick={() => void moveActiveSection(-1)}
+                  disabled={isSaving || activeIndex <= 0}
+                  className={`${adminGhostButtonClass} inline-flex items-center gap-1 px-2`}
+                >
+                  <ChevronLeft size={14} aria-hidden />
+                  Earlier
+                </button>
+                <button
+                  type="button"
+                  title="Move later on home"
+                  onClick={() => void moveActiveSection(1)}
+                  disabled={isSaving || activeIndex < 0 || activeIndex >= sections.length - 1}
+                  className={`${adminGhostButtonClass} inline-flex items-center gap-1 px-2`}
+                >
+                  Later
+                  <ChevronRight size={14} aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  title={selected.is_visible ? "Hide on home" : "Show on home"}
+                  onClick={() => void handleToggleVisible(selected)}
+                  disabled={isSaving}
+                  className={`${adminGhostButtonClass} inline-flex items-center gap-1.5`}
+                >
+                  {selected.is_visible ? <Eye size={14} /> : <EyeOff size={14} />}
+                  {selected.is_visible ? "Visible" : "Hidden"}
+                </button>
+                {["genre", "custom"].includes(selected.type) ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleDeleteSection(selected)}
+                    disabled={isSaving}
+                    className={adminDeleteButtonClassWide}
+                  >
+                    Delete
+                  </button>
+                ) : null}
+              </div>
             ) : null
           }
         >
@@ -527,7 +557,7 @@ export function HomeSectionsManager() {
                 <PromotionBannerManager />
               ) : isPlans ? (
                 <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-text-muted">
-                  Plans section has no items — toggle visibility and drag to reorder only.
+                  Plans section has no items — use Visible / Earlier / Later in the header.
                 </p>
               ) : (
                 <>
@@ -561,7 +591,7 @@ export function HomeSectionsManager() {
                             <span className="rounded-md bg-surface-elevated px-1.5 py-0.5 font-mono text-2xs font-semibold tabular-nums text-text-muted">
                               #{index + 1}
                             </span>
-                            <h3 className="truncate text-sm font-bold text-text">
+                            <h3 className="truncate text-sm font-semibold text-text">
                               {item.label ?? item.ref_id}
                             </h3>
                             <span className="shrink-0 text-2xs text-text-disabled">
@@ -588,9 +618,9 @@ export function HomeSectionsManager() {
       </div>
 
       {showAddSection ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4">
           <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-2xl">
-            <h2 className="text-[17px] font-bold">Add section</h2>
+            <h2 className="text-[17px] font-semibold">Add section</h2>
             <div className="mt-4 space-y-3">
               <label className="block text-xs text-text-muted">
                 Type
@@ -645,12 +675,12 @@ export function HomeSectionsManager() {
       ) : null}
 
       {showPicker && selected ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm sm:p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 sm:p-6">
           <div className="flex h-[min(90vh,920px)] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-2xl">
             <div className="border-b border-border px-6 py-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-[17px] font-bold">Add to {sectionLabel(selected)}</h2>
+                  <h2 className="text-[17px] font-semibold">Add to {sectionLabel(selected)}</h2>
                   <p className="mt-1 text-xs text-text-muted">
                     Pick what appears on this home rail.
                   </p>
@@ -702,7 +732,7 @@ export function HomeSectionsManager() {
                         {channel.name}
                       </span>
                       {listedIds.has(channel.id) ? (
-                        <span className="text-2xs font-bold uppercase text-success">On rail</span>
+                        <span className="text-xs font-medium text-success">On rail</span>
                       ) : (
                         <Button
                           type="button"
@@ -729,7 +759,7 @@ export function HomeSectionsManager() {
                         {series.title}
                       </span>
                       {listedIds.has(series.id) ? (
-                        <span className="text-2xs font-bold uppercase text-success">On rail</span>
+                        <span className="text-xs font-medium text-success">On rail</span>
                       ) : (
                         <Button
                           type="button"
@@ -757,7 +787,7 @@ export function HomeSectionsManager() {
                           {movie.title}
                         </span>
                         {listedIds.has(movie.id) ? (
-                          <span className="text-2xs font-bold uppercase text-success">On rail</span>
+                          <span className="text-xs font-medium text-success">On rail</span>
                         ) : (
                           <Button
                             type="button"
@@ -782,7 +812,7 @@ export function HomeSectionsManager() {
                               <span className="text-2xs text-text-muted">series</span>
                             </span>
                             {listedIds.has(series.id) ? (
-                              <span className="text-2xs font-bold uppercase text-success">
+                              <span className="text-xs font-medium text-success">
                                 On rail
                               </span>
                             ) : (

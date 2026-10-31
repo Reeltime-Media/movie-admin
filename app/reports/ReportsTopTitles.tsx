@@ -60,7 +60,7 @@ export function ReportsTopTitles() {
             return (
               <div key={item.id}>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold">
+                  <span className="font-semibold">
                     {rank}. {item.title}
                   </span>
                   <span className="text-text-muted">${item.revenue_usd}</span>
@@ -69,7 +69,7 @@ export function ReportsTopTitles() {
                   {titleTypeLabel(item.type)} · {item.purchase_count} purchases · {item.watch_count}{" "}
                   watches · {item.completion_count} completions
                 </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-bg">
+                <div className="mt-2 h-1 overflow-hidden rounded-full bg-surface-elevated">
                   <div className="h-full rounded-full bg-brand" style={{ width: `${width}%` }} />
                 </div>
               </div>

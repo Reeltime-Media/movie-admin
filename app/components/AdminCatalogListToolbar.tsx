@@ -19,13 +19,13 @@ type AdminCatalogListToolbarProps = {
   action: ReactNode;
 };
 
-/** Search + optional filter + primary action, capped at half the content width. */
+/** Search + optional filter + primary action, capped so the search box stays a readable length. */
 export function AdminCatalogListToolbar({
   action,
   ...searchProps
 }: AdminCatalogListToolbarProps) {
   return (
-    <div className="flex w-full max-w-full flex-col gap-3 sm:max-w-[50%] sm:flex-row sm:items-stretch">
+    <div className="flex w-full max-w-full flex-col gap-3 xl:max-w-[60%] sm:flex-row sm:items-stretch">
       <AdminCatalogSearchBar
         {...searchProps}
         className="min-w-0 flex-1"

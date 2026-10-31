@@ -145,7 +145,7 @@ export function MovieCommentsAdmin({ contentId, embedded = false }: MovieComment
       <button
         type="button"
         onClick={() => void loadPage(page)}
-        className="text-xs font-bold text-brand hover:underline"
+        className="text-xs font-semibold text-brand hover:underline"
       >
         Retry
       </button>
@@ -159,7 +159,7 @@ export function MovieCommentsAdmin({ contentId, embedded = false }: MovieComment
           const isEditing = editingId === comment.id;
           const isBusy = busyId === comment.id;
           return (
-            <li key={comment.id} className="rounded-lg border border-border bg-bg p-4">
+            <li key={comment.id} className="rounded-lg bg-surface-soft p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="text-sm font-semibold text-text">
@@ -274,7 +274,7 @@ export function MovieCommentsAdmin({ contentId, embedded = false }: MovieComment
             <ChevronRight size={16} className="shrink-0 text-text-muted" aria-hidden />
           )}
           <MessageSquare size={16} className="text-brand" aria-hidden />
-          <h3 className="text-lg font-bold tracking-[-0.02em]">User comments</h3>
+          <h3 className="text-lg font-semibold tracking-tight">User comments</h3>
           {total > 0 ? (
             <span className="rounded-full bg-bg px-2 py-0.5 text-2xs font-semibold text-text-muted">
               {total}

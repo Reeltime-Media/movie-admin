@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fira_Code, Fira_Sans } from "next/font/google";
+import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import { DevToolsGuard } from "./components/DevToolsGuard";
 import { QueryProvider } from "./components/QueryProvider";
 import { ThemeProvider } from "./components/ThemeProvider";
@@ -8,16 +8,16 @@ import { UploadProgressProvider } from "./components/UploadProgressContext";
 import "./globals.css";
 import "react-toastify/dist/ReactToastify.css";
 
-const firaSans = Fira_Sans({
-  variable: "--font-fira-sans",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-});
-
-const firaCode = Fira_Code({
-  variable: "--font-fira-code",
+const hankenGrotesk = Hanken_Grotesk({
+  variable: "--font-hanken-grotesk",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -48,7 +48,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${firaSans.variable} ${firaCode.variable} h-full antialiased`}
+      className={`${hankenGrotesk.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

@@ -106,13 +106,13 @@ export default function PodcastsPage() {
         />
       ) : (
         <section>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {filteredItems.map((item) => {
                 const uiStatus = toUiStatus(item.status);
                 return (
                   <article
                     key={item.id}
-                    className="group flex flex-col overflow-hidden rounded-xl border border-border bg-bg/40 transition-colors hover:border-border-hover hover:bg-surface-elevated/50"
+                    className="group flex min-w-0 flex-col"
                   >
                     <button
                       type="button"
@@ -122,16 +122,16 @@ export default function PodcastsPage() {
                       <AdminMediaThumb
                         objectKey={item.poster_key}
                         alt={`${item.title} cover`}
-                        className="aspect-2/3 w-full rounded-none border-0 border-b border-border"
+                        className="aspect-2/3 w-full rounded-lg border-0"
                         emptyLabel="No cover"
                       />
                       <span className="absolute left-2 top-2">
                         <span className={statusClasses(uiStatus)}>{uiStatus}</span>
                       </span>
-                      <span className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/55 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                      <span className="pointer-events-none absolute inset-0 bg-linear-to-t rounded-lg from-black/30 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                     </button>
 
-                    <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
+                    <div className="flex min-h-0 flex-1 flex-col gap-1.5 pt-2.5">
                       <button
                         type="button"
                         className="min-w-0 cursor-pointer text-left"
@@ -179,6 +179,7 @@ export default function PodcastsPage() {
             </div>
             {total > 0 ? (
               <AdminPagination
+                inset="none"
                 page={page}
                 pages={pages}
                 total={total}
@@ -193,7 +194,7 @@ export default function PodcastsPage() {
       {confirmDelete ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4">
           <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-xl">
-            <h2 className="text-sm font-bold text-text">Delete podcast?</h2>
+            <h2 className="text-sm font-semibold text-text">Delete podcast?</h2>
             <p className="mt-2 text-sm text-text-muted">
               This permanently removes <span className="font-semibold text-text">{confirmDelete.title}</span>{" "}
               and its assets from the catalog.

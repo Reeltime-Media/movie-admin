@@ -2,8 +2,6 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { AdminCard } from "./AdminCard";
 import { useClientAuthReady } from "../hooks/adminQueries";
 import {
   getAdminToken,
@@ -13,10 +11,11 @@ import {
 } from "../lib/api";
 import { formatUsdDisplay } from "../lib/money";
 
+// Fixed per category so a colour always means the same thing. Status colours stay out of charts.
 const SLICE_COLORS: Record<string, string> = {
-  movies: "var(--rt-brand)",
-  series: "var(--rt-warning)",
-  subscriptions: "var(--rt-success)",
+  movies: "var(--rt-chart-1)",
+  series: "var(--rt-chart-2)",
+  subscriptions: "var(--rt-chart-3)",
 };
 
 const KIND_META: Record<string, { kind: string; label: string }> = {
@@ -76,33 +75,8 @@ function toMixRows(slices: ApiRevenueKindSlice[]): MixRow[] {
     name: slice.label,
     value: Number.parseFloat(slice.revenue_usd) || 0,
     payment_count: slice.payment_count,
-    color: SLICE_COLORS[slice.kind] ?? "var(--rt-brand)",
+    color: SLICE_COLORS[slice.kind] ?? "var(--rt-chart-1)",
   }));
-}
-
-function MixTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: Array<{ payload: MixRow }>;
-}) {
-  if (!active || !payload?.length) return null;
-  const row = payload[0]?.payload;
-  if (!row) return null;
-  return (
-    <div className="rounded-lg border border-border bg-surface px-3 py-2 shadow-lg">
-      <p className="text-2xs font-semibold uppercase tracking-wide text-text-muted">
-        {row.name}
-      </p>
-      <p className="mt-0.5 text-sm font-bold tabular-nums text-text">
-        ${formatUsdDisplay(row.value)}
-      </p>
-      <p className="text-2xs text-text-muted">
-        {row.payment_count} payment{row.payment_count === 1 ? "" : "s"}
-      </p>
-    </div>
-  );
 }
 
 function periodBounds(days: number) {
@@ -156,86 +130,57 @@ export function DashboardRevenueMix({
       (!isAuthReady || paymentsQuery.isLoading || paymentsQuery.isFetching));
 
   return (
-    <AdminCard title="Sales mix" fillHeight>
-      <div className="flex h-full min-h-0 flex-col">
-        <p className="mb-2 shrink-0 text-2xs font-medium text-text-muted">
-          Movies · series · subscriptions · last {days} days
-        </p>
+    <div className="flex h-full min-h-0 flex-col">
+      <p className="text-xs font-medium text-text-muted">Sales mix, last {days} days</p>
 
-        <div className="flex min-h-[140px] flex-1 items-center">
-          {loading ? (
-            <div className="flex w-full items-center justify-center">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-brand" />
-            </div>
-          ) : !hasData ? (
-            <div className="flex w-full items-center justify-center text-sm text-text-muted">
-              No payments in this period.
-            </div>
-          ) : (
-            <div className="flex h-full w-full items-center gap-3">
-              <div className="relative aspect-square h-[min(100%,160px)] w-auto max-h-full shrink-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={rows}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius="58%"
-                      outerRadius="88%"
-                      paddingAngle={2}
-                      stroke="var(--rt-bg)"
-                      strokeWidth={2}
-                      isAnimationActive={false}
-                    >
-                      {rows.map((row) => (
-                        <Cell key={row.kind} fill={row.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<MixTooltip />} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-2xs font-semibold uppercase tracking-wide text-text-muted">
-                    Total
-                  </p>
-                  <p className="text-sm font-bold tabular-nums text-text">
-                    ${formatUsdDisplay(total)}
-                  </p>
-                </div>
-              </div>
-
-              <ul className="flex min-w-0 flex-1 flex-col justify-center gap-2.5">
-                {rows.map((row) => {
-                  const pct = total > 0 ? Math.round((row.value / total) * 100) : 0;
-                  return (
-                    <li
-                      key={row.kind}
-                      className="flex items-center justify-between gap-2 text-sm"
-                    >
-                      <span className="flex min-w-0 items-center gap-2">
-                        <span
-                          className="h-2.5 w-2.5 shrink-0 rounded-full"
-                          style={{ background: row.color }}
-                          aria-hidden
-                        />
-                        <span className="truncate font-semibold text-text">{row.name}</span>
-                      </span>
-                      <span className="shrink-0 text-right">
-                        <span className="font-bold tabular-nums text-text">
-                          ${formatUsdDisplay(row.value)}
-                        </span>
-                        <span className="ml-1.5 text-2xs tabular-nums text-text-muted">
-                          {pct}%
-                        </span>
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          )}
+      {loading ? (
+        <div className="flex flex-1 items-center justify-center py-6">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-border border-t-brand" />
         </div>
-      </div>
-    </AdminCard>
+      ) : !hasData ? (
+        <p className="flex flex-1 items-center justify-center py-6 text-sm text-text-muted">
+          No payments in this period.
+        </p>
+      ) : (
+        <>
+          <div className="mt-3 flex h-2 gap-0.5 overflow-hidden rounded-full" aria-hidden>
+            {rows
+              .filter((row) => row.value > 0)
+              .map((row) => (
+                <span
+                  key={row.kind}
+                  title={`${row.name}: $${formatUsdDisplay(row.value)}`}
+                  className="min-w-1"
+                  style={{ flexGrow: row.value, flexBasis: 0, background: row.color }}
+                />
+              ))}
+          </div>
+
+          <ul className="mt-4 space-y-3">
+            {rows.map((row) => {
+              const pct = total > 0 ? Math.round((row.value / total) * 100) : 0;
+              return (
+                <li key={row.kind} className="text-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ background: row.color }}
+                        aria-hidden
+                      />
+                      <span className="truncate text-text">{row.name}</span>
+                    </span>
+                    <span className="shrink-0 text-xs tabular-nums text-text-muted">{pct}%</span>
+                  </div>
+                  <p className="mt-0.5 pl-4 font-medium tabular-nums text-text">
+                    ${formatUsdDisplay(row.value)}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
+    </div>
   );
 }

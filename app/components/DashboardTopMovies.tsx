@@ -34,7 +34,7 @@ export function DashboardTopMovies({ compact = false }: { compact?: boolean }) {
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-brand" />
         </div>
       ) : error ? (
-        <div className="rounded-lg border border-dashed border-border bg-bg px-4 py-6 text-center">
+        <div className="px-4 py-8 text-center">
           <p className="text-sm font-semibold text-text">Could not load rankings</p>
           <p className="mt-1 text-xs text-text-muted">
             {error instanceof Error ? error.message : "Could not load rankings"}
@@ -42,13 +42,13 @@ export function DashboardTopMovies({ compact = false }: { compact?: boolean }) {
           <button
             type="button"
             onClick={() => void refetch()}
-            className="mt-3 text-xs font-bold text-brand hover:underline"
+            className="mt-3 text-xs font-medium text-brand hover:underline"
           >
             Retry
           </button>
         </div>
       ) : movies.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border bg-bg px-4 py-6 text-center">
+        <div className="px-4 py-8 text-center">
           <p className="text-sm font-semibold text-text">No purchase data yet</p>
           <p className="mt-1 text-xs text-text-muted">
             Rankings appear once customers buy or watch movies.
@@ -56,10 +56,9 @@ export function DashboardTopMovies({ compact = false }: { compact?: boolean }) {
         </div>
       ) : compact ? (
         <div className="flex h-full min-h-0 flex-col overflow-hidden">
-          <div className="flex shrink-0 border-b border-border text-2xs uppercase tracking-[0.12em] text-text-disabled">
-            <span className="w-10 px-4 pb-1.5 font-bold">#</span>
-            <span className="flex-1 px-4 pb-1.5 font-bold">Title</span>
-            <span className="px-4 pb-1.5 text-right font-bold">Buys</span>
+          <div className="flex shrink-0 justify-between border-b border-border pb-2 text-xs text-text-muted">
+            <span>Title</span>
+            <span>Purchases</span>
           </div>
           <ul className="flex min-h-0 flex-1 flex-col justify-evenly">
             {movies.map((movie, index) => {
@@ -70,15 +69,13 @@ export function DashboardTopMovies({ compact = false }: { compact?: boolean }) {
                   <button
                     type="button"
                     onClick={goToMovie}
-                    className="flex w-full cursor-pointer items-center border-b border-border/60 py-1 text-left text-sm transition-colors last:border-b-0 hover:bg-surface-elevated"
+                    className="-mx-2 flex w-[calc(100%+1rem)] cursor-pointer items-center rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-surface-soft"
                   >
-                    <span className="w-10 shrink-0 px-4 font-bold tabular-nums text-brand">
-                      {rank}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate px-4 font-semibold text-text">
+                    <span className="w-6 shrink-0 tabular-nums text-text-disabled">{rank}</span>
+                    <span className="min-w-0 flex-1 truncate font-medium text-text">
                       {movie.title}
                     </span>
-                    <span className="shrink-0 px-4 font-mono tabular-nums text-text-muted">
+                    <span className="shrink-0 pl-3 tabular-nums text-text-muted">
                       {movie.purchase_count.toLocaleString()}
                     </span>
                   </button>
@@ -91,10 +88,10 @@ export function DashboardTopMovies({ compact = false }: { compact?: boolean }) {
         <div className="-mx-5 overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-border text-2xs uppercase tracking-[0.12em] text-text-disabled">
-                <th className={`w-10 font-bold px-5 pb-2`}>#</th>
-                <th className={`font-bold px-5 pb-2`}>Title</th>
-                <th className={`text-right font-bold px-5 pb-2`}>Buys</th>
+              <tr className="border-b border-border text-xs text-text-muted">
+                <th className={`w-10 font-medium px-5 pb-2`}>#</th>
+                <th className={`font-medium px-5 pb-2`}>Title</th>
+                <th className={`text-right font-medium px-5 pb-2`}>Purchases</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -113,13 +110,13 @@ export function DashboardTopMovies({ compact = false }: { compact?: boolean }) {
                         goToMovie();
                       }
                     }}
-                    className="cursor-pointer transition-colors hover:bg-surface-elevated"
+                    className="cursor-pointer transition-colors hover:bg-surface-soft"
                   >
-                    <td className={`${cellPad} font-bold tabular-nums text-brand`}>{rank}</td>
-                    <td className={`${cellPad} max-w-0 truncate font-semibold text-text`}>
+                    <td className={`${cellPad} tabular-nums text-text-disabled`}>{rank}</td>
+                    <td className={`${cellPad} max-w-0 truncate font-medium text-text`}>
                       {movie.title}
                     </td>
-                    <td className={`${cellPad} text-right font-mono tabular-nums text-text-muted`}>
+                    <td className={`${cellPad} text-right tabular-nums text-text-muted`}>
                       {movie.purchase_count.toLocaleString()}
                     </td>
                   </tr>

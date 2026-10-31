@@ -4,10 +4,10 @@ import { useEffect, useId, useRef, useState } from "react";
 import { GENRE_OPTIONS } from "../lib/genres";
 
 const triggerClass =
-  "flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-bg px-3 py-2.5 text-left text-sm outline-none transition-colors hover:border-border-hover focus:border-border-hover focus:bg-surface-elevated";
+  "flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm outline-none transition-colors hover:border-border-hover focus:border-border-hover-elevated";
 
 const panelClass =
-  "absolute left-0 right-0 z-40 mt-1 max-h-60 overflow-y-auto rounded-xl border border-border bg-surface-elevated py-1 shadow-md";
+  "absolute left-0 right-0 z-40 mt-1 max-h-60 overflow-y-auto rounded-xl border border-border bg-surface py-1 shadow-md";
 
 type GenreMultiSelectProps = {
   selected: string[];

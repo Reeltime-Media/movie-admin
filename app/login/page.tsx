@@ -43,10 +43,10 @@ export default function LoginPage() {
           <div className="mx-auto flex justify-center">
             <BrandLogo variant="mark" height={48} priority />
           </div>
-          <p className="mt-4 text-2xs font-semibold uppercase tracking-[0.16em] text-text-disabled">
+          <p className="mt-4 text-xs font-medium text-text-muted">
             Admin console
           </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-[-0.03em] text-text">Sign in</h1>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-text">Sign in</h1>
         </div>
 
         <div className="rounded-xl border border-border bg-surface p-6">

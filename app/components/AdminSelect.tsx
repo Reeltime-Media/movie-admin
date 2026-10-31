@@ -67,7 +67,7 @@ export function AdminSelect({
           "flex items-center justify-between gap-2 text-left",
           disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
           className ??
-            "w-full rounded-lg border border-border bg-surface-elevated px-3 py-2.5 text-sm text-text outline-none transition-colors hover:border-border-hover focus:border-brand/50",
+            "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-colors hover:border-border-hover focus:border-brand",
         ]
           .filter(Boolean)
           .join(" ")}
@@ -99,7 +99,7 @@ export function AdminSelect({
                   onClick={() => choose(opt.value)}
                   className={[
                     "flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-surface-elevated",
-                    isSelected ? "font-medium text-brand" : "text-text-muted hover:text-text",
+                    isSelected ? "font-medium text-text" : "text-text-muted hover:text-text",
                   ].join(" ")}
                 >
                   <span className="min-w-0 truncate">{opt.label}</span>

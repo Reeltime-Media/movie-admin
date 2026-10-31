@@ -78,19 +78,17 @@ export function DashboardOps({
 
   return (
     <AdminCard title="Needs attention" action="Open queue" actionHref="/transcode">
-      <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5 lg:gap-3">
+      <ul className="-mx-5 -mb-5 grid gap-px border-t border-border bg-border sm:grid-cols-2 lg:grid-cols-5">
         {items.map((item) => (
-          <li key={item.label}>
+          <li key={item.label} className="bg-surface last:sm:col-span-2 last:lg:col-span-1">
             <Link
               href={item.href}
-              className="flex h-full flex-col gap-1 rounded-lg border border-border bg-bg/60 px-3 py-2.5 transition-colors hover:border-border-hover hover:bg-surface-elevated/60"
+              className="flex h-full flex-col gap-0.5 px-5 py-2.5 transition-colors hover:bg-surface-soft"
             >
-              <span className="text-2xs font-semibold uppercase tracking-[0.12em] text-text-muted">
-                {item.label}
-              </span>
+              <span className="text-xs text-text-muted">{item.label}</span>
               <span
                 className={[
-                  "text-sm font-bold tabular-nums",
+                  "text-sm font-medium tabular-nums",
                   toneClass(item.tone),
                 ].join(" ")}
               >

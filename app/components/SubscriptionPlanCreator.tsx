@@ -12,6 +12,7 @@ import {
   type ApiSubscriptionPlan,
 } from "../lib/api";
 import { Button } from "./ui/Button";
+import { adminBadgeClass } from "../lib/adminUi";
 import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../lib/money";
 
 type PlanFormState = {
@@ -188,7 +189,7 @@ export function SubscriptionPlanCreator() {
       ) : error ? (
         <div className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-4 text-xs text-warning">
           <div>{error}</div>
-          <button type="button" onClick={() => void plansQuery.refetch()} className="mt-2 font-bold hover:underline">
+          <button type="button" onClick={() => void plansQuery.refetch()} className="mt-2 font-semibold hover:underline">
             Retry
           </button>
         </div>
@@ -208,18 +209,12 @@ export function SubscriptionPlanCreator() {
               {plans.map((plan) => (
                 <div
                   key={plan.id}
-                  className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-bg p-4"
+                  className="flex flex-wrap items-center justify-between gap-4 rounded-lg bg-surface-soft p-4"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-sm font-bold">{plan.name}</h3>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wider ${
-                          plan.is_active
-                            ? "bg-success/15 text-success"
-                            : "bg-text-disabled/25 text-text-muted"
-                        }`}
-                      >
+                      <h3 className="text-sm font-semibold">{plan.name}</h3>
+                      <span className={adminBadgeClass(plan.is_active ? "success" : "muted")}>
                         {plan.is_active ? "Active" : "Inactive"}
                       </span>
                     </div>
@@ -277,7 +272,7 @@ export function SubscriptionPlanCreator() {
         >
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 id={formTitleId} className="text-lg font-bold tracking-[-0.02em]">
+              <h2 id={formTitleId} className="text-lg font-semibold tracking-tight">
                 {formTitle}
               </h2>
               {editingPlan ? (
@@ -310,7 +305,7 @@ export function SubscriptionPlanCreator() {
                   value={form.code}
                   onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
                   placeholder="e.g. series_monthly"
-                  className="mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text"
+                  className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
                   required
                 />
                 <span className="mt-1 block text-2xs text-text-disabled">
@@ -325,7 +320,7 @@ export function SubscriptionPlanCreator() {
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 placeholder="Reeltime Plus"
-                className="mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text"
+                className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
                 required
               />
             </label>
@@ -335,7 +330,7 @@ export function SubscriptionPlanCreator() {
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                 rows={2}
-                className="mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text"
+                className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
               />
             </label>
             <div className="grid gap-3 sm:grid-cols-3">
@@ -347,7 +342,7 @@ export function SubscriptionPlanCreator() {
                   value={form.priceUsd}
                   onChange={(e) => setForm((f) => ({ ...f, priceUsd: e.target.value }))}
                   placeholder="0 or 6.99"
-                  className="mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text"
+                  className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
                   required
                 />
                 <span className="mt-1 block text-2xs text-text-disabled">{ADMIN_PRICE_HINT}</span>
@@ -360,7 +355,7 @@ export function SubscriptionPlanCreator() {
                   max={365}
                   value={form.billingIntervalDays}
                   onChange={(e) => setForm((f) => ({ ...f, billingIntervalDays: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text"
+                  className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
                 />
               </label>
               <label className="block">
@@ -369,7 +364,7 @@ export function SubscriptionPlanCreator() {
                   type="number"
                   value={form.sortOrder}
                   onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text"
+                  className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
                 />
               </label>
             </div>

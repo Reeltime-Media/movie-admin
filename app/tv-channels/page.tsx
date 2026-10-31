@@ -135,11 +135,11 @@ export default function TvChannelsPage() {
                 return (
                   <article
                     key={channel.id}
-                    className="flex flex-col overflow-hidden rounded-lg border border-border bg-surface-elevated transition-colors hover:border-border-hover"
+                    className="flex flex-col overflow-hidden rounded-lg border border-border bg-surface transition-colors hover:border-border-hover"
                   >
                     <Link
                       href={`/tv-channels/${channel.id}`}
-                      className="group relative block aspect-video bg-surface"
+                      className="group relative block aspect-video bg-surface-soft"
                     >
                       {logoUrl ? (
                         <Image
@@ -150,7 +150,7 @@ export default function TvChannelsPage() {
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                         />
                       ) : (
-                        <div className="grid h-full place-items-center text-2xs font-semibold uppercase tracking-[0.16em] text-text-disabled">
+                        <div className="grid h-full place-items-center text-xs font-medium text-text-muted">
                           No logo
                         </div>
                       )}
@@ -177,7 +177,7 @@ export default function TvChannelsPage() {
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-x-3 gap-y-1">
                         <span className={adminBadgeClass(channel.is_free ? "brand" : "muted")}>
                           {channel.is_free ? "Free" : "Paid"}
                         </span>
@@ -253,11 +253,11 @@ export default function TvChannelsPage() {
           aria-labelledby="delete-channel-title"
         >
           <div className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-md">
-            <h2 id="delete-channel-title" className="text-lg font-bold tracking-[-0.02em]">
+            <h2 id="delete-channel-title" className="text-lg font-semibold tracking-tight">
               Delete channel
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-text-muted">
-              Permanently delete <span className="font-bold text-text">{confirmDelete.name}</span>
+              Permanently delete <span className="font-semibold text-text">{confirmDelete.name}</span>
               ? If the stream is live it will be stopped first. This cannot be undone.
             </p>
             <div className="mt-6 flex flex-wrap justify-end gap-2">

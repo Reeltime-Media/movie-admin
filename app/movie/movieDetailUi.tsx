@@ -25,7 +25,7 @@ export function youtubeEmbedUrl(url?: string | null) {
   return null;
 }
 
-const fieldShellClass = "rounded-lg border border-border bg-bg p-4";
+const fieldShellClass = "rounded-lg bg-surface-soft p-4";
 
 export function DetailRow({
   label,
@@ -36,7 +36,7 @@ export function DetailRow({
 }) {
   return (
     <div className={fieldShellClass}>
-      <div className="text-2xs font-bold uppercase tracking-[0.12em] text-text-disabled">
+      <div className="text-xs font-medium text-text-muted">
         {label}
       </div>
       <div className="mt-1 text-sm font-semibold text-text">{value || "-"}</div>
@@ -55,7 +55,7 @@ export function EditField({
 }) {
   return (
     <div className={`${fieldShellClass} ${className}`.trim()}>
-      <div className="text-2xs font-bold uppercase tracking-[0.12em] text-text-disabled">
+      <div className="text-xs font-medium text-text-muted">
         {label}
       </div>
       <div className="mt-1">{children}</div>
@@ -64,10 +64,10 @@ export function EditField({
 }
 
 export const movieEditInputClass =
-  "w-full rounded-lg border border-border bg-surface-elevated px-2.5 py-2 text-sm font-medium text-text outline-none transition-colors placeholder:text-text-disabled hover:border-border-hover focus:border-brand/50";
+  "w-full rounded-lg border border-border bg-surface px-2.5 py-2 text-sm font-medium text-text outline-none transition-colors placeholder:text-text-disabled hover:border-border-hover focus:border-brand";
 
 export const movieEditSelectClass =
   "w-full rounded-lg border border-border bg-surface px-2.5 py-2 text-sm font-semibold text-text outline-none transition-colors focus:border-border-hover";
 
 export const movieFileInputClass =
-  "mt-3 w-full rounded-lg border border-dashed border-border bg-surface px-3 py-3 text-2xs text-text-muted file:mr-2 file:rounded-lg file:border-0 file:bg-brand file:px-2.5 file:py-1.5 file:text-2xs file:font-bold file:text-white hover:border-border-hover";
+  "mt-3 w-full rounded-lg border border-dashed border-border bg-surface px-3 py-3 text-2xs text-text-muted file:mr-2 file:rounded-lg file:border-0 file:bg-surface-elevated file:px-2.5 file:py-1.5 file:text-2xs file:font-medium file:text-text hover:border-border-hover";
