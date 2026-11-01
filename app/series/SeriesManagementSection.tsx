@@ -10,8 +10,8 @@ import { matchesCatalogSearch } from "../lib/catalogSearch";
 import { Button } from "../components/ui/Button";
 import { SeriesManagementTable } from "./SeriesManagementTable";
 import type { SeriesListFilter } from "./seriesListTypes";
+import { ADMIN_PAGE_SIZE } from "../lib/pagination";
 
-const TABLE_PAGE_SIZE = 25;
 
 const filterOptions: { key: SeriesListFilter; label: string }[] = [
   { key: "all", label: "All" },
@@ -62,7 +62,7 @@ export function SeriesManagementSection({
     setPage(1);
   }
 
-  const pages = Math.max(1, Math.ceil(entries.length / TABLE_PAGE_SIZE));
+  const pages = Math.max(1, Math.ceil(entries.length / ADMIN_PAGE_SIZE));
 
   if (currentPage > pages) {
     currentPage = pages;
@@ -70,8 +70,8 @@ export function SeriesManagementSection({
   }
 
   const paginatedEntries = useMemo(() => {
-    const start = (currentPage - 1) * TABLE_PAGE_SIZE;
-    return entries.slice(start, start + TABLE_PAGE_SIZE);
+    const start = (currentPage - 1) * ADMIN_PAGE_SIZE;
+    return entries.slice(start, start + ADMIN_PAGE_SIZE);
   }, [entries, currentPage]);
 
   const tableTitle =
@@ -132,7 +132,7 @@ export function SeriesManagementSection({
                   page={currentPage}
                   pages={pages}
                   total={entries.length}
-                  pageSize={TABLE_PAGE_SIZE}
+                  pageSize={ADMIN_PAGE_SIZE}
                   isLoading={isLoading}
                   onPageChange={setPage}
                 />

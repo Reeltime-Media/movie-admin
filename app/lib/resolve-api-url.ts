@@ -1,5 +1,3 @@
-const GCP_API_HOST = "34.124.135.215";
-const GCP_API_PORT = "8000";
 const VERCEL_API_PROXY = "/api-proxy";
 
 export function normalizeApiUrl(raw: string): string {
@@ -7,11 +5,7 @@ export function normalizeApiUrl(raw: string): string {
   if (!trimmed || trimmed.startsWith("/")) return trimmed;
 
   try {
-    const u = new URL(trimmed);
-    if (u.hostname === GCP_API_HOST && !u.port) {
-      u.port = GCP_API_PORT;
-    }
-    return u.origin;
+    return new URL(trimmed).origin;
   } catch {
     return trimmed;
   }

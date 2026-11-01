@@ -7,10 +7,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { AdminCard } from "./AdminCard";
 import { InlineLoading } from "./InlineLoading";
-import { SortableList, persistReorderedSort } from "./SortableList";
+import { SortableList } from "./SortableList";
 import {
   createAdminPromotionBanner,
   deleteAdminPromotionBanner,
+  reorderAdminPromotionBanners,
   listAdminPromotionBanners,
   startAdminPromotionBannerImageUpload,
   updateAdminPromotionBanner,
@@ -226,9 +227,7 @@ export function PromotionBannerManager() {
     queryClient.setQueryData(queryKeys.promotionBanners, optimistic);
     setIsSaving(true);
     try {
-      await persistReorderedSort(next, (id, sortOrder) =>
-        updateAdminPromotionBanner(id, { sortOrder }),
-      );
+      await reorderAdminPromotionBanners(next.map((banner) => banner.id));
       toast.success("Banner order updated");
     } catch (err) {
       queryClient.setQueryData(queryKeys.promotionBanners, previous);

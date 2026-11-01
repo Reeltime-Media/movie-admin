@@ -1824,6 +1824,14 @@ export async function updateAdminPromotionBanner(
   });
 }
 
+export async function reorderAdminPromotionBanners(ids: string[]): Promise<void> {
+  await apiFetch<void>("/admin/promotion-banners/reorder", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+}
+
 export async function deleteAdminPromotionBanner(id: string): Promise<void> {
   await apiFetch<void>(`/admin/promotion-banners/${id}`, { method: "DELETE" });
 }
@@ -1911,6 +1919,14 @@ export async function updateAdminHeroFeatured(
       ...(input.youtubeUrl !== undefined ? { youtube_url: input.youtubeUrl } : {}),
       ...(input.videoEnabled !== undefined ? { video_enabled: input.videoEnabled } : {}),
     }),
+  });
+}
+
+export async function reorderAdminHeroFeatured(ids: string[]): Promise<void> {
+  await apiFetch<void>("/admin/hero-featured/reorder", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
   });
 }
 
@@ -2047,6 +2063,10 @@ export type ApiHomeSection = {
   updated_at: string;
   item_count: number;
   items: ApiHomeSectionItem[];
+  /** Most items this section takes; null when it has no picked items. */
+  item_limit: number | null;
+  /** With nothing picked, the website fills this section itself. */
+  auto_filled: boolean;
 };
 
 export async function listAdminHomeSections(): Promise<ApiHomeSection[]> {
@@ -2125,14 +2145,14 @@ export async function createAdminHomeSectionItem(
   });
 }
 
-export async function updateAdminHomeSectionItem(
-  itemId: string,
-  input: { sortOrder: number },
-): Promise<ApiHomeSectionItem> {
-  return apiFetch<ApiHomeSectionItem>(`/admin/home-sections/items/${itemId}`, {
-    method: "PATCH",
+export async function reorderAdminHomeSectionItems(
+  sectionId: string,
+  ids: string[],
+): Promise<void> {
+  await apiFetch<ApiHomeSection>(`/admin/home-sections/${sectionId}/items/reorder`, {
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ sort_order: input.sortOrder }),
+    body: JSON.stringify({ ids }),
   });
 }
 

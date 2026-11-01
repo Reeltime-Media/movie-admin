@@ -33,7 +33,7 @@ export const adminTdNumClass = "px-5 py-3 text-right tabular-nums";
 
 /** Status reads as a dot and a word, so a table of statuses stays calm. */
 export const adminBadgeBase =
-  "inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium capitalize before:size-1.5 before:shrink-0 before:rounded-full";
+  "inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium before:size-1.5 before:shrink-0 before:rounded-full";
 
 export type AdminBadgeTone = "success" | "warning" | "danger" | "brand" | "muted";
 
@@ -45,7 +45,13 @@ const badgeToneClass: Record<AdminBadgeTone, string> = {
   muted: "text-text-muted before:bg-text-disabled",
 };
 
+/** For status words, which often arrive lowercase from the API. */
 export function adminBadgeClass(tone: AdminBadgeTone) {
+  return `${adminBadgeBase} capitalize ${badgeToneClass[tone]}`;
+}
+
+/** For a status written as a sentence, which must keep its own casing. */
+export function adminStatusLineClass(tone: AdminBadgeTone) {
   return `${adminBadgeBase} ${badgeToneClass[tone]}`;
 }
 

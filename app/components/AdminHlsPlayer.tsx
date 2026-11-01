@@ -1,6 +1,6 @@
 "use client";
 
-import Hls from "hls.js";
+import type Hls from "hls.js";
 import { Loader2, Settings } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -38,58 +38,79 @@ export function AdminHlsPlayer({ src, title }: AdminHlsPlayerProps) {
     setAutoLevel(-1);
     setShowQuality(false);
 
-    if (Hls.isSupported()) {
-      const hls = new Hls({ startLevel: -1, capLevelToPlayerSize: true });
-      hlsRef.current = hls;
-      hls.loadSource(src);
-      hls.attachMedia(video);
+    let cancelled = false;
+    let teardown: (() => void) | undefined;
 
-      hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
-        setLevels(
-          data.levels.map((level, index) => ({
-            height: level.height || 0,
-            bitrate: level.bitrate,
-            index,
-          })),
-        );
-        setLoading(false);
-      });
+    // hls.js is large and most page views never press play on this player.
+    import("hls.js")
+      .then(({ default: HlsPlayer }) => {
+        if (cancelled) return;
 
-      hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
-        setAutoLevel(data.level);
-      });
+        if (HlsPlayer.isSupported()) {
+          const hls = new HlsPlayer({ startLevel: -1, capLevelToPlayerSize: true });
+          hlsRef.current = hls;
+          hls.loadSource(src);
+          hls.attachMedia(video);
 
-      hls.on(Hls.Events.ERROR, (_event, data) => {
-        if (data.fatal) {
-          setError("Could not play this video stream.");
-          setLoading(false);
+          hls.on(HlsPlayer.Events.MANIFEST_PARSED, (_, data) => {
+            setLevels(
+              data.levels.map((level, index) => ({
+                height: level.height || 0,
+                bitrate: level.bitrate,
+                index,
+              })),
+            );
+            setLoading(false);
+          });
+
+          hls.on(HlsPlayer.Events.LEVEL_SWITCHED, (_, data) => {
+            setAutoLevel(data.level);
+          });
+
+          hls.on(HlsPlayer.Events.ERROR, (_event, data) => {
+            if (data.fatal) {
+              setError("Could not play this video stream.");
+              setLoading(false);
+            }
+          });
+
+          teardown = () => {
+            hls.destroy();
+            hlsRef.current = null;
+          };
+          return;
         }
+
+        if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          video.src = src;
+          const onLoaded = () => setLoading(false);
+          const onError = () => {
+            setError("Could not play this video stream.");
+            setLoading(false);
+          };
+          video.addEventListener("loadedmetadata", onLoaded);
+          video.addEventListener("error", onError);
+          teardown = () => {
+            video.removeEventListener("loadedmetadata", onLoaded);
+            video.removeEventListener("error", onError);
+            video.removeAttribute("src");
+          };
+          return;
+        }
+
+        setError("HLS playback is not supported in this browser.");
+        setLoading(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setError("Could not load the video player.");
+        setLoading(false);
       });
 
-      return () => {
-        hls.destroy();
-        hlsRef.current = null;
-      };
-    }
-
-    if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      video.src = src;
-      const onLoaded = () => setLoading(false);
-      const onError = () => {
-        setError("Could not play this video stream.");
-        setLoading(false);
-      };
-      video.addEventListener("loadedmetadata", onLoaded);
-      video.addEventListener("error", onError);
-      return () => {
-        video.removeEventListener("loadedmetadata", onLoaded);
-        video.removeEventListener("error", onError);
-        video.removeAttribute("src");
-      };
-    }
-
-    setError("HLS playback is not supported in this browser.");
-    setLoading(false);
+    return () => {
+      cancelled = true;
+      teardown?.();
+    };
   }, [src]);
 
   useEffect(() => {

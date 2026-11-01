@@ -7,8 +7,8 @@ import { AdminErrorAlert } from "../components/AdminErrorAlert";
 import { AdminPagination } from "../components/AdminPagination";
 import { InlineLoading } from "../components/InlineLoading";
 import { useTopTitles } from "../hooks/adminQueries";
+import { ADMIN_PAGE_SIZE } from "../lib/pagination";
 
-const PAGE_SIZE = 10;
 
 function titleTypeLabel(type: string) {
   if (type === "single") return "Movie";
@@ -20,7 +20,7 @@ export function ReportsTopTitles() {
   const [page, setPage] = useState(1);
   const { data, isLoading, isFetching, error, refetch } = useTopTitles({
     page,
-    pageSize: PAGE_SIZE,
+    pageSize: ADMIN_PAGE_SIZE,
   });
 
   const titles = data?.items ?? [];
@@ -52,7 +52,7 @@ export function ReportsTopTitles() {
         <div className="space-y-4">
           {titles.map((item, index) => {
             const revenue = Number.parseFloat(item.revenue_usd) || 0;
-            const rank = (page - 1) * PAGE_SIZE + index + 1;
+            const rank = (page - 1) * ADMIN_PAGE_SIZE + index + 1;
             const width =
               maxRevenue > 0
                 ? Math.max(12, Math.round((revenue / maxRevenue) * 100))
@@ -79,7 +79,7 @@ export function ReportsTopTitles() {
             page={page}
             pages={pages}
             total={total}
-            pageSize={PAGE_SIZE}
+            pageSize={ADMIN_PAGE_SIZE}
             isLoading={isFetching}
             onPageChange={setPage}
           />

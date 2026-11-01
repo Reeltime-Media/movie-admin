@@ -31,7 +31,8 @@ import {
   pickFileFromInput,
   toMovieDraft,
 } from "./movieEditHelpers";
-import { formatMovieDate, movieEditInputClass, movieFileInputClass, youtubeEmbedUrl } from "./movieDetailUi";
+import { youtubeEmbedUrl } from "../lib/youtube";
+import { formatMovieDate, movieEditInputClass, movieFileInputClass, } from "./movieDetailUi";
 
 const statuses: Status[] = ["Published", "Draft", "Scheduled", "Review"];
 

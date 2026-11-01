@@ -27,26 +27,20 @@ export function formatGenres(selected: string[]): string {
   return selected.filter(Boolean).join(", ");
 }
 
+/** Genres are managed in the API, so anything stored is kept, known to this list or not. */
 export function parseGenresFromStored(stored: string): string[] {
-  const allowed = new Set<string>(GENRE_OPTIONS);
-  const seen = new Set<string>();
-  const out: string[] = [];
-
-  const push = (g: string) => {
-    if (!allowed.has(g) || seen.has(g)) return;
-    seen.add(g);
-    out.push(g);
-  };
+  const known = new Set<string>(GENRE_OPTIONS);
+  const out = new Set<string>();
 
   for (const part of stored.split(",").map((p) => p.trim()).filter(Boolean)) {
-    if (allowed.has(part)) {
-      push(part);
-      continue;
-    }
-    for (const word of part.split(/\s+/)) {
-      if (allowed.has(word)) push(word);
+    // Older rows separated genres with spaces: "Action Drama".
+    const words = part.split(/\s+/);
+    if (!known.has(part) && words.length > 1 && words.every((word) => known.has(word))) {
+      words.forEach((word) => out.add(word));
+    } else {
+      out.add(part);
     }
   }
 
-  return out;
+  return [...out];
 }

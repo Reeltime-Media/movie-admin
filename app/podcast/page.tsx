@@ -17,15 +17,15 @@ import { useAdminPodcasts } from "../hooks/adminQueries";
 import { statusClasses } from "../lib/adminData";
 import { deleteAdminPodcast, type ApiContent } from "../lib/api";
 import { formatPodcastDate, toUiStatus } from "./podcastUi";
+import { ADMIN_PAGE_SIZE } from "../lib/pagination";
 
-const PAGE_SIZE = 20;
 
 export default function PodcastsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const { data, isLoading, isFetching, error: queryError, refetch } = useAdminPodcasts(page, PAGE_SIZE);
+  const { data, isLoading, isFetching, error: queryError, refetch } = useAdminPodcasts(page, ADMIN_PAGE_SIZE);
 
   const items = useMemo(() => data?.items ?? [], [data?.items]);
   const pages = data?.pages ?? 1;
@@ -183,7 +183,7 @@ export default function PodcastsPage() {
                 page={page}
                 pages={pages}
                 total={total}
-                pageSize={PAGE_SIZE}
+                pageSize={ADMIN_PAGE_SIZE}
                 isLoading={isFetching}
                 onPageChange={setPage}
               />

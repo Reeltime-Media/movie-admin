@@ -1,4 +1,5 @@
 export const MIN_PAID_PRICE_USD = 0.03;
+const MIN_PRICE_LABEL = `$${MIN_PAID_PRICE_USD.toFixed(2)}`;
 
 export function formatUsdDisplay(value: string | number): string {
   const parsed = typeof value === "number" ? value : Number.parseFloat(value);
@@ -9,8 +10,7 @@ export function formatUsdDisplay(value: string | number): string {
   });
 }
 
-export const ADMIN_PRICE_HINT =
-  "Enter 0 for free, or at least $0.03 for paid pricing.";
+export const ADMIN_PRICE_HINT = `Enter 0 for free, or at least ${MIN_PRICE_LABEL} for paid pricing.`;
 
 export function normalizeMoneyInput(value: string): string | null {
   const normalized = value.replace(/[$,\s]/g, "").trim();
@@ -46,7 +46,7 @@ export function validateAdminPriceUsd(
   if (!normalized) {
     return {
       ok: false,
-      message: "Enter a valid price. Use 0 for free, or at least $0.03.",
+      message: `Enter a valid price. Use 0 for free, or at least ${MIN_PRICE_LABEL}.`,
     };
   }
 
@@ -54,7 +54,7 @@ export function validateAdminPriceUsd(
   if (cents === null || cents < 0) {
     return {
       ok: false,
-      message: "Enter a valid price. Use 0 for free, or at least $0.03.",
+      message: `Enter a valid price. Use 0 for free, or at least ${MIN_PRICE_LABEL}.`,
     };
   }
   if (cents === 0) {
@@ -66,7 +66,7 @@ export function validateAdminPriceUsd(
 
   return {
     ok: false,
-    message: "Price must be $0 (free) or at least $0.03. Amounts between $0.01 and $0.02 are not allowed.",
+    message: `Price must be $0 (free) or at least ${MIN_PRICE_LABEL}.`,
   };
 }
 

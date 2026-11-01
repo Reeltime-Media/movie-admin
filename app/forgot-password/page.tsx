@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
               type="email"
               required
               autoComplete="email"
-              placeholder="admin@reeltime.com"
+              placeholder="admin@reeltime.fun"
             />
           </Field>
 

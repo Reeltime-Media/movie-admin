@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { PIN_COOKIE, isValidPinCookie } from "./lib/admin-pin";
 
 const PUBLIC_PATHS = ["/login"];
 const PIN_PATH = "/pin";
-const PIN_COOKIE = "reeltime_admin_pin";
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const hasPinAccess = request.cookies.get(PIN_COOKIE)?.value === "verified";
+  const hasPinAccess = await isValidPinCookie(request.cookies.get(PIN_COOKIE)?.value);
 
   if (pathname === PIN_PATH || pathname.startsWith(`${PIN_PATH}/`)) {
     if (hasPinAccess) {

@@ -14,8 +14,8 @@ import { Button } from "../components/ui/Button";
 import { adminBadgeClass, adminTdClass } from "../lib/adminUi";
 import { deleteUser, setUserActive, type ApiUser } from "../lib/api";
 import { useDashboardSummary, useUsers } from "../hooks/adminQueries";
+import { ADMIN_PAGE_SIZE } from "../lib/pagination";
 
-const PAGE_SIZE = 20;
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
@@ -33,7 +33,7 @@ export default function UsersPage() {
     isFetching,
     error: usersError,
     refetch,
-  } = useUsers(page, PAGE_SIZE);
+  } = useUsers(page, ADMIN_PAGE_SIZE);
   const { data: summary } = useDashboardSummary();
 
   const users = usersData?.items ?? [];
@@ -175,7 +175,7 @@ export default function UsersPage() {
               page={page}
               pages={pages}
               total={total}
-              pageSize={PAGE_SIZE}
+              pageSize={ADMIN_PAGE_SIZE}
               isLoading={isFetching}
               onPageChange={setPage}
             />

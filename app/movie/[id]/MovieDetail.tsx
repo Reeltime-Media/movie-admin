@@ -13,7 +13,8 @@ import { AdminDownloadSourceButton } from "../../components/AdminDownloadSourceB
 import { AdminSourceVideoPlayer } from "../../components/AdminSourceVideoPlayer";
 import { MovieCommentsAdmin } from "../MovieCommentsAdmin";
 import { formatIctLabel } from "../../lib/datetimeIct";
-import { formatMovieDate, youtubeEmbedUrl } from "../movieDetailUi";
+import { youtubeEmbedUrl } from "../../lib/youtube";
+import { formatMovieDate } from "../movieDetailUi";
 import { useAdminMovie } from "../../hooks/adminQueries";
 
 type MovieTab = "overview" | "media" | "comments";

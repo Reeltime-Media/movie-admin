@@ -18,8 +18,8 @@ import {
   adminLabelClass,
   adminTdClass,
 } from "../lib/adminUi";
+import { ADMIN_PAGE_SIZE } from "../lib/pagination";
 
-const PAGE_SIZE = 20;
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
@@ -108,7 +108,7 @@ export default function PaymentsPage() {
     refetch,
   } = usePayments({
     page: currentPage,
-    pageSize: PAGE_SIZE,
+    pageSize: ADMIN_PAGE_SIZE,
     search: debouncedSearch || undefined,
     status: status === "all" ? undefined : status,
     dateFrom: dateFrom || undefined,
@@ -303,7 +303,7 @@ export default function PaymentsPage() {
               page={currentPage}
               pages={pages}
               total={total}
-              pageSize={PAGE_SIZE}
+              pageSize={ADMIN_PAGE_SIZE}
               isLoading={isFetching}
               onPageChange={setPage}
             />

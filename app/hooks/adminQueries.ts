@@ -1,7 +1,13 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import {
   createGenre,
   deleteGenre,
@@ -18,6 +24,8 @@ import {
   listAdminTopTitles,
   listAdminTvAccessCodes,
   listAdminTvChannels,
+  listAllAdminMovies,
+  listAllAdminSeries,
   listGenres,
   listSeriesEpisodesApi,
   listTranscodeJobCounts,
@@ -38,6 +46,25 @@ import { queryKeys } from "../lib/queryKeys";
 import type { RevenueDateRange } from "../components/RevenuePanel";
 
 const emptySubscribe = () => () => {};
+
+/** Pickers reopen often, so they share one copy of the whole catalog for a short while. */
+const CATALOG_PICKER_STALE_MS = 2 * 60_000;
+
+export function fetchCatalogMovies(queryClient: QueryClient) {
+  return queryClient.fetchQuery({
+    queryKey: queryKeys.catalogMovies,
+    queryFn: listAllAdminMovies,
+    staleTime: CATALOG_PICKER_STALE_MS,
+  });
+}
+
+export function fetchCatalogSeries(queryClient: QueryClient) {
+  return queryClient.fetchQuery({
+    queryKey: queryKeys.catalogSeries,
+    queryFn: listAllAdminSeries,
+    staleTime: CATALOG_PICKER_STALE_MS,
+  });
+}
 
 /** Avoid SSR/client mismatch: queries only run after mount (when auth token is readable). */
 export function useClientAuthReady() {

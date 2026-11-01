@@ -5,31 +5,43 @@ import { useState, type DragEvent, type ReactNode } from "react";
 
 type Identifiable = { id: string };
 
+type SortableLayout = "cards" | "rows" | "grid";
+
 type SortableListProps<T extends Identifiable> = {
   items: T[];
   onReorder: (next: T[]) => void | Promise<void>;
   disabled?: boolean;
   renderItem: (item: T, index: number) => ReactNode;
+  layout?: SortableLayout;
+  itemClassName?: (item: T) => string;
 };
 
+const containerClass: Record<SortableLayout, string> = {
+  cards: "space-y-3",
+  rows: "space-y-0.5",
+  grid: "grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-4 xl:grid-cols-6",
+};
+
+/** `data-drag-ok` marks a control that fills its row, so the row can still be dragged by it. */
 function isInteractiveTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;
-  return Boolean(
-    target.closest(
-      "button, a, input, select, textarea, label, [role='button'], [data-no-drag]",
-    ),
+  const control = target.closest(
+    "button, a, input, select, textarea, label, [role='button'], [data-no-drag]",
   );
+  return Boolean(control) && !control?.hasAttribute("data-drag-ok");
 }
 
 /**
- * Vertical Trello-style reorder. Drag from anywhere on the card; Edit /
- * Remove and other controls stay clickable.
+ * Trello-style reorder for cards, compact rows or a poster grid. Drag from
+ * anywhere on the item; Edit / Remove and other controls stay clickable.
  */
 export function SortableList<T extends Identifiable>({
   items,
   onReorder,
   disabled = false,
   renderItem,
+  layout = "cards",
+  itemClassName,
 }: SortableListProps<T>) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
@@ -79,10 +91,15 @@ export function SortableList<T extends Identifiable>({
   };
 
   return (
-    <div className="space-y-3">
+    <div className={containerClass[layout]}>
       {items.map((item, index) => {
         const isDragging = dragId === item.id;
         const isOver = overId === item.id && dragId !== item.id;
+        const dragState = isDragging
+          ? "opacity-50"
+          : isOver
+            ? "shadow-[inset_0_0_0_1px_var(--rt-brand)]"
+            : "";
         return (
           <div
             key={item.id}
@@ -91,22 +108,47 @@ export function SortableList<T extends Identifiable>({
             onDragOver={(event) => onDragOver(event, item.id)}
             onDrop={() => void onDrop(item.id)}
             onDragEnd={clearDrag}
-            className={[
-              "flex items-stretch gap-3 rounded-lg border bg-bg p-4 transition-[border-color,opacity,box-shadow]",
-              disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing",
-              isDragging
-                ? "border-brand/50 opacity-50 shadow-lg"
-                : isOver
-                  ? "border-brand shadow-[inset_0_0_0_1px_var(--rt-brand)]"
-                  : "border-border hover:border-border-hover",
-            ].join(" ")}
+            className={
+              layout === "rows"
+                ? [
+                    "group/row flex items-center rounded-lg pr-1 transition-colors",
+                    dragState,
+                    itemClassName?.(item),
+                  ].join(" ")
+                : layout === "grid"
+                  ? [
+                      "min-w-0 rounded-lg transition-opacity",
+                      disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing",
+                      dragState,
+                      itemClassName?.(item),
+                    ].join(" ")
+                  : [
+                      "flex items-stretch gap-3 rounded-lg border bg-bg p-4 transition-[border-color,opacity,box-shadow]",
+                      disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing",
+                      isDragging
+                        ? "border-brand/50 opacity-50 shadow-lg"
+                        : isOver
+                          ? "border-brand shadow-[inset_0_0_0_1px_var(--rt-brand)]"
+                          : "border-border hover:border-border-hover",
+                      itemClassName?.(item),
+                    ].join(" ")
+            }
           >
-            <div
-              className="flex shrink-0 items-center self-center text-text-disabled"
-              aria-hidden
-            >
-              <GripVertical size={16} strokeWidth={2} />
-            </div>
+            {layout === "rows" ? (
+              <div
+                className="flex w-5 shrink-0 cursor-grab justify-center text-text-disabled opacity-0 transition-opacity group-hover/row:opacity-100 active:cursor-grabbing [@media(hover:none)]:hidden"
+                aria-hidden
+              >
+                <GripVertical size={14} strokeWidth={2} />
+              </div>
+            ) : layout === "cards" ? (
+              <div
+                className="flex shrink-0 items-center self-center text-text-disabled"
+                aria-hidden
+              >
+                <GripVertical size={16} strokeWidth={2} />
+              </div>
+            ) : null}
             <div className="min-w-0 flex-1">{renderItem(item, index)}</div>
           </div>
         );

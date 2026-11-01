@@ -1,3 +1,6 @@
+/** Rows per page on admin list screens. */
+export const ADMIN_PAGE_SIZE = 20;
+
 export type PaginatedResponse<T> = {
   items: T[];
   total: number;

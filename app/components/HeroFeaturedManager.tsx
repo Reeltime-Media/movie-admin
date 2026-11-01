@@ -9,13 +9,12 @@ import { AdminCatalogSearchBar } from "./AdminCatalogSearchBar";
 import { AdminMediaThumb } from "./AdminMediaThumb";
 import { InlineLoading } from "./InlineLoading";
 import { HeroBannerField, HeroVideoField } from "./HeroSlideMediaFields";
-import { SortableList, persistReorderedSort } from "./SortableList";
+import { SortableList } from "./SortableList";
 import {
   createAdminHeroFeatured,
   deleteAdminHeroFeatured,
+  reorderAdminHeroFeatured,
   listAdminHeroFeatured,
-  listAllAdminMovies,
-  listAllAdminSeries,
   updateAdminHeroFeatured,
   type ApiContent,
   type ApiHeroFeaturedItem,
@@ -23,6 +22,7 @@ import {
 } from "../lib/api";
 import { Button } from "./ui/Button";
 import { adminBadgeClass } from "../lib/adminUi";
+import { fetchCatalogMovies, fetchCatalogSeries } from "../hooks/adminQueries";
 import { queryKeys } from "../lib/queryKeys";
 
 type ContentType = "movie" | "series";
@@ -172,7 +172,7 @@ export function HeroFeaturedManager() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([listAllAdminMovies(), listAllAdminSeries()])
+    Promise.all([fetchCatalogMovies(queryClient), fetchCatalogSeries(queryClient)])
       .then(([movieRows, seriesRows]) => {
         if (cancelled) return;
         setMovies(movieRows);
@@ -189,7 +189,7 @@ export function HeroFeaturedManager() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [queryClient]);
 
   useEffect(() => {
     if (!showForm) return;
@@ -345,9 +345,7 @@ export function HeroFeaturedManager() {
     queryClient.setQueryData(queryKeys.heroFeatured, optimistic);
     setIsSaving(true);
     try {
-      await persistReorderedSort(next, (id, sortOrder) =>
-        updateAdminHeroFeatured(id, { sortOrder }),
-      );
+      await reorderAdminHeroFeatured(next.map((item) => item.id));
       toast.success("Carousel order updated");
     } catch (err) {
       queryClient.setQueryData(queryKeys.heroFeatured, previous);

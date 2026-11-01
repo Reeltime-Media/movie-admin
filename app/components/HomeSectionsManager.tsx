@@ -1,18 +1,34 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Eye, EyeOff, Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Plus,
+  X,
+} from "lucide-react";
+import Link from "next/link";
+import { useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { AdminCard } from "./AdminCard";
-import { AdminCatalogSearchBar } from "./AdminCatalogSearchBar";
-import { AdminSectionTabs } from "./AdminSectionTabs";
-import { AdminSelect } from "./AdminSelect";
+import { AdminEmptyState } from "./AdminEmptyState";
+import { AdminErrorAlert } from "./AdminErrorAlert";
+import { AdminMediaThumb } from "./AdminMediaThumb";
 import { Button } from "./ui/Button";
+import { Dialog } from "./ui/Dialog";
+import { Input } from "./ui/Field";
 import { HeroFeaturedManager } from "./HeroFeaturedManager";
+import { HomeSectionAddDialog } from "./HomeSectionAddDialog";
+import { HomeSectionOutline } from "./HomeSectionOutline";
+import { HomeSectionPicker, type HomeSectionPickerRow } from "./HomeSectionPicker";
 import { InlineLoading } from "./InlineLoading";
 import { PromotionBannerManager } from "./PromotionBannerManager";
-import { SortableList, persistReorderedSort } from "./SortableList";
+import { SortableList } from "./SortableList";
 import {
   createAdminHomeSection,
   createAdminHomeSectionItem,
@@ -21,11 +37,9 @@ import {
   getAdminHomeSection,
   listAdminHomeSections,
   listAdminTvChannels,
-  listAllAdminMovies,
-  listAllAdminSeries,
+  reorderAdminHomeSectionItems,
   reorderAdminHomeSections,
   updateAdminHomeSection,
-  updateAdminHomeSectionItem,
   type ApiContent,
   type ApiHomeSection,
   type ApiHomeSectionItem,
@@ -33,58 +47,70 @@ import {
   type ApiSeries,
   type ApiTvChannel,
 } from "../lib/api";
-import { useGenres } from "../hooks/adminQueries";
+import { fetchCatalogMovies, fetchCatalogSeries, useGenres } from "../hooks/adminQueries";
 import { GENRE_OPTIONS } from "../lib/genres";
+import { adminLabelClass, adminStatusLineClass } from "../lib/adminUi";
 import {
-  adminDeleteButtonClassWide,
-  adminGhostButtonClass,
-  adminInputClass,
-  adminPrimaryButtonClass,
-} from "../lib/adminUi";
+  isRepeatableSection,
+  sectionItemKind,
+  sectionItemNoun,
+  sectionLabel,
+  sectionShowsTitle,
+  sectionTypeInfo,
+} from "../lib/homeSections";
 import { queryKeys } from "../lib/queryKeys";
 
-const TYPE_LABELS: Record<string, string> = {
-  hero: "Hero carousel",
-  banners: "Promo banners",
-  tv: "Live TV",
-  free_today: "Free movies today",
-  trending: "Trending now",
-  most_watched: "Most watched",
-  coming_soon: "Coming soon",
-  series: "Series",
-  genre: "Genre rail",
-  custom: "Custom rail",
-  plans: "Plans",
-};
-
-const ADDABLE_TYPES: { value: ApiHomeSectionType; label: string }[] = [
-  { value: "genre", label: "Genre rail" },
-  { value: "custom", label: "Custom rail" },
-  { value: "trending", label: "Trending now" },
-  { value: "most_watched", label: "Most watched" },
-  { value: "series", label: "Series" },
-  { value: "tv", label: "Live TV" },
-  { value: "free_today", label: "Free movies today" },
-  { value: "coming_soon", label: "Coming soon" },
-  { value: "hero", label: "Hero carousel" },
-  { value: "banners", label: "Promo banners" },
-  { value: "plans", label: "Plans" },
-];
-
-function sectionLabel(section: ApiHomeSection): string {
-  if (section.title?.trim()) return section.title.trim();
-  if (section.type === "genre" && section.genre_name) return section.genre_name;
-  return TYPE_LABELS[section.type] ?? section.type;
+function movieRow(movie: ApiContent): HomeSectionPickerRow {
+  return {
+    id: movie.id,
+    kind: "movie",
+    title: movie.title,
+    slug: movie.slug,
+    meta: movie.is_published ? "Movie" : "Movie · Not published, won’t show",
+    posterKey: movie.poster_key,
+  };
 }
 
-function itemKindForSection(type: string): string | null {
-  if (type === "tv") return "tv_channel";
-  if (type === "series") return "series";
-  if (type === "custom") return "movie";
-  if (["free_today", "trending", "most_watched", "coming_soon", "genre"].includes(type)) {
-    return "movie";
+function seriesRow(series: ApiSeries): HomeSectionPickerRow {
+  return {
+    id: series.id,
+    kind: "series",
+    title: series.title,
+    slug: series.slug,
+    meta: series.is_published ? "Series" : "Series · Not published, won’t show",
+    posterKey: series.poster_key,
+  };
+}
+
+function channelRow(channel: ApiTvChannel): HomeSectionPickerRow {
+  return {
+    id: channel.id,
+    kind: "tv_channel",
+    title: channel.name,
+    slug: channel.slug,
+    meta: channel.is_published ? "" : "Not published, won’t show",
+    posterKey: channel.logo_key,
+  };
+}
+
+/** Picks are shown straight away; this id marks one the server hasn't confirmed yet. */
+const PENDING_ITEM_PREFIX = "pending-";
+
+function isPendingItem(item: ApiHomeSectionItem) {
+  return item.id.startsWith(PENDING_ITEM_PREFIX);
+}
+
+function emptyRailMessage(section: ApiHomeSection, noun: string) {
+  if (section.auto_filled) {
+    return {
+      title: "Filled automatically",
+      description: `The website picks these ${noun} for now. Add your own to choose them by hand.`,
+    };
   }
-  return null;
+  return {
+    title: "Not on the page yet",
+    description: `This row stays off the home page until you add ${noun}.`,
+  };
 }
 
 export function HomeSectionsManager() {
@@ -97,112 +123,130 @@ export function HomeSectionsManager() {
   });
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  /** On phones the outline and the editor take turns; on desktop both show. */
+  const [showEditorOnPhone, setShowEditorOnPhone] = useState(false);
+  /** Only the dialogs and the title form wait for the server; everything else is optimistic. */
   const [isSaving, setIsSaving] = useState(false);
   const [showAddSection, setShowAddSection] = useState(false);
-  const [newType, setNewType] = useState<ApiHomeSectionType>("custom");
-  const [newTitle, setNewTitle] = useState("");
-  const [newGenre, setNewGenre] = useState("Horror");
+  const [deleteTarget, setDeleteTarget] = useState<ApiHomeSection | null>(null);
   /** Per-section title edits — avoids syncing draft via useEffect. */
   const [titleBySection, setTitleBySection] = useState<Record<string, string>>({});
   const [showPicker, setShowPicker] = useState(false);
-  const [search, setSearch] = useState("");
-  const [movies, setMovies] = useState<ApiContent[]>([]);
-  const [seriesList, setSeriesList] = useState<ApiSeries[]>([]);
-  const [channels, setChannels] = useState<ApiTvChannel[]>([]);
+  const [catalogRows, setCatalogRows] = useState<HomeSectionPickerRow[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(false);
+  const writeQueue = useRef<Promise<unknown>>(Promise.resolve());
 
   const sections = useMemo(() => sectionsQuery.data ?? [], [sectionsQuery.data]);
   const activeSectionId = selectedId ?? sections[0]?.id ?? null;
+  const activeIndex = sections.findIndex((s) => s.id === activeSectionId);
+  const section = activeIndex >= 0 ? sections[activeIndex] : null;
 
   const detailQuery = useQuery({
     queryKey: queryKeys.homeSection(activeSectionId ?? ""),
     queryFn: () => getAdminHomeSection(activeSectionId!),
-    enabled: Boolean(activeSectionId),
+    enabled: section ? sectionItemKind(section.type) !== null : false,
   });
 
   const selected = detailQuery.data ?? null;
   const items = useMemo(() => selected?.items ?? [], [selected?.items]);
-  const titleDraft =
-    selected != null
-      ? (titleBySection[selected.id] ?? selected.title ?? "")
-      : "";
+  const listedIds = useMemo(() => new Set(items.map((i) => i.ref_id)), [items]);
+
+  const savedTitle = section?.title ?? "";
+  const titleDraft = section ? (titleBySection[section.id] ?? savedTitle) : "";
+  const titleChanged = titleDraft.trim() !== savedTitle.trim();
 
   const genreOptions = useMemo(() => {
-    const fromApi = (genreRows ?? []).map((g) => g.name).filter(Boolean);
-    const merged = [...new Set([...GENRE_OPTIONS, ...fromApi])].sort((a, b) =>
-      a.localeCompare(b),
-    );
-    return merged.map((name) => ({ value: name, label: name }));
+    const names = genreRows?.map((g) => g.name).filter(Boolean) ?? [...GENRE_OPTIONS];
+    return [...names].sort((a, b) => a.localeCompare(b)).map((name) => ({ value: name, label: name }));
   }, [genreRows]);
-
-  useEffect(() => {
-    if (!showPicker) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !isSaving) setShowPicker(false);
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = prev;
-    };
-  }, [showPicker, isSaving]);
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.homeSections });
-    if (activeSectionId) {
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.homeSection(activeSectionId),
-      });
-    }
+  };
+
+  /** Saves run one at a time, in the order they were made, so quick clicks can't race. */
+  const enqueueWrite = <T,>(write: () => Promise<T>) => {
+    const result = writeQueue.current.then(write);
+    writeQueue.current = result.catch(() => undefined);
+    return result;
+  };
+
+  /** The screen already moved on, so a failed save reloads what the server really has. */
+  const recoverFromFailedWrite = (err: unknown, fallback: string) => {
+    toast.error(err instanceof Error ? err.message : fallback);
+    invalidate();
+  };
+
+  const updateCachedItems = (
+    sectionId: string,
+    update: (current: ApiHomeSectionItem[]) => ApiHomeSectionItem[],
+  ) => {
+    const detailKey = queryKeys.homeSection(sectionId);
+    void queryClient.cancelQueries({ queryKey: detailKey });
+    const detail = queryClient.getQueryData<ApiHomeSection>(detailKey);
+    if (!detail) return;
+    const nextItems = update(detail.items);
+    queryClient.setQueryData<ApiHomeSection>(detailKey, {
+      ...detail,
+      items: nextItems,
+      item_count: nextItems.length,
+    });
+    queryClient.setQueryData<ApiHomeSection[]>(queryKeys.homeSections, (rows) =>
+      rows?.map((row) => (row.id === sectionId ? { ...row, item_count: nextItems.length } : row)),
+    );
+  };
+
+  const prefetchSection = (target: ApiHomeSection) => {
+    if (sectionItemKind(target.type) === null) return;
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.homeSection(target.id),
+      queryFn: () => getAdminHomeSection(target.id),
+    });
+  };
+
+  const handleSelect = (id: string) => {
+    setSelectedId(id);
+    setShowEditorOnPhone(true);
+    window.scrollTo({ top: 0 });
   };
 
   const handleReorderSections = async (next: ApiHomeSection[]) => {
-    const previous = sections;
+    void queryClient.cancelQueries({ queryKey: queryKeys.homeSections, exact: true });
     queryClient.setQueryData(queryKeys.homeSections, next);
-    setIsSaving(true);
     try {
-      await reorderAdminHomeSections(next.map((s) => s.id));
-      toast.success("Section order updated");
+      await enqueueWrite(() => reorderAdminHomeSections(next.map((s) => s.id)));
     } catch (err) {
-      queryClient.setQueryData(queryKeys.homeSections, previous);
-      toast.error(err instanceof Error ? err.message : "Could not reorder sections.");
-    } finally {
-      setIsSaving(false);
-      invalidate();
+      recoverFromFailedWrite(err, "Could not reorder sections.");
     }
   };
 
   const moveActiveSection = async (direction: -1 | 1) => {
-    if (!activeSectionId) return;
-    const index = sections.findIndex((s) => s.id === activeSectionId);
-    const nextIndex = index + direction;
-    if (index < 0 || nextIndex < 0 || nextIndex >= sections.length) return;
+    const nextIndex = activeIndex + direction;
+    if (activeIndex < 0 || nextIndex < 0 || nextIndex >= sections.length) return;
     const next = [...sections];
-    const [row] = next.splice(index, 1);
+    const [row] = next.splice(activeIndex, 1);
     next.splice(nextIndex, 0, row!);
     await handleReorderSections(next);
   };
 
-  const handleToggleVisible = async (section: ApiHomeSection) => {
-    setIsSaving(true);
+  const handleToggleVisible = async (target: ApiHomeSection) => {
+    const isVisible = !target.is_visible;
+    void queryClient.cancelQueries({ queryKey: queryKeys.homeSections, exact: true });
+    queryClient.setQueryData<ApiHomeSection[]>(queryKeys.homeSections, (rows) =>
+      rows?.map((row) => (row.id === target.id ? { ...row, is_visible: isVisible } : row)),
+    );
     try {
-      await updateAdminHomeSection(section.id, { isVisible: !section.is_visible });
-      toast.success(section.is_visible ? "Hidden on home" : "Visible on home");
-      invalidate();
+      await enqueueWrite(() => updateAdminHomeSection(target.id, { isVisible }));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not update visibility.");
-    } finally {
-      setIsSaving(false);
+      recoverFromFailedWrite(err, "Could not update visibility.");
     }
   };
 
   const handleSaveTitle = async () => {
-    if (!selected) return;
+    if (!section) return;
     setIsSaving(true);
     try {
-      await updateAdminHomeSection(selected.id, { title: titleDraft.trim() || null });
+      await updateAdminHomeSection(section.id, { title: titleDraft.trim() || null });
       toast.success("Title saved");
       invalidate();
     } catch (err) {
@@ -212,37 +256,39 @@ export function HomeSectionsManager() {
     }
   };
 
-  const handleCreateSection = async () => {
+  const handleCreateSection = async (input: {
+    type: ApiHomeSectionType;
+    title: string;
+    genre: string;
+  }) => {
     setIsSaving(true);
     try {
       const created = await createAdminHomeSection({
-        type: newType,
-        title: newType === "custom" ? newTitle.trim() : null,
-        genreName: newType === "genre" ? newGenre : null,
+        type: input.type,
+        title: input.type === "custom" ? input.title : null,
+        genreName: input.type === "genre" ? input.genre : null,
         sortOrder: sections.length,
       });
       setShowAddSection(false);
-      setNewTitle("");
       setSelectedId(created.id);
+      setShowEditorOnPhone(true);
       invalidate();
-      toast.success("Section created");
+      toast.success("Section added");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not create section.");
+      toast.error(err instanceof Error ? err.message : "Could not add section.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleDeleteSection = async (section: ApiHomeSection) => {
-    if (!["genre", "custom"].includes(section.type)) {
-      toast.error("Hide this section instead of deleting it.");
-      return;
-    }
-    if (!window.confirm(`Delete “${sectionLabel(section)}”?`)) return;
+  const handleDeleteSection = async () => {
+    if (!deleteTarget) return;
     setIsSaving(true);
     try {
-      await deleteAdminHomeSection(section.id);
-      if (selectedId === section.id) setSelectedId(null);
+      await deleteAdminHomeSection(deleteTarget.id);
+      if (activeSectionId === deleteTarget.id) setSelectedId(null);
+      setShowEditorOnPhone(false);
+      setDeleteTarget(null);
       invalidate();
       toast.success("Section deleted");
     } catch (err) {
@@ -253,19 +299,24 @@ export function HomeSectionsManager() {
   };
 
   const openPicker = async () => {
+    if (!section) return;
+    setCatalogRows([]);
     setShowPicker(true);
     setCatalogLoading(true);
     try {
-      const kind = selected ? itemKindForSection(selected.type) : null;
-      if (kind === "tv_channel") {
+      if (section.type === "tv") {
         const page = await listAdminTvChannels({ page: 1, pageSize: 100 });
-        setChannels(page.items ?? []);
-      } else if (kind === "series" || selected?.type === "custom") {
-        const [m, s] = await Promise.all([listAllAdminMovies(), listAllAdminSeries()]);
-        setMovies(m);
-        setSeriesList(s);
+        setCatalogRows((page.items ?? []).map(channelRow));
+      } else if (section.type === "series") {
+        setCatalogRows((await fetchCatalogSeries(queryClient)).map(seriesRow));
+      } else if (section.type === "custom") {
+        const [movies, series] = await Promise.all([
+          fetchCatalogMovies(queryClient),
+          fetchCatalogSeries(queryClient),
+        ]);
+        setCatalogRows([...movies.map(movieRow), ...series.map(seriesRow)]);
       } else {
-        setMovies(await listAllAdminMovies());
+        setCatalogRows((await fetchCatalogMovies(queryClient)).map(movieRow));
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not load catalog.");
@@ -275,571 +326,430 @@ export function HomeSectionsManager() {
     }
   };
 
-  const listedIds = useMemo(() => new Set(items.map((i) => i.ref_id)), [items]);
-
-  const handleAddMovie = async (movie: ApiContent) => {
-    if (!selected) return;
-    setIsSaving(true);
+  const handleAddItem = async (row: HomeSectionPickerRow) => {
+    if (!section) return;
+    const sectionId = section.id;
+    const pendingId = `${PENDING_ITEM_PREFIX}${row.id}`;
+    const sortOrder =
+      queryClient.getQueryData<ApiHomeSection>(queryKeys.homeSection(sectionId))?.items.length ?? 0;
+    updateCachedItems(sectionId, (current) => [
+      ...current,
+      {
+        id: pendingId,
+        section_id: sectionId,
+        item_kind: row.kind,
+        ref_id: row.id,
+        sort_order: sortOrder,
+        created_at: "",
+        updated_at: "",
+        label: row.title,
+        poster_key: row.posterKey,
+        slug: row.slug,
+      },
+    ]);
     try {
-      await createAdminHomeSectionItem(selected.id, {
-        itemKind: "movie",
-        refId: movie.id,
-        sortOrder: items.length,
-      });
-      toast.success(`Added “${movie.title}”`);
-      invalidate();
+      const created = await enqueueWrite(() =>
+        createAdminHomeSectionItem(sectionId, {
+          itemKind: row.kind,
+          refId: row.id,
+          sortOrder,
+        }),
+      );
+      updateCachedItems(sectionId, (current) =>
+        current.map((item) => (item.id === pendingId ? created : item)),
+      );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not add movie.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleAddSeries = async (series: ApiSeries) => {
-    if (!selected) return;
-    setIsSaving(true);
-    try {
-      await createAdminHomeSectionItem(selected.id, {
-        itemKind: "series",
-        refId: series.id,
-        sortOrder: items.length,
-      });
-      toast.success(`Added “${series.title}”`);
-      invalidate();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not add series.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleAddChannel = async (channel: ApiTvChannel) => {
-    if (!selected) return;
-    setIsSaving(true);
-    try {
-      await createAdminHomeSectionItem(selected.id, {
-        itemKind: "tv_channel",
-        refId: channel.id,
-        sortOrder: items.length,
-      });
-      toast.success(`Added “${channel.name}”`);
-      invalidate();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not add channel.");
-    } finally {
-      setIsSaving(false);
+      updateCachedItems(sectionId, (current) => current.filter((item) => item.id !== pendingId));
+      recoverFromFailedWrite(err, "Could not add this item.");
     }
   };
 
   const handleRemoveItem = async (item: ApiHomeSectionItem) => {
-    if (!window.confirm(`Remove “${item.label ?? "this item"}” from the rail?`)) return;
-    setIsSaving(true);
+    updateCachedItems(item.section_id, (current) => current.filter((row) => row.id !== item.id));
     try {
-      await deleteAdminHomeSectionItem(item.id);
-      toast.success("Removed");
-      invalidate();
+      await enqueueWrite(() => deleteAdminHomeSectionItem(item.id));
+      toast.success(`Removed “${item.label ?? "item"}”`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not remove item.");
-    } finally {
-      setIsSaving(false);
+      recoverFromFailedWrite(err, "Could not remove item.");
     }
   };
 
   const handleReorderItems = async (next: ApiHomeSectionItem[]) => {
-    if (!selected) return;
-    const previous = items;
-    queryClient.setQueryData(queryKeys.homeSection(selected.id), {
-      ...selected,
-      items: next.map((item, index) => ({ ...item, sort_order: index })),
-    });
-    setIsSaving(true);
+    if (!section) return;
+    const sectionId = section.id;
+    updateCachedItems(sectionId, () =>
+      next.map((item, index) => ({ ...item, sort_order: index })),
+    );
     try {
-      await persistReorderedSort(next, (id, sortOrder) =>
-        updateAdminHomeSectionItem(id, { sortOrder }),
+      await enqueueWrite(() =>
+        reorderAdminHomeSectionItems(
+          sectionId,
+          next.map((item) => item.id),
+        ),
       );
-      toast.success("Order updated");
     } catch (err) {
-      queryClient.setQueryData(queryKeys.homeSection(selected.id), {
-        ...selected,
-        items: previous,
-      });
-      toast.error(err instanceof Error ? err.message : "Could not reorder.");
-    } finally {
-      setIsSaving(false);
-      invalidate();
+      recoverFromFailedWrite(err, "Could not reorder.");
     }
   };
 
-  const filteredMovies = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return movies.filter(
-      (m) =>
-        !q ||
-        m.title.toLowerCase().includes(q) ||
-        m.slug.toLowerCase().includes(q),
+  const moveItem = (index: number, direction: -1 | 1) => {
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= items.length) return;
+    const next = [...items];
+    const [row] = next.splice(index, 1);
+    next.splice(nextIndex, 0, row!);
+    void handleReorderItems(next);
+  };
+
+  if (sectionsQuery.isLoading) return <InlineLoading label="Loading sections" />;
+
+  if (sectionsQuery.error) {
+    return (
+      <AdminErrorAlert
+        message={
+          sectionsQuery.error instanceof Error
+            ? sectionsQuery.error.message
+            : "Could not load sections."
+        }
+        onRetry={() => void sectionsQuery.refetch()}
+      />
     );
-  }, [movies, search]);
+  }
 
-  const filteredSeries = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return seriesList.filter(
-      (s) =>
-        !q ||
-        s.title.toLowerCase().includes(q) ||
-        s.slug.toLowerCase().includes(q),
+  const addDialog = showAddSection ? (
+    <HomeSectionAddDialog
+      sections={sections}
+      genreOptions={genreOptions}
+      isSaving={isSaving}
+      onCreate={(input) => void handleCreateSection(input)}
+      onClose={() => setShowAddSection(false)}
+    />
+  ) : null;
+
+  if (sections.length === 0) {
+    return (
+      <>
+        <AdminEmptyState
+          title="No sections yet"
+          description="Add the first section to start building the home page."
+          action={<Button onClick={() => setShowAddSection(true)}>Add section</Button>}
+        />
+        {addDialog}
+      </>
     );
-  }, [seriesList, search]);
+  }
 
-  const filteredChannels = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return channels.filter(
-      (c) => !q || c.name.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q),
-    );
-  }, [channels, search]);
+  const canPickItems = section ? sectionItemKind(section.type) !== null : false;
+  const limit = section?.item_limit ?? null;
+  const atLimit = limit != null && items.length >= limit;
+  const noun = section ? sectionItemNoun(section.type) : "titles";
+  const isChannelRail = section?.type === "tv";
+  const hasPendingItems = items.some(isPendingItem);
+  const showPosterKind = section?.type === "custom";
+  const name = section ? sectionLabel(section) : "";
 
-  const existingTypes = useMemo(() => new Set(sections.map((s) => s.type)), [sections]);
-  const addTypeOptions = ADDABLE_TYPES.filter(
-    (t) => t.value === "genre" || t.value === "custom" || !existingTypes.has(t.value),
-  ).map((t) => ({ value: t.value, label: t.label }));
-
-  const pickable = selected ? itemKindForSection(selected.type) : null;
-  const usesEmbeddedHero = selected?.type === "hero";
-  const usesEmbeddedBanners = selected?.type === "banners";
-  const isPlans = selected?.type === "plans";
-  const activeIndex = activeSectionId
-    ? sections.findIndex((s) => s.id === activeSectionId)
-    : -1;
-
-  const sectionTabs = useMemo(
-    () =>
-      sections.map((section) => ({
-        key: section.id,
-        label: section.is_visible
-          ? sectionLabel(section)
-          : `${sectionLabel(section)} · hidden`,
-        badge: section.item_count,
-      })),
-    [sections],
+  const addItemsButton = (
+    <Button
+      type="button"
+      size="sm"
+      disabled={atLimit}
+      icon={<Plus size={14} aria-hidden />}
+      onClick={() => void openPicker()}
+    >
+      Add {noun}
+    </Button>
   );
 
   return (
     <>
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-text-muted">
-            Landing sections · {sections.length}
-          </p>
-          <button
-            type="button"
-            onClick={() => setShowAddSection(true)}
-            className={`inline-flex items-center gap-1.5 ${adminPrimaryButtonClass}`}
-          >
-            <Plus size={14} strokeWidth={2.5} aria-hidden />
-            Add section
-          </button>
+      <div className="grid items-start gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
+        <div
+          className={[
+            "lg:sticky lg:top-20 lg:block lg:max-h-[calc(100dvh-6.5rem)] lg:overflow-y-auto lg:rounded-xl",
+            showEditorOnPhone ? "hidden" : "",
+          ].join(" ")}
+        >
+          <HomeSectionOutline
+            sections={sections}
+            activeId={activeSectionId}
+            onSelect={handleSelect}
+            onPreview={prefetchSection}
+            onReorder={handleReorderSections}
+            onToggleVisible={(target) => void handleToggleVisible(target)}
+            onAdd={() => setShowAddSection(true)}
+          />
         </div>
 
-        {sectionsQuery.isLoading ? (
-          <InlineLoading label="Loading sections" />
-        ) : sectionsQuery.error ? (
-          <div className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-4 text-xs text-warning">
-            {sectionsQuery.error instanceof Error
-              ? sectionsQuery.error.message
-              : "Could not load sections."}
-            <p className="mt-2 text-2xs">
-              Run: cd movie-api && alembic upgrade head
-            </p>
-          </div>
-        ) : sections.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-text-muted">
-            No sections yet. Add one or run the API migration.
-          </p>
-        ) : (
-          <AdminSectionTabs
-            tabs={sectionTabs}
-            active={activeSectionId ?? ""}
-            onChange={setSelectedId}
-            label="Landing sections"
-          />
-        )}
+        {section ? (
+          <div className={["min-w-0 space-y-4 lg:block", showEditorOnPhone ? "" : "hidden"].join(" ")}>
+            <button
+              type="button"
+              onClick={() => setShowEditorOnPhone(false)}
+              className="inline-flex items-center gap-1.5 text-sm text-text-muted transition-colors hover:text-text lg:hidden"
+            >
+              <ArrowLeft size={15} aria-hidden />
+              All sections
+            </button>
 
-        <AdminCard
-          title={selected ? sectionLabel(selected) : "Section"}
-          headerAction={
-            selected ? (
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <button
+            <header className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="truncate text-xl font-semibold tracking-tight text-text">{name}</h2>
+                <p className="mt-0.5 text-sm text-text-muted">
+                  {section.type === "genre" && section.genre_name
+                    ? `${section.genre_name} movie posters, linked to that genre’s page.`
+                    : sectionTypeInfo(section.type).description}
+                </p>
+                <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted">
+                  <span className={adminStatusLineClass(section.is_visible ? "success" : "muted")}>
+                    {section.is_visible ? "Showing on home" : "Hidden from home"}
+                  </span>
+                  <span className="tabular-nums">
+                    Section {activeIndex + 1} of {sections.length}
+                  </span>
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Button
                   type="button"
-                  title="Move earlier on home"
+                  variant="secondary"
+                  size="sm"
+                  aria-label="Move section up"
+                  title="Move up"
+                  disabled={activeIndex <= 0}
                   onClick={() => void moveActiveSection(-1)}
-                  disabled={isSaving || activeIndex <= 0}
-                  className={`${adminGhostButtonClass} inline-flex items-center gap-1 px-2`}
+                  className="w-7 !px-0"
                 >
-                  <ChevronLeft size={14} aria-hidden />
-                  Earlier
-                </button>
-                <button
+                  <ArrowUp size={14} aria-hidden />
+                </Button>
+                <Button
                   type="button"
-                  title="Move later on home"
+                  variant="secondary"
+                  size="sm"
+                  aria-label="Move section down"
+                  title="Move down"
+                  disabled={activeIndex >= sections.length - 1}
                   onClick={() => void moveActiveSection(1)}
-                  disabled={isSaving || activeIndex < 0 || activeIndex >= sections.length - 1}
-                  className={`${adminGhostButtonClass} inline-flex items-center gap-1 px-2`}
+                  className="w-7 !px-0"
                 >
-                  Later
-                  <ChevronRight size={14} aria-hidden />
-                </button>
-                <button
+                  <ArrowDown size={14} aria-hidden />
+                </Button>
+                <Button
                   type="button"
-                  title={selected.is_visible ? "Hide on home" : "Show on home"}
-                  onClick={() => void handleToggleVisible(selected)}
-                  disabled={isSaving}
-                  className={`${adminGhostButtonClass} inline-flex items-center gap-1.5`}
+                  variant="secondary"
+                  size="sm"
+                  icon={
+                    section.is_visible ? (
+                      <EyeOff size={14} aria-hidden />
+                    ) : (
+                      <Eye size={14} aria-hidden />
+                    )
+                  }
+                  onClick={() => void handleToggleVisible(section)}
                 >
-                  {selected.is_visible ? <Eye size={14} /> : <EyeOff size={14} />}
-                  {selected.is_visible ? "Visible" : "Hidden"}
-                </button>
-                {["genre", "custom"].includes(selected.type) ? (
-                  <button
+                  {section.is_visible ? "Hide from home" : "Show on home"}
+                </Button>
+                {isRepeatableSection(section.type) ? (
+                  <Button
                     type="button"
-                    onClick={() => void handleDeleteSection(selected)}
+                    variant="danger-soft"
+                    size="sm"
                     disabled={isSaving}
-                    className={adminDeleteButtonClassWide}
+                    onClick={() => setDeleteTarget(section)}
                   >
                     Delete
-                  </button>
+                  </Button>
                 ) : null}
               </div>
-            ) : null
-          }
-        >
-          {!activeSectionId ? (
-            <p className="py-8 text-center text-sm text-text-muted">Select a section</p>
-          ) : detailQuery.isLoading ? (
-            <InlineLoading label="Loading section" />
-          ) : !selected ? (
-            <p className="text-sm text-warning">Section not found</p>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-end gap-2">
-                <label className="min-w-[12rem] flex-1 text-xs text-text-muted">
-                  Display title
-                  <input
+            </header>
+
+            {sectionShowsTitle(section.type) ? (
+              <form
+                className="rounded-xl border border-border bg-surface p-5"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (titleChanged) void handleSaveTitle();
+                }}
+              >
+                <label className={adminLabelClass} htmlFor="home-section-title">
+                  Title on the website
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    id="home-section-title"
                     value={titleDraft}
-                    onChange={(e) =>
+                    onChange={(event) =>
                       setTitleBySection((prev) => ({
                         ...prev,
-                        [selected.id]: e.target.value,
+                        [section.id]: event.target.value,
                       }))
                     }
-                    placeholder={TYPE_LABELS[selected.type] ?? "Default website label"}
-                    className={`mt-1 w-full ${adminInputClass}`}
+                    placeholder={
+                      section.genre_name ?? sectionTypeInfo(section.type).label
+                    }
                   />
-                </label>
-                <button
-                  type="button"
-                  onClick={() => void handleSaveTitle()}
-                  disabled={isSaving}
-                  className={adminPrimaryButtonClass}
-                >
-                  Save title
-                </button>
-              </div>
-
-              {selected.type === "genre" ? (
-                <p className="text-xs text-text-muted">
-                  Genre: <span className="font-semibold text-text">{selected.genre_name}</span>
+                  {titleChanged ? (
+                    <Button type="submit" loading={isSaving}>
+                      Save title
+                    </Button>
+                  ) : null}
+                </div>
+                <p className="mt-1.5 text-xs text-text-muted">
+                  Leave empty to use the default title, translated for each viewer.
                 </p>
-              ) : null}
+              </form>
+            ) : null}
 
-              {usesEmbeddedHero ? (
-                <HeroFeaturedManager />
-              ) : usesEmbeddedBanners ? (
-                <PromotionBannerManager />
-              ) : isPlans ? (
-                <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-text-muted">
-                  Plans section has no items — use Visible / Earlier / Later in the header.
+            {section.type === "hero" ? (
+              <HeroFeaturedManager />
+            ) : section.type === "banners" ? (
+              <PromotionBannerManager />
+            ) : section.type === "plans" ? (
+              <AdminCard title="Plan cards">
+                <p className="text-sm text-text-muted">
+                  These cards come from your subscription plans.{" "}
+                  <Link href="/plans" className="font-medium text-brand hover:underline">
+                    Manage plans
+                  </Link>
                 </p>
-              ) : (
-                <>
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs text-text-muted">
-                      {items.length} items · drag to reorder
+              </AdminCard>
+            ) : canPickItems ? (
+              <AdminCard
+                title={
+                  limit != null
+                    ? `${noun[0]!.toUpperCase()}${noun.slice(1)} · ${items.length} of ${limit}`
+                    : noun
+                }
+                headerAction={items.length > 0 ? addItemsButton : undefined}
+              >
+                {detailQuery.isLoading ? (
+                  <InlineLoading label="Loading section" minHeight="sm" />
+                ) : items.length === 0 ? (
+                  <AdminEmptyState
+                    {...emptyRailMessage(section, noun)}
+                    action={addItemsButton}
+                  />
+                ) : (
+                  <>
+                    <p className="-mt-1 mb-3 text-xs text-text-muted">
+                      Same order as the website.
+                      {items.length > 1 ? (
+                        <>
+                          {" "}
+                          <span className="[@media(hover:none)]:hidden">Drag to rearrange.</span>
+                          <span className="hidden [@media(hover:none)]:inline">
+                            Use the arrows to rearrange.
+                          </span>
+                        </>
+                      ) : null}
                     </p>
-                    {pickable ? (
-                      <button
-                        type="button"
-                        onClick={() => void openPicker()}
-                        className={`inline-flex items-center gap-1.5 ${adminPrimaryButtonClass}`}
-                      >
-                        <Plus size={14} strokeWidth={2.5} aria-hidden />
-                        Add
-                      </button>
-                    ) : null}
-                  </div>
-                  {items.length === 0 ? (
-                    <p className="rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-text-muted">
-                      Empty — website may fall back to automatic content for this rail.
-                    </p>
-                  ) : (
                     <SortableList
                       items={items}
-                      disabled={isSaving}
+                      layout="grid"
+                      disabled={hasPendingItems}
                       onReorder={handleReorderItems}
                       renderItem={(item, index) => (
-                        <div className="flex flex-wrap items-center gap-3">
-                          <div className="flex min-w-0 flex-1 items-center gap-2">
-                            <span className="rounded-md bg-surface-elevated px-1.5 py-0.5 font-mono text-2xs font-semibold tabular-nums text-text-muted">
-                              #{index + 1}
+                        <div className={isPendingItem(item) ? "opacity-60" : "group/item"}>
+                          <div className="relative">
+                            <AdminMediaThumb
+                              objectKey={item.poster_key}
+                              alt=""
+                              emptyLabel={isChannelRail ? "No logo" : "No poster"}
+                              className={[
+                                "w-full rounded-lg border-0",
+                                isChannelRail ? "aspect-video" : "aspect-2/3",
+                              ].join(" ")}
+                            />
+                            <span className="absolute left-1.5 top-1.5 grid h-5 min-w-5 place-items-center rounded-md bg-surface/95 px-1 text-xs font-medium tabular-nums text-text ring-1 ring-black/5">
+                              {index + 1}
                             </span>
-                            <h3 className="truncate text-sm font-semibold text-text">
-                              {item.label ?? item.ref_id}
-                            </h3>
-                            <span className="shrink-0 text-2xs text-text-disabled">
-                              {item.item_kind}
-                            </span>
+                            <div
+                              hidden={hasPendingItems}
+                              className="absolute right-1.5 top-1.5 flex gap-0.5 rounded-md bg-surface/95 p-0.5 opacity-0 ring-1 ring-black/5 transition-opacity focus-within:opacity-100 group-hover/item:opacity-100 [@media(hover:none)]:inset-x-1.5 [@media(hover:none)]:bottom-1.5 [@media(hover:none)]:bg-surface [@media(hover:none)]:top-auto [@media(hover:none)]:justify-between [@media(hover:none)]:opacity-100"
+                            >
+                              <button
+                                type="button"
+                                aria-label={`Move ${item.label ?? "item"} earlier`}
+                                disabled={index === 0}
+                                onClick={() => moveItem(index, -1)}
+                                className="grid size-5 place-items-center rounded text-text-muted transition-colors hover:text-text disabled:opacity-30"
+                              >
+                                <ChevronLeft size={13} aria-hidden />
+                              </button>
+                              <button
+                                type="button"
+                                aria-label={`Move ${item.label ?? "item"} later`}
+                                disabled={index === items.length - 1}
+                                onClick={() => moveItem(index, 1)}
+                                className="grid size-5 place-items-center rounded text-text-muted transition-colors hover:text-text disabled:opacity-30"
+                              >
+                                <ChevronRight size={13} aria-hidden />
+                              </button>
+                              <button
+                                type="button"
+                                aria-label={`Remove ${item.label ?? "item"}`}
+                                onClick={() => void handleRemoveItem(item)}
+                                className="grid size-5 place-items-center rounded text-text-muted transition-colors hover:text-danger"
+                              >
+                                <X size={13} aria-hidden />
+                              </button>
+                            </div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => void handleRemoveItem(item)}
-                            disabled={isSaving}
-                            className={adminDeleteButtonClassWide}
-                          >
-                            Remove
-                          </button>
+                          <p className="mt-1.5 truncate text-sm font-medium text-text">
+                            {item.label ?? "Unavailable"}
+                          </p>
+                          {showPosterKind ? (
+                            <p className="truncate text-xs capitalize text-text-muted">
+                              {item.item_kind}
+                            </p>
+                          ) : null}
                         </div>
                       )}
                     />
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </AdminCard>
+                  </>
+                )}
+              </AdminCard>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
-      {showAddSection ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-2xl">
-            <h2 className="text-[17px] font-semibold">Add section</h2>
-            <div className="mt-4 space-y-3">
-              <label className="block text-xs text-text-muted">
-                Type
-                <AdminSelect
-                  value={newType}
-                  onChange={(v) => setNewType(v as ApiHomeSectionType)}
-                  options={addTypeOptions}
-                  className={`mt-1 w-full ${adminInputClass}`}
-                />
-              </label>
-              {newType === "custom" ? (
-                <label className="block text-xs text-text-muted">
-                  Title
-                  <input
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    className={`mt-1 w-full ${adminInputClass}`}
-                    placeholder="e.g. Editor’s picks"
-                  />
-                </label>
-              ) : null}
-              {newType === "genre" ? (
-                <label className="block text-xs text-text-muted">
-                  Genre
-                  <AdminSelect
-                    value={newGenre}
-                    onChange={setNewGenre}
-                    options={genreOptions}
-                    className={`mt-1 w-full ${adminInputClass}`}
-                  />
-                </label>
-              ) : null}
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <Button type="button" variant="secondary" onClick={() => setShowAddSection(false)}>
+      {addDialog}
+
+      {deleteTarget ? (
+        <Dialog
+          title="Delete section"
+          description={`Remove “${sectionLabel(deleteTarget)}” from the home page? Its picked ${sectionItemNoun(deleteTarget.type)} stay in your catalog.`}
+          onClose={() => setDeleteTarget(null)}
+          footer={
+            <>
+              <Button type="button" variant="secondary" onClick={() => setDeleteTarget(null)}>
                 Cancel
               </Button>
               <Button
                 type="button"
-                onClick={() => void handleCreateSection()}
-                disabled={
-                  isSaving ||
-                  (newType === "custom" && !newTitle.trim()) ||
-                  (newType === "genre" && !newGenre)
-                }
+                variant="danger"
+                loading={isSaving}
+                onClick={() => void handleDeleteSection()}
               >
-                Create
+                Delete section
               </Button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        />
       ) : null}
 
-      {showPicker && selected ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 sm:p-6">
-          <div className="flex h-[min(90vh,920px)] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-2xl">
-            <div className="border-b border-border px-6 py-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-[17px] font-semibold">Add to {sectionLabel(selected)}</h2>
-                  <p className="mt-1 text-xs text-text-muted">
-                    Pick what appears on this home rail.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowPicker(false)}
-                  className="flex size-8 items-center justify-center rounded-lg border border-border text-text-muted hover:bg-surface-elevated hover:text-text"
-                  aria-label="Close"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-5">
-              <AdminCatalogSearchBar
-                value={search}
-                onChange={setSearch}
-                placeholder="Search…"
-                resultCount={
-                  selected.type === "tv"
-                    ? filteredChannels.length
-                    : selected.type === "series"
-                      ? filteredSeries.length
-                      : filteredMovies.length +
-                        (selected.type === "custom" ? filteredSeries.length : 0)
-                }
-                totalCount={
-                  selected.type === "tv"
-                    ? channels.length
-                    : selected.type === "series"
-                      ? seriesList.length
-                      : movies.length
-                }
-              />
-              <div className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-lg border border-border">
-                {catalogLoading ? (
-                  <p className="py-6 text-center text-xs text-text-muted">Loading…</p>
-                ) : selected.type === "tv" ? (
-                  filteredChannels.map((channel, idx) => (
-                    <div
-                      key={channel.id}
-                      className={[
-                        "flex items-center gap-3 px-3.5 py-2.5",
-                        idx > 0 ? "border-t border-border" : "",
-                      ].join(" ")}
-                    >
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                        {channel.name}
-                      </span>
-                      {listedIds.has(channel.id) ? (
-                        <span className="text-xs font-medium text-success">On rail</span>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          disabled={isSaving}
-                          onClick={() => void handleAddChannel(channel)}
-                        >
-                          Add
-                        </Button>
-                      )}
-                    </div>
-                  ))
-                ) : selected.type === "series" ? (
-                  filteredSeries.map((series, idx) => (
-                    <div
-                      key={series.id}
-                      className={[
-                        "flex items-center gap-3 px-3.5 py-2.5",
-                        idx > 0 ? "border-t border-border" : "",
-                      ].join(" ")}
-                    >
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                        {series.title}
-                      </span>
-                      {listedIds.has(series.id) ? (
-                        <span className="text-xs font-medium text-success">On rail</span>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          disabled={isSaving}
-                          onClick={() => void handleAddSeries(series)}
-                        >
-                          Add
-                        </Button>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <>
-                    {filteredMovies.map((movie, idx) => (
-                      <div
-                        key={movie.id}
-                        className={[
-                          "flex items-center gap-3 px-3.5 py-2.5",
-                          idx > 0 ? "border-t border-border" : "",
-                        ].join(" ")}
-                      >
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                          {movie.title}
-                        </span>
-                        {listedIds.has(movie.id) ? (
-                          <span className="text-xs font-medium text-success">On rail</span>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            disabled={isSaving}
-                            onClick={() => void handleAddMovie(movie)}
-                          >
-                            Add
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                    {selected.type === "custom"
-                      ? filteredSeries.map((series) => (
-                          <div
-                            key={`s-${series.id}`}
-                            className="flex items-center gap-3 border-t border-border px-3.5 py-2.5"
-                          >
-                            <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                              {series.title}{" "}
-                              <span className="text-2xs text-text-muted">series</span>
-                            </span>
-                            {listedIds.has(series.id) ? (
-                              <span className="text-xs font-medium text-success">
-                                On rail
-                              </span>
-                            ) : (
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                                disabled={isSaving}
-                                onClick={() => void handleAddSeries(series)}
-                              >
-                                Add
-                              </Button>
-                            )}
-                          </div>
-                        ))
-                      : null}
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="flex justify-end border-t border-border px-6 py-4">
-              <Button type="button" variant="secondary" onClick={() => setShowPicker(false)}>
-                Done
-              </Button>
-            </div>
-          </div>
-        </div>
+      {showPicker && section ? (
+        <HomeSectionPicker
+          sectionName={name}
+          noun={noun}
+          rows={catalogRows}
+          loading={catalogLoading}
+          listedIds={listedIds}
+          limit={limit}
+          onAdd={(row) => void handleAddItem(row)}
+          onClose={() => setShowPicker(false)}
+        />
       ) : null}
     </>
   );

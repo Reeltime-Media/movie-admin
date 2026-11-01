@@ -1,5 +1,7 @@
 export const queryKeys = {
   catalog: ["catalog"] as const,
+  catalogMovies: ["catalog", "movies"] as const,
+  catalogSeries: ["catalog", "series"] as const,
   movie: (id: string) => ["movie", id] as const,
   series: (id: string) => ["series", id] as const,
   dashboardSummary: ["dashboard", "summary"] as const,

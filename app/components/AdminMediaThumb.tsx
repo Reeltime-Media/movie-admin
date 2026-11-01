@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { mediaUrl } from "../lib/media";
+import { mediaUrl, posterThumbKey } from "../lib/media";
 
 type AdminMediaThumbProps = {
   objectKey?: string | null;
@@ -28,6 +28,7 @@ export function AdminMediaThumb({
   emptyLabel = "No poster",
 }: AdminMediaThumbProps) {
   const candidates = [
+    mediaUrl(posterThumbKey(objectKey)),
     mediaUrl(objectKey),
     srcUrl,
     ...fallbackKeys.map((key) => mediaUrl(key)),

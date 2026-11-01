@@ -22,8 +22,8 @@ import {
 } from "../lib/api";
 import { mediaUrl } from "../lib/media";
 import { queryKeys } from "../lib/queryKeys";
+import { ADMIN_PAGE_SIZE } from "../lib/pagination";
 
-const PAGE_SIZE = 20;
 
 function statusTone(status: string): AdminBadgeTone {
   if (status === "live") return "success";
@@ -49,7 +49,7 @@ export default function TvChannelsPage() {
     isFetching,
     error: channelsError,
     refetch,
-  } = useTvChannels(page, PAGE_SIZE);
+  } = useTvChannels(page, ADMIN_PAGE_SIZE);
 
   const channels = channelsData?.items ?? [];
   const pages = channelsData?.pages ?? 1;
@@ -236,7 +236,7 @@ export default function TvChannelsPage() {
                 page={page}
                 pages={pages}
                 total={total}
-                pageSize={PAGE_SIZE}
+                pageSize={ADMIN_PAGE_SIZE}
                 isLoading={isFetching}
                 onPageChange={setPage}
               />

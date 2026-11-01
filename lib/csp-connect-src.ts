@@ -1,7 +1,7 @@
 /**
- * CSP connect-src for admin API calls.
- * Vercel: use NEXT_PUBLIC_API_URL=/api-proxy (same-origin, no extra host needed).
- * Direct GCP http URL must be listed explicitly for Edge middleware.
+ * CSP connect-src for admin API calls. Browsers reach the API through
+ * same-origin /api-proxy, so its address never needs to appear in this header.
+ * Set MOVIE_API_ORIGIN only if a browser must call an API host directly.
  */
 export function cspConnectSrc(): string {
   const parts = ["'self'", "https:", "http://localhost:*", "http://127.0.0.1:*"];
@@ -16,15 +16,7 @@ export function cspConnectSrc(): string {
     }
   };
 
-  // Inlined at build time when set on Vercel (-b / project env)
-  add(process.env.NEXT_PUBLIC_API_URL);
-  add(process.env.API_PROXY_TARGET);
-
-  // Production GCP API (fallback if env not inlined on Edge)
-  add(process.env.MOVIE_API_ORIGIN ?? "http://34.124.135.215:8000");
-  // Some env typos omit :8000 — allow both so requests are not CSP-blocked
-  add("http://34.124.135.215");
-  add("http://34.124.135.215:8000");
+  add(process.env.MOVIE_API_ORIGIN);
 
   return parts.join(" ");
 }

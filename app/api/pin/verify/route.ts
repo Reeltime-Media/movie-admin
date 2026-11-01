@@ -1,17 +1,5 @@
 import { NextResponse } from "next/server";
-
-const PIN_COOKIE = "reeltime_admin_pin";
-
-function getAdminPin() {
-  // Prefer the server-only ADMIN_PIN. NEXT_PUBLIC_ADMIN_PIN is kept only as a
-  // fallback for existing deploys, but note that any NEXT_PUBLIC_* var is inlined
-  // into the client bundle — set ADMIN_PIN (server-only) instead.
-  // The "1234" default is dev-only: in production a missing PIN fails closed
-  // rather than accepting a well-known default.
-  const configured = process.env.ADMIN_PIN ?? process.env.NEXT_PUBLIC_ADMIN_PIN;
-  const raw = configured ?? (process.env.NODE_ENV === "production" ? "" : "1234");
-  return raw.trim();
-}
+import { PIN_COOKIE, createPinCookie, getAdminPin } from "../../../../lib/admin-pin";
 
 /** Only set Secure when the request is actually HTTPS (not merely NODE_ENV=production). */
 function isSecureRequest(request: Request): boolean {
@@ -49,9 +37,10 @@ export async function POST(request: Request) {
   }
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(PIN_COOKIE, "verified", {
+  const cookie = await createPinCookie(expectedPin);
+  response.cookies.set(PIN_COOKIE, cookie.value, {
     path: "/",
-    maxAge: 60 * 60 * 12,
+    maxAge: cookie.maxAge,
     sameSite: "lax",
     httpOnly: true,
     secure: isSecureRequest(request),

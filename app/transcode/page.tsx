@@ -19,10 +19,10 @@ import {
   fetchTranscodeJobsProgress,
   type TranscodeJob,
 } from "../lib/api";
+import { ADMIN_PAGE_SIZE } from "../lib/pagination";
 
 type StatusFilter = "all" | "queued" | "running" | "success" | "failed";
 
-const PAGE_SIZE = 10;
 
 const FILTERS: { key: StatusFilter; label: string }[] = [
   { key: "all", label: "All" },
@@ -135,7 +135,7 @@ export default function TranscodePage() {
 
   const { jobsQuery, countsQuery, retryMutation } = useTranscodeJobs({
     page,
-    pageSize: PAGE_SIZE,
+    pageSize: ADMIN_PAGE_SIZE,
     status: filter === "all" ? undefined : filter,
   });
 
@@ -395,7 +395,7 @@ export default function TranscodePage() {
               page={page}
               pages={pages}
               total={total}
-              pageSize={PAGE_SIZE}
+              pageSize={ADMIN_PAGE_SIZE}
               isLoading={jobsQuery.isFetching}
               onPageChange={setPage}
             />

@@ -10,8 +10,8 @@ import { matchesCatalogSearch } from "../lib/catalogSearch";
 import { Button } from "../components/ui/Button";
 import { MovieManagementTable } from "./MovieManagementTable";
 import type { ListFilter } from "./movieListTypes";
+import { ADMIN_PAGE_SIZE } from "../lib/pagination";
 
-const TABLE_PAGE_SIZE = 20;
 
 const filterOptions: { key: ListFilter; label: string }[] = [
   { key: "all", label: "All movies" },
@@ -55,7 +55,7 @@ export function MovieManagementSection() {
     setPage(1);
   }
 
-  const pages = Math.max(1, Math.ceil(entries.length / TABLE_PAGE_SIZE));
+  const pages = Math.max(1, Math.ceil(entries.length / ADMIN_PAGE_SIZE));
 
   if (currentPage > pages) {
     currentPage = pages;
@@ -63,8 +63,8 @@ export function MovieManagementSection() {
   }
 
   const paginatedEntries = useMemo(() => {
-    const start = (currentPage - 1) * TABLE_PAGE_SIZE;
-    return entries.slice(start, start + TABLE_PAGE_SIZE);
+    const start = (currentPage - 1) * ADMIN_PAGE_SIZE;
+    return entries.slice(start, start + ADMIN_PAGE_SIZE);
   }, [entries, currentPage]);
 
   return (
@@ -115,7 +115,7 @@ export function MovieManagementSection() {
                   page={currentPage}
                   pages={pages}
                   total={entries.length}
-                  pageSize={TABLE_PAGE_SIZE}
+                  pageSize={ADMIN_PAGE_SIZE}
                   isLoading={isLoading}
                   onPageChange={setPage}
                 />

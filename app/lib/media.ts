@@ -63,6 +63,15 @@ export function inferFileContentType(file: File): string {
  * asset (same key, new bytes) busts the browser cache and Cloudflare's edge
  * cache for r2.dev hosts — both key off the full URL including query string.
  */
+/** Matches POSTER_THUMB_WIDTH in movie-api, which writes these copies at upload. */
+const POSTER_THUMB_SUFFIX = "-w400";
+
+export function posterThumbKey(key?: string | null) {
+  if (!key || !/(^|\/)poster[^/]*\.[a-z0-9]+$/i.test(key)) return null;
+  if (key.includes(`${POSTER_THUMB_SUFFIX}.`)) return null;
+  return key.replace(/\.[a-z0-9]+$/i, `${POSTER_THUMB_SUFFIX}.webp`);
+}
+
 export function mediaUrl(key?: string | null, version?: string | null) {
   if (!key) return null;
   if (/^https?:\/\//i.test(key)) return key;
