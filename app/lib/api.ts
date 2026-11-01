@@ -2065,6 +2065,9 @@ export type ApiHomeSection = {
   items: ApiHomeSectionItem[];
   /** Most items this section takes; null when it has no picked items. */
   item_limit: number | null;
+  default_item_limit: number | null;
+  /** Highest limit an admin can set; null when this section's limit is fixed. */
+  max_item_limit: number | null;
   /** With nothing picked, the website fills this section itself. */
   auto_filled: boolean;
 };
@@ -2104,6 +2107,8 @@ export async function updateAdminHomeSection(
     genreName?: string | null;
     isVisible?: boolean;
     sortOrder?: number;
+    /** null puts the section back on its default. */
+    itemLimit?: number | null;
   },
 ): Promise<ApiHomeSection> {
   return apiFetch<ApiHomeSection>(`/admin/home-sections/${id}`, {
@@ -2114,6 +2119,7 @@ export async function updateAdminHomeSection(
       ...(input.genreName !== undefined ? { genre_name: input.genreName } : {}),
       ...(input.isVisible !== undefined ? { is_visible: input.isVisible } : {}),
       ...(input.sortOrder !== undefined ? { sort_order: input.sortOrder } : {}),
+      ...(input.itemLimit !== undefined ? { item_limit: input.itemLimit } : {}),
     }),
   });
 }

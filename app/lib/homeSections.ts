@@ -122,6 +122,22 @@ export function sectionItemNoun(type: string, count = 2): string {
   return count === 1 ? "title" : "titles";
 }
 
+/** Why a typed limit can't be saved, or null when it can. */
+export function sectionLimitProblem(section: ApiHomeSection, limit: number | null): string | null {
+  const max = section.max_item_limit;
+  if (max === null) return null;
+  const wanted = limit ?? section.default_item_limit ?? 0;
+  if (!Number.isInteger(wanted) || wanted < 1 || wanted > max) {
+    return `Enter a whole number from 1 to ${max}.`;
+  }
+  const extra = section.item_count - wanted;
+  if (extra > 0) {
+    const noun = sectionItemNoun(section.type, section.item_count);
+    return `This section has ${section.item_count} ${noun}. Remove ${extra} first.`;
+  }
+  return null;
+}
+
 /** One-line state for the outline: what this section currently puts on the page. */
 export function sectionSummary(section: ApiHomeSection): string {
   const { contentLabel } = sectionTypeInfo(section.type);

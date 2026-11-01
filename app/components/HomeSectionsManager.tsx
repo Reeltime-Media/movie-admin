@@ -55,6 +55,7 @@ import {
   sectionItemKind,
   sectionItemNoun,
   sectionLabel,
+  sectionLimitProblem,
   sectionShowsTitle,
   sectionTypeInfo,
 } from "../lib/homeSections";
@@ -131,6 +132,7 @@ export function HomeSectionsManager() {
   const [deleteTarget, setDeleteTarget] = useState<ApiHomeSection | null>(null);
   /** Per-section title edits — avoids syncing draft via useEffect. */
   const [titleBySection, setTitleBySection] = useState<Record<string, string>>({});
+  const [limitBySection, setLimitBySection] = useState<Record<string, string>>({});
   const [showPicker, setShowPicker] = useState(false);
   const [catalogRows, setCatalogRows] = useState<HomeSectionPickerRow[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(false);
@@ -154,6 +156,15 @@ export function HomeSectionsManager() {
   const savedTitle = section?.title ?? "";
   const titleDraft = section ? (titleBySection[section.id] ?? savedTitle) : "";
   const titleChanged = titleDraft.trim() !== savedTitle.trim();
+  const canEditLimit = section?.max_item_limit != null;
+  const limitDraft = section
+    ? (limitBySection[section.id] ?? String(section.item_limit ?? ""))
+    : "";
+  /** Empty means "use the default". */
+  const typedLimit = limitDraft.trim() === "" ? null : Number(limitDraft);
+  const limitChanged =
+    canEditLimit && (typedLimit ?? section.default_item_limit) !== section.item_limit;
+  const limitProblem = section && limitChanged ? sectionLimitProblem(section, typedLimit) : null;
 
   const genreOptions = useMemo(() => {
     const names = genreRows?.map((g) => g.name).filter(Boolean) ?? [...GENRE_OPTIONS];
@@ -242,15 +253,23 @@ export function HomeSectionsManager() {
     }
   };
 
-  const handleSaveTitle = async () => {
-    if (!section) return;
+  const handleSaveSettings = async () => {
+    if (!section || limitProblem) return;
     setIsSaving(true);
     try {
-      await updateAdminHomeSection(section.id, { title: titleDraft.trim() || null });
-      toast.success("Title saved");
+      await updateAdminHomeSection(section.id, {
+        ...(titleChanged ? { title: titleDraft.trim() || null } : {}),
+        ...(limitChanged ? { itemLimit: typedLimit } : {}),
+      });
+      toast.success("Section saved");
+      setLimitBySection((prev) => {
+        const next = { ...prev };
+        delete next[section.id];
+        return next;
+      });
       invalidate();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not save title.");
+      toast.error(err instanceof Error ? err.message : "Could not save this section.");
     } finally {
       setIsSaving(false);
     }
@@ -568,35 +587,66 @@ export function HomeSectionsManager() {
                 className="rounded-xl border border-border bg-surface p-5"
                 onSubmit={(event) => {
                   event.preventDefault();
-                  if (titleChanged) void handleSaveTitle();
+                  if ((titleChanged || limitChanged) && !limitProblem) void handleSaveSettings();
                 }}
               >
-                <label className={adminLabelClass} htmlFor="home-section-title">
-                  Title on the website
-                </label>
-                <div className="flex gap-2">
-                  <Input
-                    id="home-section-title"
-                    value={titleDraft}
-                    onChange={(event) =>
-                      setTitleBySection((prev) => ({
-                        ...prev,
-                        [section.id]: event.target.value,
-                      }))
-                    }
-                    placeholder={
-                      section.genre_name ?? sectionTypeInfo(section.type).label
-                    }
-                  />
-                  {titleChanged ? (
-                    <Button type="submit" loading={isSaving}>
-                      Save title
-                    </Button>
+                <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_10rem]">
+                  <div className="min-w-0">
+                    <label className={adminLabelClass} htmlFor="home-section-title">
+                      Title on the website
+                    </label>
+                    <Input
+                      id="home-section-title"
+                      value={titleDraft}
+                      onChange={(event) =>
+                        setTitleBySection((prev) => ({
+                          ...prev,
+                          [section.id]: event.target.value,
+                        }))
+                      }
+                      placeholder={section.genre_name ?? sectionTypeInfo(section.type).label}
+                    />
+                    <p className="mt-1.5 text-xs text-text-muted">
+                      Leave empty to use the default title, translated for each viewer.
+                    </p>
+                  </div>
+                  {canEditLimit ? (
+                    <div>
+                      <label className={adminLabelClass} htmlFor="home-section-limit">
+                        Most {noun} shown
+                      </label>
+                      <Input
+                        id="home-section-limit"
+                        type="number"
+                        inputMode="numeric"
+                        min={Math.max(section.item_count, 1)}
+                        max={section.max_item_limit ?? undefined}
+                        error={Boolean(limitProblem)}
+                        value={limitDraft}
+                        onChange={(event) =>
+                          setLimitBySection((prev) => ({
+                            ...prev,
+                            [section.id]: event.target.value,
+                          }))
+                        }
+                        placeholder={String(section.default_item_limit ?? "")}
+                      />
+                      <p className="mt-1.5 text-xs text-text-muted">
+                        Default {section.default_item_limit}, up to {section.max_item_limit}
+                      </p>
+                    </div>
                   ) : null}
                 </div>
-                <p className="mt-1.5 text-xs text-text-muted">
-                  Leave empty to use the default title, translated for each viewer.
-                </p>
+                {limitProblem ? (
+                  <p className="mt-2 text-xs font-medium text-danger">{limitProblem}</p>
+                ) : null}
+                {titleChanged || limitChanged ? (
+                  <div className="mt-4 flex justify-end">
+                    <Button type="submit" loading={isSaving} disabled={Boolean(limitProblem)}>
+                      Save changes
+                    </Button>
+                  </div>
+                ) : null}
               </form>
             ) : null}
 
@@ -642,6 +692,7 @@ export function HomeSectionsManager() {
                           </span>
                         </>
                       ) : null}
+                      {atLimit && canEditLimit ? ` This section is full. Raise “Most ${noun} shown” to add more.` : null}
                     </p>
                     <SortableList
                       items={items}
