@@ -113,13 +113,13 @@ export function DashboardRevenueMix({
     staleTime: 60_000,
   });
 
+  const apiSlices = timeline?.by_kind;
+  const paymentItems = paymentsQuery.data?.items;
   const slices = useMemo(() => {
-    if (hasApiMix && timeline?.by_kind) return timeline.by_kind;
-    if (!hasApiMix && paymentsQuery.data?.items) {
-      return slicesFromPayments(paymentsQuery.data.items);
-    }
+    if (hasApiMix && apiSlices) return apiSlices;
+    if (!hasApiMix && paymentItems) return slicesFromPayments(paymentItems);
     return emptySlices();
-  }, [hasApiMix, timeline?.by_kind, paymentsQuery.data?.items]);
+  }, [hasApiMix, apiSlices, paymentItems]);
 
   const rows = useMemo(() => toMixRows(slices), [slices]);
   const total = rows.reduce((sum, row) => sum + row.value, 0);

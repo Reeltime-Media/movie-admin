@@ -145,26 +145,21 @@ export function SeasonsEpisodesEditor({
   includeVideo = false,
 }: SeasonsEpisodesEditorProps) {
   const [editingEpisodeId, setEditingEpisodeId] = useState<string | null>(null);
-  const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
-  const [didInitSeason, setDidInitSeason] = useState(false);
+  /** undefined until the user picks a season; null means all collapsed. */
+  const [chosenSeasonId, setActiveSeasonId] = useState<string | null | undefined>(undefined);
   /** Season id waiting for an episode-count choice (null = closed). */
   const [episodeCountForSeasonId, setEpisodeCountForSeasonId] = useState<string | null>(null);
   const [episodeCountInput, setEpisodeCountInput] = useState("12");
   const emit = (next: Season[]) => onChange(renumberSeasons(next));
 
-  useEffect(() => {
-    if (!seasons.length) return;
-    // Open the first season once on load; allow collapsing afterward.
-    if (!didInitSeason) {
-      setActiveSeasonId(seasons[0].id);
-      setDidInitSeason(true);
-      return;
-    }
-    // If the open season was deleted, fall back to the first remaining one.
-    if (activeSeasonId && !seasons.some((s) => s.id === activeSeasonId)) {
-      setActiveSeasonId(seasons[0]?.id ?? null);
-    }
-  }, [seasons, activeSeasonId, didInitSeason]);
+  // The first season is open until the user picks; allow collapsing afterward.
+  // If the open season was deleted, fall back to the first remaining one.
+  const activeSeasonId =
+    chosenSeasonId === null
+      ? null
+      : chosenSeasonId && seasons.some((s) => s.id === chosenSeasonId)
+        ? chosenSeasonId
+        : (seasons[0]?.id ?? null);
 
   let editingContext: { season: Season; episode: Episode } | null = null;
   if (editingEpisodeId) {
@@ -609,7 +604,7 @@ export function SeasonsEpisodesEditor({
                   type="button"
                   aria-expanded={open}
                   onClick={() =>
-                    setActiveSeasonId((prev) => (prev === season.id ? null : season.id))
+                    setActiveSeasonId(activeSeasonId === season.id ? null : season.id)
                   }
                   className="flex min-w-0 flex-1 items-center gap-2 text-left"
                 >

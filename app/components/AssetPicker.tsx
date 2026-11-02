@@ -29,17 +29,18 @@ export function AssetPicker({
   file,
   onFileChange,
 }: AssetPickerProps) {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ file: File; url: string } | null>(null);
 
   useEffect(() => {
-    if (!file || !file.type.startsWith("image/")) {
-      setPreviewUrl(null);
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = () => setPreview({ file, url: String(reader.result) });
+    reader.readAsDataURL(file);
+    return () => reader.abort();
   }, [file]);
+
+  // Keyed by file, so a cleared or swapped file never shows the old preview.
+  const previewUrl = preview?.file === file ? preview.url : null;
 
   return (
     <label className="block cursor-pointer">
