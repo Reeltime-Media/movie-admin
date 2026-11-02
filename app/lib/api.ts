@@ -365,20 +365,56 @@ async function parseApiResponse<T>(res: Response): Promise<T> {
   return (await res.json()) as T;
 }
 
-async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = getAdminToken();
-  const headers = new Headers(init.headers);
-  headers.set("Accept", "application/json");
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
+let refreshingToken: Promise<boolean> | null = null;
 
+/** Swap a token the API rejected for a new one, so a login never times out.
+ * False when the login is really over; throws when the API can't say, which
+ * must not sign anyone out. */
+function refreshAdminToken(expired: string): Promise<boolean> {
+  if (getAdminToken() !== expired) return Promise.resolve(Boolean(getAdminToken()));
+  refreshingToken ??= requestTokenRefresh(expired).finally(() => {
+    refreshingToken = null;
+  });
+  return refreshingToken;
+}
+
+async function requestTokenRefresh(expired: string): Promise<boolean> {
+  const res = await fetch(apiUrl("/auth/refresh"), {
+    method: "POST",
+    headers: { Accept: "application/json", Authorization: `Bearer ${expired}` },
+  });
+  // 404: an API from before this route existed.
+  if (res.status === 401 || res.status === 404) return false;
+  if (!res.ok) throw new Error(await errorMessageFromResponse(res));
+  const { access_token: token } = (await res.json()) as { access_token?: string };
+  if (!token) return false;
+  // A login or logout (here or in another tab) while this was in flight wins.
+  if (getAdminToken() !== expired) return Boolean(getAdminToken());
+  setAdminToken(token);
+  return true;
+}
+
+/** fetch with the admin token; a 401 is retried once with a refreshed token. */
+async function fetchWithAdminToken(path: string, init: RequestInit = {}): Promise<Response> {
+  const send = (token: string | null) => {
+    const headers = new Headers(init.headers);
+    headers.set("Accept", "application/json");
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+    return fetch(apiUrl(path), { ...init, headers });
+  };
+
+  const token = getAdminToken();
+  const res = await send(token);
+  if (res.status !== 401 || !token || path.startsWith("/auth/")) return res;
+  return (await refreshAdminToken(token)) ? send(getAdminToken()) : res;
+}
+
+async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(apiUrl(path), {
-      ...init,
-      headers,
-    });
+    res = await fetchWithAdminToken(path, init);
   } catch (err) {
     const target = resolveApiUrl();
     const message =
@@ -489,13 +525,9 @@ export type HlsRebuildStatus = {
 export async function getAdminSourceVideoDownload(
   contentId: string,
 ): Promise<AdminSourceVideoDownload> {
-  const token = getAdminToken();
-  const headers = new Headers({ Accept: "application/json" });
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-
   let res: Response;
   try {
-    res = await fetch(apiUrl(`/admin/content/${contentId}/source-url`), { headers });
+    res = await fetchWithAdminToken(`/admin/content/${contentId}/source-url`);
   } catch (err) {
     const target = resolveApiUrl();
     const message = err instanceof Error ? err.message : "Network request failed";
