@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowUpDown, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AdminCard } from "../components/AdminCard";
 import { AdminCatalogListToolbar } from "../components/AdminCatalogListToolbar";
@@ -8,6 +9,7 @@ import { InlineLoading } from "../components/InlineLoading";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
 import { matchesCatalogSearch } from "../lib/catalogSearch";
 import { Button } from "../components/ui/Button";
+import { MovieCatalogReorder } from "./MovieCatalogReorder";
 import { MovieManagementTable } from "./MovieManagementTable";
 import type { ListFilter } from "./movieListTypes";
 import { ADMIN_PAGE_SIZE } from "../lib/pagination";
@@ -27,9 +29,20 @@ export function MovieManagementSection() {
   const [listFilter, setListFilter] = useState<ListFilter>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [isReordering, setIsReordering] = useState(false);
 
   const moviesOnly = useMemo(
-    () => movies.filter((m) => m.type === "Movie"),
+    () =>
+      movies
+        .filter((m) => m.type === "Movie")
+        .sort((a, b) => {
+          const orderA = a.sortOrder ?? 0;
+          const orderB = b.sortOrder ?? 0;
+          if (orderA !== orderB) return orderA - orderB;
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        }),
     [movies],
   );
 
@@ -92,14 +105,27 @@ export function MovieManagementSection() {
           onFilterChange={(next) => setListFilter(next as ListFilter)}
           filterLabel="Filter movies"
           action={
-            <Button href="/movie/new" className="w-full sm:w-auto">
-              Add movie
-            </Button>
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+              <Button
+                type="button"
+                variant={isReordering ? "primary" : "secondary"}
+                icon={<ArrowUpDown size={14} aria-hidden />}
+                onClick={() => setIsReordering((prev) => !prev)}
+                className="w-full sm:w-auto"
+              >
+                {isReordering ? "Back to list" : "Reorder catalog"}
+              </Button>
+              <Button href="/movie/new" className="w-full sm:w-auto" icon={<Plus size={14} aria-hidden />}>
+                Add movie
+              </Button>
+            </div>
           }
         />
       </div>
 
-      {isLoading && moviesOnly.length === 0 ? (
+      {isReordering ? (
+        <MovieCatalogReorder movies={moviesOnly} onComplete={refreshMovies} />
+      ) : isLoading && moviesOnly.length === 0 ? (
         <AdminCard title={tableTitleForFilter(listFilter)}>
           <InlineLoading label="Loading movies" />
         </AdminCard>

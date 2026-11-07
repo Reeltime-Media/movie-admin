@@ -465,6 +465,25 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
                 placeholder="2024"
               />
             </EditField>
+            <EditField label="Catalog order">
+              <input
+                className={compactInputClass}
+                type="number"
+                min={0}
+                step={1}
+                inputMode="numeric"
+                value={editDraft.sortOrder ?? 0}
+                onChange={(e) =>
+                  patchDraft({
+                    sortOrder: e.target.value ? Number(e.target.value) : 0,
+                  })
+                }
+                placeholder="0"
+              />
+              <p className="mt-1 text-2xs text-text-disabled">
+                Position on /movies page (lower numbers appear first)
+              </p>
+            </EditField>
             <EditField label="Description" className="sm:col-span-2 lg:col-span-4">
               <textarea
                 className={`${compactInputClass} min-h-24 resize-y font-normal`}

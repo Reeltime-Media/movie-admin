@@ -80,6 +80,13 @@ export function MovieManagementTable({
                     <span className="absolute left-2 top-2">
                       <span className={statusClasses(item.status)}>{item.status}</span>
                     </span>
+                    {item.sortOrder !== undefined ? (
+                      <span className="absolute right-2 top-2">
+                        <span className="rounded-md bg-surface/90 px-1.5 py-0.5 text-2xs font-bold tabular-nums text-text shadow-sm ring-1 ring-border">
+                          #{item.sortOrder + 1}
+                        </span>
+                      </span>
+                    ) : null}
                     <span className="pointer-events-none absolute inset-0 bg-linear-to-t rounded-lg from-black/30 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                   </button>
 

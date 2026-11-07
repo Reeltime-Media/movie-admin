@@ -130,6 +130,7 @@ export type ApiContent = {
   /** UTC go-live for scheduled movies. */
   publish_at?: string | null;
   is_free?: boolean;
+  sort_order?: number;
   transcode_status: string;
   watch_count: number;
   /** Optional: only present once movie-api ships purchase_count on AdminContentRead. */
@@ -593,6 +594,7 @@ export async function createAdminMovieDraft(input: {
   runtimeMinutes?: number;
   priceUsd: string;
   trailerUrl?: string;
+  sortOrder?: number;
 }) {
   return apiFetch<ApiContent>("/admin/movies", {
     method: "POST",
@@ -608,6 +610,7 @@ export async function createAdminMovieDraft(input: {
       runtime_minutes: input.runtimeMinutes ?? null,
       price_usd: input.priceUsd,
       trailer_url: input.trailerUrl || null,
+      sort_order: input.sortOrder ?? 0,
     }),
   });
 }
@@ -759,6 +762,7 @@ export async function updateAdminMovie(
     status: string;
     publishAt?: string | null;
     trailerUrl?: string | null;
+    sortOrder?: number;
   },
 ) {
   return apiFetch<ApiContent>(`/admin/movies/${id}`, {
@@ -777,7 +781,16 @@ export async function updateAdminMovie(
       status: input.status,
       publish_at: input.publishAt ?? null,
       trailer_url: input.trailerUrl || null,
+      ...(input.sortOrder !== undefined ? { sort_order: input.sortOrder } : {}),
     }),
+  });
+}
+
+export async function reorderAdminMovies(ids: string[]): Promise<void> {
+  await apiFetch<void>("/admin/movies/reorder", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
   });
 }
 

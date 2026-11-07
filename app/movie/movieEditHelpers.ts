@@ -18,6 +18,7 @@ export function toMovieDraft(entry: CatalogEntry): Omit<CatalogEntry, "id"> {
     price: entry.price,
     views: entry.views,
     rating: entry.rating,
+    sortOrder: entry.sortOrder ?? 0,
     runtime: entry.runtime,
     runtimeMinutes: entry.runtimeMinutes,
     releaseYear: entry.releaseYear,
