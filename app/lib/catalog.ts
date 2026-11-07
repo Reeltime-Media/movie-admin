@@ -121,6 +121,7 @@ export function apiSeriesToCatalogEntry(series: ApiSeries, apiSeasons: ApiSeason
         : "Free",
     views: "-",
     rating: series.rating ?? "-",
+    sortOrder: series.sort_order ?? 0,
     status,
     publishAt: series.publish_at ?? null,
     genre: formatGenres(series.genres),
@@ -183,6 +184,7 @@ export async function updateCatalogEntry(
       is_short_movie: Boolean(entry.isShortMovie),
       trailer_url: entry.trailerUrl ?? null,
       release_year: entry.releaseYear ?? null,
+      sort_order: entry.sortOrder,
     };
     const rating = ratingToApi(entry.rating);
     if (rating != null) patch.rating = rating;

@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowUpDown, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AdminCard } from "../components/AdminCard";
 import { AdminCatalogListToolbar } from "../components/AdminCatalogListToolbar";
@@ -8,6 +9,7 @@ import { InlineLoading } from "../components/InlineLoading";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
 import { matchesCatalogSearch } from "../lib/catalogSearch";
 import { Button } from "../components/ui/Button";
+import { SeriesCatalogReorder } from "./SeriesCatalogReorder";
 import { SeriesManagementTable } from "./SeriesManagementTable";
 import type { SeriesListFilter } from "./seriesListTypes";
 import { ADMIN_PAGE_SIZE } from "../lib/pagination";
@@ -27,6 +29,7 @@ export function SeriesManagementSection({
   const [listFilter, setListFilter] = useState<SeriesListFilter>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [isReordering, setIsReordering] = useState(false);
 
   const noun = shortForm ? "short series" : "series";
   const newHref = shortForm ? "/short-series/new" : "/series/new";
@@ -34,9 +37,18 @@ export function SeriesManagementSection({
 
   const seriesOnly = useMemo(
     () =>
-      movies.filter(
-        (m) => m.type === "Series" && Boolean(m.isShortMovie) === shortForm,
-      ),
+      movies
+        .filter(
+          (m) => m.type === "Series" && Boolean(m.isShortMovie) === shortForm,
+        )
+        .sort((a, b) => {
+          const orderA = a.sortOrder ?? 0;
+          const orderB = b.sortOrder ?? 0;
+          if (orderA !== orderB) return orderA - orderB;
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        }),
     [movies, shortForm],
   );
 
@@ -108,14 +120,31 @@ export function SeriesManagementSection({
           onFilterChange={(next) => setListFilter(next as SeriesListFilter)}
           filterLabel={`Filter ${noun}`}
           action={
-            <Button href={newHref} className="w-full sm:w-auto">
-              {addLabel}
-            </Button>
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+              <Button
+                type="button"
+                variant={isReordering ? "primary" : "secondary"}
+                icon={<ArrowUpDown size={14} aria-hidden />}
+                onClick={() => setIsReordering((prev) => !prev)}
+                className="w-full sm:w-auto"
+              >
+                {isReordering ? "Back to list" : "Reorder catalog"}
+              </Button>
+              <Button href={newHref} className="w-full sm:w-auto" icon={<Plus size={14} aria-hidden />}>
+                {addLabel}
+              </Button>
+            </div>
           }
         />
       </div>
 
-      {isLoading && seriesOnly.length === 0 ? (
+      {isReordering ? (
+        <SeriesCatalogReorder
+          series={seriesOnly}
+          shortForm={shortForm}
+          onComplete={refreshMovies}
+        />
+      ) : isLoading && seriesOnly.length === 0 ? (
         <AdminCard title={tableTitle}>
           <InlineLoading label={`Loading ${noun}`} />
         </AdminCard>

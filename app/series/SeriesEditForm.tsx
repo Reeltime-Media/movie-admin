@@ -530,6 +530,25 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
                       }
                     />
                   </EditRow>
+                  <EditRow label="Catalog order">
+                    <input
+                      className={movieEditInputClass}
+                      type="number"
+                      min={0}
+                      step={1}
+                      inputMode="numeric"
+                      value={editDraft.sortOrder ?? 0}
+                      onChange={(e) =>
+                        patchDraft({
+                          sortOrder: e.target.value ? Number(e.target.value) : 0,
+                        })
+                      }
+                      placeholder="0"
+                    />
+                    <p className="mt-1 text-2xs text-text-disabled">
+                      Position on {editDraft.isShortMovie ? "/short-movies" : "/series"} catalog (lower numbers appear first)
+                    </p>
+                  </EditRow>
                   <EditRow label="Genres">
                     <GenreMultiSelect
                       selected={parseGenresFromStored(editDraft.genre)}

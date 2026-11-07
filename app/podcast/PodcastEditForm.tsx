@@ -63,6 +63,7 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingPoster, setIsUploadingPoster] = useState(false);
+  const [sortOrder, setSortOrder] = useState<number>(0);
   const [hydratedId, setHydratedId] = useState<string | null>(null);
 
   if (podcast && podcast.id !== hydratedId) {
@@ -72,6 +73,7 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
     setDescription(podcast.description ?? "");
     setAccess(podcastAccessFromIsFree(Boolean(podcast.is_free)));
     setStatus(toUiStatus(podcast.status));
+    setSortOrder(podcast.sort_order ?? 0);
     setDetectedRuntime(null);
     setPosterFile(null);
     setAudioFile(null);
@@ -174,6 +176,7 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
         ...(runtimeMinutes !== undefined ? { runtimeMinutes } : {}),
         status: toApiStatus(status),
         isFree: isFreeFromPodcastAccess(access),
+        sortOrder,
       });
 
       void queryClient.invalidateQueries({ queryKey: ["podcasts"] });
@@ -287,6 +290,19 @@ export function PodcastEditForm({ podcastId }: { podcastId: string }) {
                 <EditRow label="Runtime">
                   <span className="text-sm text-text">
                     {runtimeLabel ?? "Detected from audio when uploaded"}
+                  </span>
+                </EditRow>
+                <EditRow label="Catalog order">
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value ? Number(e.target.value) : 0)}
+                    className={podcastTextInputClass}
+                  />
+                  <span className="mt-1.5 block text-2xs text-text-disabled">
+                    Position on /podcasts catalog (lower numbers appear first)
                   </span>
                 </EditRow>
                 <EditRow label="Description">

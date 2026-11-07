@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowUpDown } from "lucide-react";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -16,6 +17,7 @@ import { useTvChannels } from "../hooks/adminQueries";
 import { adminBadgeClass, type AdminBadgeTone } from "../lib/adminUi";
 import {
   deleteAdminTvChannel,
+  listAllAdminTvChannels,
   startAdminTvChannel,
   stopAdminTvChannel,
   type ApiTvChannel,
@@ -23,6 +25,7 @@ import {
 import { mediaUrl } from "../lib/media";
 import { queryKeys } from "../lib/queryKeys";
 import { ADMIN_PAGE_SIZE } from "../lib/pagination";
+import { TvChannelCatalogReorder } from "./TvChannelCatalogReorder";
 
 
 function statusTone(status: string): AdminBadgeTone {
@@ -62,9 +65,35 @@ export default function TvChannelsPage() {
 
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<ApiTvChannel | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
+  const [allChannels, setAllChannels] = useState<ApiTvChannel[]>([]);
+  const [isLoadingAll, setIsLoadingAll] = useState(false);
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: ["tv-channels"] });
+  };
+
+  const handleToggleReorder = async () => {
+    if (!isReordering) {
+      setIsLoadingAll(true);
+      try {
+        const full = await listAllAdminTvChannels();
+        setAllChannels(full);
+        setIsReordering(true);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to load TV channels for reordering");
+      } finally {
+        setIsLoadingAll(false);
+      }
+    } else {
+      setIsReordering(false);
+    }
+  };
+
+  const handleReorderComplete = async () => {
+    invalidate();
+    const full = await listAllAdminTvChannels().catch(() => []);
+    setAllChannels(full);
   };
 
   const handleToggleStream = async (channel: ApiTvChannel) => {
@@ -101,68 +130,94 @@ export default function TvChannelsPage() {
 
   return (
     <AdminShell title="TV channels">
-      <AdminCard
-        title="Live channels"
-        headerAction={
-          <Button href="/tv-channels/new" size="sm">
-            New channel
-          </Button>
-        }
-      >
-        {isLoading && !channels.length ? (
-          <InlineLoading label="Loading TV channels" />
-        ) : error ? (
-          <AdminErrorAlert message={error} onRetry={() => void refetch()} />
-        ) : channels.length === 0 ? (
-          <AdminEmptyState
-            title="No TV channels yet"
-            description="Create a channel to start restreaming a live source."
-            action={
+      {isReordering ? (
+        <TvChannelCatalogReorder
+          channels={allChannels}
+          onComplete={handleReorderComplete}
+          onBack={() => setIsReordering(false)}
+        />
+      ) : (
+        <AdminCard
+          title="Live channels"
+          headerAction={
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                icon={<ArrowUpDown size={14} aria-hidden />}
+                onClick={() => void handleToggleReorder()}
+                loading={isLoadingAll}
+              >
+                Reorder channels
+              </Button>
               <Button href="/tv-channels/new" size="sm">
                 New channel
               </Button>
-            }
-          />
-        ) : (
-          <>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {channels.map((channel) => {
-                const logoUrl = mediaUrl(channel.logo_key);
-                const isRunning =
-                  channel.status === "live" || channel.status === "starting";
-                const isBusy = busyId === channel.id;
+            </div>
+          }
+        >
+          {isLoading && !channels.length ? (
+            <InlineLoading label="Loading TV channels" />
+          ) : error ? (
+            <AdminErrorAlert message={error} onRetry={() => void refetch()} />
+          ) : channels.length === 0 ? (
+            <AdminEmptyState
+              title="No TV channels yet"
+              description="Create a channel to start restreaming a live source."
+              action={
+                <Button href="/tv-channels/new" size="sm">
+                  New channel
+                </Button>
+              }
+            />
+          ) : (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {channels.map((channel) => {
+                  const logoUrl = mediaUrl(channel.logo_key);
+                  const isRunning =
+                    channel.status === "live" || channel.status === "starting";
+                  const isBusy = busyId === channel.id;
 
-                return (
-                  <article
-                    key={channel.id}
-                    className="flex flex-col overflow-hidden rounded-lg border border-border bg-surface transition-colors hover:border-border-hover"
-                  >
-                    <Link
-                      href={`/tv-channels/${channel.id}`}
-                      className="group relative block aspect-video bg-surface-soft"
+                  return (
+                    <article
+                      key={channel.id}
+                      className="flex flex-col overflow-hidden rounded-lg border border-border bg-surface transition-colors hover:border-border-hover"
                     >
-                      {logoUrl ? (
-                        <Image
-                          src={logoUrl}
-                          alt=""
-                          fill
-                          className="object-cover transition-transform duration-200 group-hover:scale-[1.02]"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                        />
-                      ) : (
-                        <div className="grid h-full place-items-center text-xs font-medium text-text-muted">
-                          No logo
-                        </div>
-                      )}
-                      <span
-                        className={[
-                          "absolute left-2 top-2",
-                          adminBadgeClass(statusTone(channel.status)),
-                        ].join(" ")}
+                      <Link
+                        href={`/tv-channels/${channel.id}`}
+                        className="group relative block aspect-video bg-surface-soft"
                       >
-                        {channel.status}
-                      </span>
-                    </Link>
+                        {logoUrl ? (
+                          <Image
+                            src={logoUrl}
+                            alt=""
+                            fill
+                            className="object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                          />
+                        ) : (
+                          <div className="grid h-full place-items-center text-xs font-medium text-text-muted">
+                            No logo
+                          </div>
+                        )}
+                        <span
+                          className={[
+                            "absolute left-2 top-2",
+                            adminBadgeClass(statusTone(channel.status)),
+                          ].join(" ")}
+                        >
+                          {channel.status}
+                        </span>
+                        {channel.sort_order !== undefined ? (
+                          <span className="absolute right-2 top-2">
+                            <span className="rounded-md bg-surface/90 px-1.5 py-0.5 text-2xs font-bold tabular-nums text-text shadow-sm ring-1 ring-border">
+                              #{channel.sort_order + 1}
+                            </span>
+                          </span>
+                        ) : null}
+                      </Link>
 
                     <div className="flex flex-1 flex-col gap-2 p-3">
                       <div className="min-w-0">
@@ -244,6 +299,7 @@ export default function TvChannelsPage() {
           </>
         )}
       </AdminCard>
+      )}
 
       {confirmDelete ? (
         <div

@@ -30,6 +30,7 @@ export type ApiSeries = {
   is_published: boolean;
   publish_at?: string | null;
   is_short_movie: boolean;
+  sort_order?: number;
   created_at: string;
   updated_at: string;
 };
@@ -665,6 +666,7 @@ export async function updateAdminPodcast(
     runtimeMinutes?: number | null;
     status: string;
     isFree?: boolean;
+    sortOrder?: number;
   },
 ) {
   return apiFetch<ApiContent>(`/admin/podcasts/${id}`, {
@@ -680,7 +682,16 @@ export async function updateAdminPodcast(
         : {}),
       status: input.status,
       is_free: Boolean(input.isFree),
+      ...(input.sortOrder !== undefined ? { sort_order: input.sortOrder } : {}),
     }),
+  });
+}
+
+export async function reorderAdminPodcasts(ids: string[]): Promise<void> {
+  await apiFetch<void>("/admin/podcasts/reorder", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
   });
 }
 
@@ -1307,12 +1318,21 @@ export async function updateSeriesApi(
     banner_key: string | null;
     trailer_url: string | null;
     release_year: number | null;
+    sort_order: number;
   }>,
 ): Promise<ApiSeries> {
   return apiFetch<ApiSeries>(`/series/${slug}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
+  });
+}
+
+export async function reorderAdminSeries(ids: string[]): Promise<void> {
+  await apiFetch<void>("/admin/series/reorder", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
   });
 }
 
@@ -2340,6 +2360,10 @@ export async function listAdminTvChannels(
   return apiFetch<PaginatedResponse<ApiTvChannel>>(`/admin/tv-channels${paginationQuery(query)}`);
 }
 
+export async function listAllAdminTvChannels(): Promise<ApiTvChannel[]> {
+  return fetchAllPages((page, pageSize) => listAdminTvChannels({ page, pageSize }));
+}
+
 export async function getAdminTvChannel(id: string): Promise<ApiTvChannel> {
   return apiFetch<ApiTvChannel>(`/admin/tv-channels/${id}`);
 }
@@ -2384,6 +2408,14 @@ export async function updateAdminTvChannel(
       ...(input.isFree !== undefined ? { is_free: input.isFree } : {}),
       ...(input.sortOrder !== undefined ? { sort_order: input.sortOrder } : {}),
     }),
+  });
+}
+
+export async function reorderAdminTvChannels(ids: string[]): Promise<void> {
+  await apiFetch<void>("/admin/tv-channels/reorder", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
   });
 }
 

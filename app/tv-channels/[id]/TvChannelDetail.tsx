@@ -30,6 +30,7 @@ type DraftState = {
   sourceUrl: string;
   isFree: boolean;
   isPublished: boolean;
+  sortOrder: number;
 };
 
 function statusTone(status: string): AdminBadgeTone {
@@ -114,6 +115,7 @@ export function TvChannelDetail({ channelId }: { channelId: string }) {
       sourceUrl: channel.source_url,
       isFree: channel.is_free,
       isPublished: channel.is_published,
+      sortOrder: channel.sort_order ?? 0,
     });
     setLogoFile(null);
     setSaveError(null);
@@ -161,6 +163,7 @@ export function TvChannelDetail({ channelId }: { channelId: string }) {
         sourceUrl,
         isFree: draft.isFree,
         isPublished: draft.isPublished,
+        sortOrder: draft.sortOrder,
       });
 
       if (logoFile) {
@@ -375,6 +378,23 @@ export function TvChannelDetail({ channelId }: { channelId: string }) {
               />
               <span className="mt-1.5 block text-2xs text-text-disabled">
                 The origin HLS (.m3u8) source FFmpeg restreams from. Admin-only.
+              </span>
+            </label>
+
+            <label className="block">
+              <span className={adminLabelClass}>Channel order</span>
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={draft.sortOrder}
+                onChange={(e) =>
+                  patchDraft({ sortOrder: e.target.value ? Number(e.target.value) : 0 })
+                }
+                className={adminInputClass}
+              />
+              <span className="mt-1.5 block text-2xs text-text-disabled">
+                Broadcast order on /tv page (lower numbers appear first).
               </span>
             </label>
 

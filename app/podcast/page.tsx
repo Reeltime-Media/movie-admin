@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -15,7 +16,8 @@ import { InlineLoading } from "../components/InlineLoading";
 import { Button } from "../components/ui/Button";
 import { useAdminPodcasts } from "../hooks/adminQueries";
 import { statusClasses } from "../lib/adminData";
-import { deleteAdminPodcast, type ApiContent } from "../lib/api";
+import { deleteAdminPodcast, listAllAdminPodcasts, type ApiContent } from "../lib/api";
+import { PodcastCatalogReorder } from "./PodcastCatalogReorder";
 import { formatPodcastDate, toUiStatus } from "./podcastUi";
 import { ADMIN_PAGE_SIZE } from "../lib/pagination";
 
@@ -50,6 +52,32 @@ export default function PodcastsPage() {
 
   const [confirmDelete, setConfirmDelete] = useState<ApiContent | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
+  const [allPodcasts, setAllPodcasts] = useState<ApiContent[]>([]);
+  const [isLoadingAll, setIsLoadingAll] = useState(false);
+
+  const handleToggleReorder = async () => {
+    if (!isReordering) {
+      setIsLoadingAll(true);
+      try {
+        const full = await listAllAdminPodcasts();
+        setAllPodcasts(full);
+        setIsReordering(true);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to load podcasts for reordering");
+      } finally {
+        setIsLoadingAll(false);
+      }
+    } else {
+      setIsReordering(false);
+    }
+  };
+
+  const handleReorderComplete = async () => {
+    void queryClient.invalidateQueries({ queryKey: ["podcasts"] });
+    const full = await listAllAdminPodcasts().catch(() => []);
+    setAllPodcasts(full);
+  };
 
   const handleDelete = async () => {
     if (!confirmDelete) return;
@@ -76,16 +104,30 @@ export default function PodcastsPage() {
           resultCount={filteredItems.length}
           totalCount={items.length}
           action={
-            <Button href="/podcast/new" className="w-full sm:w-auto">
-              Add podcast
-            </Button>
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+              <Button
+                type="button"
+                variant={isReordering ? "primary" : "secondary"}
+                icon={<ArrowUpDown size={14} aria-hidden />}
+                onClick={() => void handleToggleReorder()}
+                loading={isLoadingAll}
+                className="w-full sm:w-auto"
+              >
+                {isReordering ? "Back to list" : "Reorder catalog"}
+              </Button>
+              <Button href="/podcast/new" className="w-full sm:w-auto">
+                Add podcast
+              </Button>
+            </div>
           }
         />
       </div>
 
       {error ? <AdminErrorAlert message={error} onRetry={() => void refetch()} /> : null}
 
-      {isLoading && items.length === 0 ? (
+      {isReordering ? (
+        <PodcastCatalogReorder podcasts={allPodcasts} onComplete={handleReorderComplete} />
+      ) : isLoading && items.length === 0 ? (
         <AdminCard title="Podcasts">
           <InlineLoading label="Loading podcasts" />
         </AdminCard>
@@ -128,6 +170,13 @@ export default function PodcastsPage() {
                       <span className="absolute left-2 top-2">
                         <span className={statusClasses(uiStatus)}>{uiStatus}</span>
                       </span>
+                      {item.sort_order !== undefined ? (
+                        <span className="absolute right-2 top-2">
+                          <span className="rounded-md bg-surface/90 px-1.5 py-0.5 text-2xs font-bold tabular-nums text-text shadow-sm ring-1 ring-border">
+                            #{item.sort_order + 1}
+                          </span>
+                        </span>
+                      ) : null}
                       <span className="pointer-events-none absolute inset-0 bg-linear-to-t rounded-lg from-black/30 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                     </button>
 
