@@ -142,12 +142,28 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
   const [prevSeriesUpdatedAt, setPrevSeriesUpdatedAt] = useState<string | null>(null);
 
   if (series && (series.id !== prevSeriesId || series.updatedAt !== prevSeriesUpdatedAt)) {
+    const isNewSeries = series.id !== prevSeriesId;
     setPrevSeriesId(series.id);
     setPrevSeriesUpdatedAt(series.updatedAt ?? null);
-    setEditDraft(structuredClone(toSeriesDraft(series)));
-    setEditSaveError(null);
-    setEditPosterFile(null);
-    setEditBannerFile(null);
+    if (isNewSeries || !editDraft) {
+      setEditDraft(structuredClone(toSeriesDraft(series)));
+      setEditSaveError(null);
+      setEditPosterFile(null);
+      setEditBannerFile(null);
+    } else {
+      setEditDraft((prev) =>
+        prev
+          ? {
+              ...prev,
+              posterKey: series.posterKey,
+              posterUrl: series.posterUrl,
+              bannerKey: series.bannerKey,
+              bannerUrl: series.bannerUrl,
+              updatedAt: series.updatedAt,
+            }
+          : structuredClone(toSeriesDraft(series)),
+      );
+    }
   }
 
   // Catalog list no longer embeds seasons — load them when opening edit.

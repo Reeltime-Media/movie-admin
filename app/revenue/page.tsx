@@ -17,7 +17,8 @@ import { formatUsdDisplay } from "../lib/money";
 const DAY_OPTIONS = [7, 30, 90] as const;
 
 function formatTableDate(isoDate: string) {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Phnom_Penh",
     weekday: "short",
     year: "numeric",
     month: "short",

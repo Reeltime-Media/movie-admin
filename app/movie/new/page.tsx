@@ -16,6 +16,7 @@ import { WizardSteps } from "../../components/WizardSteps";
 import { useCreateGenre, useDeleteGenre, useGenres } from "../../hooks/adminQueries";
 import type { Status } from "../../lib/adminData";
 import {
+  abortMovieUpload,
   completeMovieUpload,
   createAdminMovieDraft,
   startMovieUpload,
@@ -339,6 +340,7 @@ export default function NewMoviePage() {
       status === "Draft" ? "Draft saved with video" : "Movie uploaded successfully";
 
     void (async () => {
+      let uploadInfo: { source_key: string; upload_id: string } | null = null;
       try {
         const upload = await startMovieUpload({
           title: fields.title,
@@ -347,6 +349,7 @@ export default function NewMoviePage() {
           posterContentType: posterImage ? imageContentType(posterImage) : undefined,
           bannerContentType: bannerImage ? imageContentType(bannerImage) : undefined,
         });
+        uploadInfo = upload;
 
         if (posterImage && upload.poster_upload_url) {
           setJobLabel(movieJobId, "Uploading poster…");
@@ -395,6 +398,16 @@ export default function NewMoviePage() {
         await refreshMovies();
         toast.success(successMessage);
       } catch (err) {
+        if (uploadInfo) {
+          try {
+            await abortMovieUpload({
+              sourceKey: uploadInfo.source_key,
+              uploadId: uploadInfo.upload_id,
+            });
+          } catch (abortErr) {
+            console.warn("Failed to abort multipart upload:", abortErr);
+          }
+        }
         const message = err instanceof Error ? err.message : "Upload failed";
         failJob(movieJobId, message);
         toast.error(message);

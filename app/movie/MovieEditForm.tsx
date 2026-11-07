@@ -80,14 +80,32 @@ export function MovieEditForm({ movieId }: { movieId: string }) {
   const [prevMovieUpdatedAt, setPrevMovieUpdatedAt] = useState<string | null>(null);
 
   if (movie && (movie.id !== prevMovieId || movie.updatedAt !== prevMovieUpdatedAt)) {
+    const isNewMovie = movie.id !== prevMovieId;
     setPrevMovieId(movie.id);
     setPrevMovieUpdatedAt(movie.updatedAt ?? null);
-    setEditDraft(structuredClone(toMovieDraft(movie)));
-    setEditSaveError(null);
-    setEditPosterFile(null);
-    setEditBannerFile(null);
-    setEditVideoFile(null);
-    setEditUploadProgress(null);
+    if (isNewMovie || !editDraft) {
+      setEditDraft(structuredClone(toMovieDraft(movie)));
+      setEditSaveError(null);
+      setEditPosterFile(null);
+      setEditBannerFile(null);
+      setEditVideoFile(null);
+      setEditUploadProgress(null);
+    } else {
+      setEditDraft((prev) =>
+        prev
+          ? {
+              ...prev,
+              posterKey: movie.posterKey,
+              posterUrl: movie.posterUrl,
+              bannerKey: movie.bannerKey,
+              bannerUrl: movie.bannerUrl,
+              hlsMasterKey: movie.hlsMasterKey,
+              hlsMasterUrl: movie.hlsMasterUrl,
+              updatedAt: movie.updatedAt,
+            }
+          : structuredClone(toMovieDraft(movie)),
+      );
+    }
   }
 
   const { data: genreData } = useGenres();

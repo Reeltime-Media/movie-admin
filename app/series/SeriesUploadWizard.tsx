@@ -26,6 +26,7 @@ import {
 } from "../lib/api";
 import { useUploadProgress } from "../components/UploadProgressContext";
 import { fromIctDatetimeLocalValue } from "../lib/datetimeIct";
+import { ADMIN_PRICE_HINT, validateAdminPriceUsd } from "../lib/money";
 import {
   defaultSeasons,
   episodeVideoReadyCount,
@@ -199,6 +200,13 @@ export function SeriesUploadWizard({
       return;
     }
 
+    const rawPrice = String(fd.get("monthlyPriceUsd") || "0");
+    const priceResult = validateAdminPriceUsd(rawPrice);
+    if (!priceResult.ok) {
+      failValidation(priceResult.message, 0);
+      return;
+    }
+
     setSubmitError(null);
     setDetailsError(null);
     setSeasonsError(null);
@@ -211,10 +219,11 @@ export function SeriesUploadWizard({
 
     void (async () => {
       try {
+        const monthlyPriceUsd = priceResult.value;
         const series = await createSeries({
           title,
           titleKm: titleKm || null,
-          monthlyPriceUsd: "6.99",
+          monthlyPriceUsd,
           description: String(fd.get("description") || "").trim() || undefined,
           genres,
           releaseYear: parseOptionalNumber(fd.get("releaseYear")),
@@ -382,6 +391,14 @@ export function SeriesUploadWizard({
                   name="rating"
                   inputMode="decimal"
                   placeholder="8.7"
+                  className={textInputClass}
+                />
+              </Field>
+
+              <Field label="Monthly price (USD)" hint={ADMIN_PRICE_HINT}>
+                <input
+                  name="monthlyPriceUsd"
+                  placeholder="0 or 6.99"
                   className={textInputClass}
                 />
               </Field>

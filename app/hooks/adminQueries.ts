@@ -339,12 +339,12 @@ export function useTvChannel(id: string) {
   return { ...query, isAuthReady };
 }
 
-export function useAdminPodcasts(page: number, pageSize: number) {
+export function useAdminPodcasts(page: number, pageSize: number, search?: string) {
   const isAuthReady = useClientAuthReady();
 
   const query = useQuery({
-    queryKey: queryKeys.podcasts({ page, pageSize }),
-    queryFn: () => listAdminPodcasts({ page, pageSize }),
+    queryKey: queryKeys.podcasts({ page, pageSize, search }),
+    queryFn: () => listAdminPodcasts({ page, pageSize, search }),
     enabled: isAuthReady && Boolean(getAdminToken()),
     staleTime: 30_000,
     placeholderData: keepPreviousData,

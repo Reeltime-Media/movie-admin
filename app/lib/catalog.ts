@@ -2,6 +2,7 @@ import { type CatalogEntry, type Season, type Status } from "./adminData";
 import {
   deleteAdminMovie,
   deleteAdminSeriesApi,
+  deleteEpisodeApi,
   getAdminToken,
   listAllAdminMovies,
   listAllAdminSeries,
@@ -217,8 +218,22 @@ export async function updateCatalogEntry(
         );
       }
     }
-    if (episodeUpdates.length) {
-      await Promise.all(episodeUpdates);
+
+    const currentSlugs = new Set(
+      entry.seasons.flatMap((s) => s.episodes.map((e) => e.slug).filter(Boolean)),
+    );
+    const episodeDeletions: Promise<unknown>[] = [];
+    for (const priorSeason of existing.seasons) {
+      for (const priorEp of priorSeason.episodes) {
+        if (priorEp.slug && !currentSlugs.has(priorEp.slug)) {
+          episodeDeletions.push(deleteEpisodeApi(existing.slug, priorEp.slug));
+        }
+      }
+    }
+
+    const pendingWork = [...episodeUpdates, ...episodeDeletions];
+    if (pendingWork.length) {
+      await Promise.all(pendingWork);
     }
 
     const apiSeasons = await listSeriesEpisodesApi(existing.slug).catch(() => null);

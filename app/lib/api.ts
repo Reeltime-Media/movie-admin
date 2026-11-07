@@ -286,6 +286,7 @@ export type ApiTopTitleReport = {
   purchase_count: number;
   watch_count: number;
   completion_count: number;
+  completion_rate?: number;
 };
 
 export type ApiRevenueTimelinePoint = {
@@ -336,17 +337,30 @@ async function errorMessageFromResponse(res: Response) {
         .map((item) => {
           if (typeof item === "string") return item;
           if (item && typeof item === "object" && "msg" in item) {
-            return String((item as { msg: unknown }).msg);
+            const err = item as { loc?: unknown[]; msg: unknown };
+            const loc = Array.isArray(err.loc)
+              ? err.loc.filter((part) => part !== "body" && part !== "query").join(".")
+              : "";
+            return loc ? `${loc}: ${String(err.msg)}` : String(err.msg);
           }
           return null;
         })
         .filter(Boolean)
-        .join(", ") || message;
+        .join("; ") || message;
     }
   } catch {
     // Keep the HTTP status message.
   }
   return message;
+}
+
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
 }
 
 async function parseApiResponse<T>(res: Response): Promise<T> {
@@ -357,7 +371,7 @@ async function parseApiResponse<T>(res: Response): Promise<T> {
     if (res.status === 401) {
       clearAdminToken();
     }
-    throw new Error(await errorMessageFromResponse(res));
+    throw new ApiError(await errorMessageFromResponse(res), res.status);
   }
 
   if (res.status === 204) {
@@ -574,6 +588,9 @@ export async function getAdminRebuildSourceFromHlsStatus(
   contentId: string,
   exportId: string,
 ): Promise<HlsRebuildStatus> {
+  if (!exportId || exportId === "null" || exportId === "undefined") {
+    throw new Error("Invalid export ID for HLS rebuild status check");
+  }
   return apiFetch<HlsRebuildStatus>(
     `/admin/content/${contentId}/rebuild-source-from-hls/${encodeURIComponent(exportId)}`,
   );
@@ -1010,6 +1027,20 @@ export async function completeMovieUpload(input: {
   });
 }
 
+export async function abortMovieUpload(input: {
+  sourceKey: string;
+  uploadId: string;
+}): Promise<void> {
+  await apiFetch<void>("/movies/uploads/abort", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      source_key: input.sourceKey,
+      upload_id: input.uploadId,
+    }),
+  });
+}
+
 function uploadBlobToPresignedUrl(
   url: string,
   blob: Blob,
@@ -1367,6 +1398,15 @@ export async function updateEpisodeApi(
   });
 }
 
+export async function deleteEpisodeApi(
+  seriesSlug: string,
+  episodeSlug: string,
+): Promise<void> {
+  await apiFetch<void>(`/series/${seriesSlug}/episodes/${episodeSlug}`, {
+    method: "DELETE",
+  });
+}
+
 export async function startEpisodeAssetUpload(
   seriesSlug: string,
   episodeSlug: string,
@@ -1529,6 +1569,23 @@ export async function completeEpisodeUpload(
   });
 }
 
+export async function abortEpisodeUpload(
+  seriesSlug: string,
+  input: {
+    sourceKey: string;
+    uploadId: string;
+  },
+): Promise<void> {
+  await apiFetch<void>(`/series/${seriesSlug}/episodes/uploads/abort`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      source_key: input.sourceKey,
+      upload_id: input.uploadId,
+    }),
+  });
+}
+
 export async function uploadEpisodeVideoMultipart(
   file: File,
   seriesSlug: string,
@@ -1586,33 +1643,45 @@ export async function uploadEpisodeWithAssets(
     await uploadFileToPresignedUrl(upload.poster_upload_url, posterFile);
   }
 
-  const parts = await uploadEpisodeVideoMultipart(
-    videoFile,
-    seriesSlug,
-    {
-      partSize: upload.part_size,
-      partUrls: upload.part_urls,
+  try {
+    const parts = await uploadEpisodeVideoMultipart(
+      videoFile,
+      seriesSlug,
+      {
+        partSize: upload.part_size,
+        partUrls: upload.part_urls,
+        sourceKey: upload.source_key,
+        uploadId: upload.upload_id,
+      },
+      onProgress,
+    );
+
+    return await completeEpisodeUpload(seriesSlug, {
+      contentId: upload.content_id,
+      episodeSlug: upload.episode_slug,
       sourceKey: upload.source_key,
       uploadId: upload.upload_id,
-    },
-    onProgress,
-  );
-
-  return completeEpisodeUpload(seriesSlug, {
-    contentId: upload.content_id,
-    episodeSlug: upload.episode_slug,
-    sourceKey: upload.source_key,
-    uploadId: upload.upload_id,
-    parts,
-    title: data.title,
-    seasonNumber: data.seasonNumber,
-    episodeNumber: data.episodeNumber,
-    description: data.description,
-    runtime: data.runtime,
-    status: data.status,
-    isFree: data.isFree,
-    posterKey: upload.poster_key,
-  });
+      parts,
+      title: data.title,
+      seasonNumber: data.seasonNumber,
+      episodeNumber: data.episodeNumber,
+      description: data.description,
+      runtime: data.runtime,
+      status: data.status,
+      isFree: data.isFree,
+      posterKey: upload.poster_key,
+    });
+  } catch (err) {
+    try {
+      await abortEpisodeUpload(seriesSlug, {
+        sourceKey: upload.source_key,
+        uploadId: upload.upload_id,
+      });
+    } catch (abortErr) {
+      console.warn("Failed to abort multipart upload for episode:", abortErr);
+    }
+    throw err;
+  }
 }
 
 // ── Transcode jobs ───────────────────────────────────────────────────────────

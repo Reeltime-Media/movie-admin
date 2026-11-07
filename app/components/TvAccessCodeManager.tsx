@@ -191,7 +191,11 @@ export function TvAccessCodeManager() {
                     </td>
                     <td className="py-3 pr-3 text-text-muted">{row.label || "—"}</td>
                     <td className="py-3 pr-3 text-text-muted">
-                      {new Date(row.expires_at).toLocaleString()}
+                      {new Intl.DateTimeFormat("en-US", {
+                        timeZone: "Asia/Phnom_Penh",
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      }).format(new Date(row.expires_at))}
                     </td>
                     <td className="py-3 pr-3">
                       <span

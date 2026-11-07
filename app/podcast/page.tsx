@@ -27,7 +27,11 @@ export default function PodcastsPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const { data, isLoading, isFetching, error: queryError, refetch } = useAdminPodcasts(page, ADMIN_PAGE_SIZE);
+  const { data, isLoading, isFetching, error: queryError, refetch } = useAdminPodcasts(
+    page,
+    ADMIN_PAGE_SIZE,
+    search,
+  );
 
   const items = useMemo(() => data?.items ?? [], [data?.items]);
   const pages = data?.pages ?? 1;
@@ -37,18 +41,6 @@ export default function PodcastsPage() {
       ? queryError.message
       : "Could not load podcasts."
     : null;
-
-  const filteredItems = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((item) => {
-      const haystack = [item.title, item.title_km, item.slug, item.description]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(q);
-    });
-  }, [items, search]);
 
   const [confirmDelete, setConfirmDelete] = useState<ApiContent | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -99,10 +91,13 @@ export default function PodcastsPage() {
       <div className="mb-4">
         <AdminCatalogListToolbar
           value={search}
-          onChange={setSearch}
+          onChange={(val) => {
+            setSearch(val);
+            setPage(1);
+          }}
           placeholder="Search podcasts by title or description…"
-          resultCount={filteredItems.length}
-          totalCount={items.length}
+          resultCount={search.trim() ? total : undefined}
+          totalCount={total}
           action={
             <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
               <Button
@@ -132,24 +127,26 @@ export default function PodcastsPage() {
           <InlineLoading label="Loading podcasts" />
         </AdminCard>
       ) : items.length === 0 ? (
-        <AdminEmptyState
-          title="No podcasts yet"
-          description="Create a draft, upload cover and audio, then publish."
-          action={
-            <Button href="/podcast/new" size="sm">
-              Add podcast
-            </Button>
-          }
-        />
-      ) : filteredItems.length === 0 ? (
-        <AdminEmptyState
-          title="No matching podcasts"
-          description="Try a different search, or clear the filter."
-        />
+        search.trim() ? (
+          <AdminEmptyState
+            title="No matching podcasts"
+            description="Try a different search, or clear the filter."
+          />
+        ) : (
+          <AdminEmptyState
+            title="No podcasts yet"
+            description="Create a draft, upload cover and audio, then publish."
+            action={
+              <Button href="/podcast/new" size="sm">
+                Add podcast
+              </Button>
+            }
+          />
+        )
       ) : (
         <section>
             <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {filteredItems.map((item) => {
+              {items.map((item) => {
                 const uiStatus = toUiStatus(item.status);
                 return (
                   <article

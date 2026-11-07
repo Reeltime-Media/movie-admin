@@ -101,6 +101,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/catalog", destination: "/movie", permanent: true },
       { source: "/catalog/new", destination: "/movie/new", permanent: true },
+      { source: "/hero", destination: "/promotions", permanent: true },
     ];
   },
 };

@@ -31,7 +31,8 @@ const STATUS_OPTIONS = [
 type StatusFilter = (typeof STATUS_OPTIONS)[number]["value"];
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Phnom_Penh",
     year: "numeric",
     month: "short",
     day: "numeric",
