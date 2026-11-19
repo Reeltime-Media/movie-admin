@@ -51,18 +51,19 @@ const emptySubscribe = () => () => {};
 /** Pickers reopen often, so they share one copy of the whole catalog for a short while. */
 const CATALOG_PICKER_STALE_MS = 2 * 60_000;
 
-export function fetchCatalogMovies(queryClient: QueryClient) {
+/** One app's titles for a picker. TV5's are cached apart from Reeltime's. */
+export function fetchCatalogMovies(queryClient: QueryClient, app: AppName = "reeltime") {
   return queryClient.fetchQuery({
-    queryKey: queryKeys.catalogMovies,
-    queryFn: () => listAllAdminMovies(),
+    queryKey: app === "reeltime" ? queryKeys.catalogMovies : [...queryKeys.catalogMovies, app],
+    queryFn: () => listAllAdminMovies(app),
     staleTime: CATALOG_PICKER_STALE_MS,
   });
 }
 
-export function fetchCatalogSeries(queryClient: QueryClient) {
+export function fetchCatalogSeries(queryClient: QueryClient, app: AppName = "reeltime") {
   return queryClient.fetchQuery({
-    queryKey: queryKeys.catalogSeries,
-    queryFn: () => listAllAdminSeries(),
+    queryKey: app === "reeltime" ? queryKeys.catalogSeries : [...queryKeys.catalogSeries, app],
+    queryFn: () => listAllAdminSeries(app),
     staleTime: CATALOG_PICKER_STALE_MS,
   });
 }

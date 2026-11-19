@@ -18,6 +18,7 @@ import {
   updateAdminHeroFeatured,
   type ApiContent,
   type ApiHeroFeaturedItem,
+  type AppName,
   type ApiSeries,
 } from "../lib/api";
 import { Button } from "./ui/Button";
@@ -49,9 +50,20 @@ function customSlideLabel(item: ApiHeroFeaturedItem): string {
   return customSlideMode(item) === "video" ? "Custom video" : "Image slide";
 }
 
-/** Mirrors the API rule: an on-site path ("/pricing") or an http(s) URL. */
-function isValidSlideLink(value: string): boolean {
+/** Mirrors the API rule: an on-site path ("/pricing") or an http(s) URL. The TV5
+ * app has no site pages, so its slides can only link to a full https:// URL. */
+function isValidSlideLink(value: string, app: AppName): boolean {
+  if (app === "tv5") return /^https:\/\//.test(value);
   return (value.startsWith("/") && !value.startsWith("//")) || /^https?:\/\//.test(value);
+}
+
+/** Where each app's home banner lives. Placements starting "tv5" are TV5's. */
+function placementFor(app: AppName) {
+  return app === "tv5" ? "tv5_home" : "home";
+}
+
+function isAppPlacement(placement: string, app: AppName) {
+  return placement.startsWith("tv5") === (app === "tv5");
 }
 
 type ItemFormState = {
@@ -120,7 +132,17 @@ function buildCatalog(movies: ApiContent[], seriesList: ApiSeries[]): CatalogEnt
   return [...movieEntries, ...seriesEntries].sort((a, b) => a.title.localeCompare(b.title));
 }
 
-export function HeroFeaturedManager() {
+/**
+ * The home banner carousel of one app. Reeltime's slides feature Reeltime titles;
+ * TV5's (placement "tv5_home") feature TV5 series and Kun Khmer matches, and are
+ * banner images only because the TV5 app doesn't play slide videos.
+ */
+export function HeroFeaturedManager({ app = "reeltime" }: { app?: AppName }) {
+  const isTv5 = app === "tv5";
+  const placement = placementFor(app);
+  // TV5 calls its single titles Kun Khmer matches.
+  const movieLabel = isTv5 ? "Match" : "Movie";
+  const moviesLabel = isTv5 ? "Matches" : "Movies";
   const queryClient = useQueryClient();
   const itemsQuery = useQuery({
     queryKey: queryKeys.heroFeatured,
@@ -139,7 +161,11 @@ export function HeroFeaturedManager() {
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
 
-  const items = itemsQuery.data ?? [];
+  const allItems = itemsQuery.data;
+  const items = useMemo(
+    () => (allItems ?? []).filter((item) => isAppPlacement(item.placement, app)),
+    [allItems, app],
+  );
   const isLoading = itemsQuery.isLoading;
   const error = itemsQuery.error
     ? itemsQuery.error instanceof Error
@@ -172,7 +198,7 @@ export function HeroFeaturedManager() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([fetchCatalogMovies(queryClient), fetchCatalogSeries(queryClient)])
+    Promise.all([fetchCatalogMovies(queryClient, app), fetchCatalogSeries(queryClient, app)])
       .then(([movieRows, seriesRows]) => {
         if (cancelled) return;
         setMovies(movieRows);
@@ -189,7 +215,7 @@ export function HeroFeaturedManager() {
     return () => {
       cancelled = true;
     };
-  }, [queryClient]);
+  }, [queryClient, app]);
 
   useEffect(() => {
     if (!showForm) return;
@@ -274,12 +300,16 @@ export function HeroFeaturedManager() {
       toast.error("Upload an image for this slide.");
       return;
     }
-    if (isImage && linkUrl && !isValidSlideLink(linkUrl)) {
-      toast.error("The link must be a site page starting with / or a full https:// link.");
+    if (isImage && linkUrl && !isValidSlideLink(linkUrl, app)) {
+      toast.error(
+        isTv5
+          ? "The link must be a full https:// link."
+          : "The link must be a site page starting with / or a full https:// link.",
+      );
       return;
     }
     if (!isCustom && !form.contentId) {
-      toast.error("Pick a movie or series from the catalog below.");
+      toast.error(`Pick a ${movieLabel.toLowerCase()} or series from the catalog below.`);
       return;
     }
 
@@ -288,7 +318,7 @@ export function HeroFeaturedManager() {
       const payload = {
         contentType: isCustom ? ("custom" as const) : form.contentType,
         contentId: isCustom ? null : form.contentId,
-        placement: "home",
+        placement,
         isActive: true,
         // New slides append to the end; existing keep their drag order.
         sortOrder: editingItem ? editingItem.sort_order : items.length,
@@ -300,7 +330,8 @@ export function HeroFeaturedManager() {
         linkUrl: isImage ? linkUrl || null : null,
         videoKey: isImage ? null : form.videoKey || null,
         youtubeUrl: isImage || form.videoKey ? null : form.youtubeUrl.trim() || null,
-        videoEnabled: isCustom ? true : (form.videoEnabled ?? true),
+        // TV5 slides are banner images: no trailer either.
+        videoEnabled: isTv5 ? false : isCustom ? true : (form.videoEnabled ?? true),
       };
 
       if (editingItem) {
@@ -308,7 +339,7 @@ export function HeroFeaturedManager() {
         toast.success("Hero slide updated.");
       } else {
         await createAdminHeroFeatured(payload);
-        toast.success("Added to home hero.");
+        toast.success(isTv5 ? "Added to the TV5 home banner." : "Added to home hero.");
       }
 
       invalidate();
@@ -325,12 +356,13 @@ export function HeroFeaturedManager() {
       item.content_title ??
       item.title ??
       (item.content_type === "custom" ? customSlideLabel(item) : item.content_id ?? "this slide");
-    if (!window.confirm(`Remove "${label}" from the home hero?`)) return;
+    if (!window.confirm(`Remove "${label}" from the ${isTv5 ? "TV5 home banner" : "home hero"}?`))
+      return;
     setIsSaving(true);
     try {
       await deleteAdminHeroFeatured(item.id);
       invalidate();
-      toast.success("Removed from home hero.");
+      toast.success(isTv5 ? "Removed from the TV5 home banner." : "Removed from home hero.");
       if (editingItem?.id === item.id) closeForm();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not remove hero slide.");
@@ -340,8 +372,11 @@ export function HeroFeaturedManager() {
   };
 
   const handleReorder = async (next: ApiHeroFeaturedItem[]) => {
-    const previous = items;
-    const optimistic = next.map((item, index) => ({ ...item, sort_order: index }));
+    const previous = allItems;
+    const reordered = new Map(next.map((item, index) => [item.id, { ...item, sort_order: index }]));
+    // The cache holds every app's slides; only this app's change order.
+    const optimistic = (allItems ?? []).map((item) => reordered.get(item.id) ?? item);
+    optimistic.sort((a, b) => a.sort_order - b.sort_order);
     queryClient.setQueryData(queryKeys.heroFeatured, optimistic);
     setIsSaving(true);
     try {
@@ -359,7 +394,7 @@ export function HeroFeaturedManager() {
   return (
     <>
       <AdminCard
-        title="Home hero carousel"
+        title={isTv5 ? "TV5 home banner" : "Home hero carousel"}
         headerAction={
           <Button
             type="button"
@@ -379,7 +414,7 @@ export function HeroFeaturedManager() {
           <p className="mb-4 text-xs text-warning">{catalogError}</p>
         ) : (
           <p className="mb-4 text-xs text-text-muted">
-            Catalog ready: {movies.length} movies · {seriesList.length} series
+            Catalog ready: {movies.length} {moviesLabel.toLowerCase()} · {seriesList.length} series
           </p>
         )}
 
@@ -403,7 +438,9 @@ export function HeroFeaturedManager() {
           <div className="rounded-lg border border-dashed border-border py-8 text-center">
             <p className="text-sm text-text-muted">No hero slides yet.</p>
             <p className="mt-1 text-xs text-text-disabled">
-              Click &ldquo;Add slide&rdquo; — feature a movie or series, or add a video or image slide.
+              {isTv5
+                ? "Until you add one, the app slides through its newest series and matches. Feature a match or series, or add an image slide."
+                : "Click \u201cAdd slide\u201d — feature a movie or series, or add a video or image slide."}
             </p>
             <Button type="button" className="mt-4" onClick={openCreateForm}>
               Add slide
@@ -434,7 +471,9 @@ export function HeroFeaturedManager() {
                       <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-xs font-medium text-text-muted">
                         {item.content_type === "custom"
                           ? `${customSlideMode(item)} only`
-                          : item.content_type}
+                          : item.content_type === "movie"
+                            ? movieLabel.toLowerCase()
+                            : item.content_type}
                       </span>
                       {item.video_key || item.youtube_url ? (
                         <span className={adminBadgeClass("brand")}>Video</span>
@@ -486,10 +525,18 @@ export function HeroFeaturedManager() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-[17px] font-semibold tracking-tight">
-                    {editingItem ? "Edit hero slide" : "Add hero slide"}
+                    {editingItem
+                      ? isTv5
+                        ? "Edit banner slide"
+                        : "Edit hero slide"
+                      : isTv5
+                        ? "Add banner slide"
+                        : "Add hero slide"}
                   </h2>
                   <p className="mt-1 text-xs leading-relaxed text-text-muted">
-                    What plays in the big carousel at the top of the client home page.
+                    {isTv5
+                      ? "What slides through the banner at the top of the TV5 app's home screen."
+                      : "What plays in the big carousel at the top of the client home page."}
                   </p>
                 </div>
                 <button
@@ -511,13 +558,15 @@ export function HeroFeaturedManager() {
               <div className="min-h-0 flex-1 overflow-y-auto">
                 {/* ── Section: Slide type ── */}
                 <div className="border-b border-border px-6 py-4">
-                  <div className="grid gap-2 sm:grid-cols-3">
+                  <div className={`grid gap-2 ${isTv5 ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
                     {(
                       [
                         [
                           "catalog",
-                          "Movie or series",
-                          "Feature a title from your catalog. Its trailer plays automatically.",
+                          isTv5 ? "Match or series" : "Movie or series",
+                          isTv5
+                            ? "Feature a Kun Khmer match or TV5 series. Its banner image is shown."
+                            : "Feature a title from your catalog. Its trailer plays automatically.",
                         ],
                         [
                           "video",
@@ -527,10 +576,15 @@ export function HeroFeaturedManager() {
                         [
                           "image",
                           "Image only",
-                          "Just a picture — upload an image and optionally link it to a page.",
+                          isTv5
+                            ? "Just a picture — upload an image and optionally link it to a web page."
+                            : "Just a picture — upload an image and optionally link it to a page.",
                         ],
                       ] as const
-                    ).map(([mode, label, hint]) => {
+                    )
+                      // The TV5 app shows banner images only, so no video slides there.
+                      .filter(([mode]) => !(isTv5 && mode === "video"))
+                      .map(([mode, label, hint]) => {
                       const isActive = form.slideMode === mode;
                       return (
                         <button
@@ -591,7 +645,7 @@ export function HeroFeaturedManager() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold">{selectedEntry.title}</p>
                         <p className="text-2xs text-text-muted">
-                          {selectedEntry.contentType === "movie" ? "Movie" : "Series"}
+                          {selectedEntry.contentType === "movie" ? movieLabel : "Series"}
                           {!selectedEntry.isPublished ? " · Draft (won't show until published)" : ""}
                         </p>
                       </div>
@@ -618,7 +672,7 @@ export function HeroFeaturedManager() {
                     {(
                       [
                         ["all", "All"],
-                        ["movie", "Movies"],
+                        ["movie", moviesLabel],
                         ["series", "Series"],
                       ] as const
                     ).map(([key, label]) => {
@@ -650,7 +704,7 @@ export function HeroFeaturedManager() {
                   <AdminCatalogSearchBar
                     value={catalogSearch}
                     onChange={setCatalogSearch}
-                    placeholder="Search movies and series by title or slug…"
+                    placeholder={`Search ${moviesLabel.toLowerCase()} and series by title or slug…`}
                     resultCount={filteredCatalog.length}
                     totalCount={catalog.length}
                   />
@@ -666,7 +720,9 @@ export function HeroFeaturedManager() {
                       </p>
                     ) : filteredCatalog.length === 0 ? (
                       <p className="py-6 text-center text-xs text-text-muted">
-                        No titles match. Add movies under Movies or series under Series first.
+                        {isTv5
+                          ? "No titles match. Add matches under Kun Khmer or series under TV5 series first."
+                          : "No titles match. Add movies under Movies or series under Series first."}
                       </p>
                     ) : (
                       filteredCatalog.map((entry, idx) => {
@@ -686,7 +742,7 @@ export function HeroFeaturedManager() {
                           >
                             {/* Type is a neutral chip; colour is reserved for status + brand. */}
                             <span className={`shrink-0 ${adminBadgeClass("muted")}`}>
-                              {entry.contentType === "movie" ? "Movie" : "Series"}
+                              {entry.contentType === "movie" ? movieLabel : "Series"}
                             </span>
                             <span className="min-w-0 flex-1 truncate text-sm font-medium text-text">
                               {entry.title}
@@ -710,7 +766,8 @@ export function HeroFeaturedManager() {
                   </div>
                 </div>
 
-                {/* ── Section: Video (catalog) ── */}
+                {/* ── Section: Video (catalog) ── not on TV5, whose banner has no video */}
+                {isTv5 ? null : (
                 <div className="border-t border-border px-6 py-5">
                   <div className="mb-3 flex items-center gap-2 text-xs font-medium text-text-muted">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 3.5A1.5 1.5 0 014 2h6a1.5 1.5 0 011.5 1.5v7A1.5 1.5 0 0110 12H4a1.5 1.5 0 01-1.5-1.5v-7z" stroke="currentColor" strokeWidth="1.3"/><path d="M6 5.5l2.5 1.5L6 8.5v-3z" fill="currentColor"/></svg>
@@ -780,6 +837,7 @@ export function HeroFeaturedManager() {
                     </div>
                   ) : null}
                 </div>
+                )}
                 </>
                 ) : form.slideMode === "video" ? (
                 <div className="px-6 py-5 space-y-5">
@@ -852,12 +910,13 @@ export function HeroFeaturedManager() {
                       type="text"
                       value={form.linkUrl}
                       onChange={(e) => setForm((prev) => ({ ...prev, linkUrl: e.target.value }))}
-                      placeholder="/pricing or https://…"
+                      placeholder={isTv5 ? "https://…" : "/pricing or https://…"}
                       className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10"
                     />
                     <p className="mt-1 text-2xs text-text-disabled">
-                      Clicking the slide opens this — a site page like /pricing, or a full https:// link
-                      (opens in a new tab). Leave empty for a picture with no click.
+                      {isTv5
+                        ? "Tapping the slide opens this web page. Leave empty for a picture with no tap."
+                        : "Clicking the slide opens this — a site page like /pricing, or a full https:// link (opens in a new tab). Leave empty for a picture with no click."}
                     </p>
                   </div>
                 </div>
@@ -953,7 +1012,13 @@ export function HeroFeaturedManager() {
                         : !form.bannerKey)
                   }
                 >
-                  {isSaving ? "Saving…" : editingItem ? "Save changes" : "Add to hero"}
+                  {isSaving
+                    ? "Saving…"
+                    : editingItem
+                      ? "Save changes"
+                      : isTv5
+                        ? "Add to banner"
+                        : "Add to hero"}
                 </Button>
               </div>
             </form>

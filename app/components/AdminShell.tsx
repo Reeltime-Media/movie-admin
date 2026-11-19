@@ -10,6 +10,7 @@ import {
   Headphones,
   Home,
   KeyRound,
+  GalleryHorizontal,
   Layers,
   Swords,
   Clapperboard,
@@ -51,6 +52,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "TV5 series", href: "/tv5/series", icon: Clapperboard },
       { label: "Kun Khmer", href: "/tv5/matches", icon: Swords },
+      { label: "TV5 home banner", href: "/tv5/banners", icon: GalleryHorizontal },
       { label: "TV5 plans", href: "/tv5/plans", icon: Layers },
     ],
   },
