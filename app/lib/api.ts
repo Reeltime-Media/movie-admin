@@ -15,6 +15,7 @@ export { fetchAllPages } from "./pagination";
 
 export type ApiSeries = {
   id: string;
+  app?: AppName;
   slug: string;
   title: string;
   title_km?: string | null;
@@ -104,8 +105,30 @@ export type EpisodeAssetUploadStartResponse = {
   poster_upload_url: string | null;
 };
 
+/** Which app a title, series or plan belongs to. TV5 content never appears in Reeltime. */
+export type AppName = "reeltime" | "tv5";
+
+/** Fight card for a TV5 Kun Khmer match. */
+export type ApiMatchDetails = {
+  red_fighter: string;
+  blue_fighter: string;
+  event_name: string | null;
+  weight_class: string | null;
+  match_date: string | null;
+  winner: "red" | "blue" | "draw" | "no_contest" | null;
+  result_method: string | null;
+  result_round: number | null;
+};
+
+function withApp(path: string, app: AppName) {
+  return `${path}${path.includes("?") ? "&" : "?"}app=${app}`;
+}
+
 export type ApiContent = {
   id: string;
+  app?: AppName;
+  /** Present on TV5 matches. */
+  match?: ApiMatchDetails | null;
   type: string;
   slug: string;
   title: string;
@@ -182,6 +205,7 @@ export type ApiPaymentIntent = {
 
 export type ApiSubscriptionPlan = {
   id: string;
+  app?: AppName;
   code: string;
   name: string;
   description: string | null;
@@ -487,12 +511,14 @@ export async function deleteUser(userId: string): Promise<void> {
   await apiFetch<void>(`/users/${userId}`, { method: "DELETE" });
 }
 
-export async function listAdminMovies(query: PaginationQuery = {}) {
-  return apiFetch<PaginatedResponse<ApiContent>>(`/admin/movies${paginationQuery(query)}`);
+export async function listAdminMovies(query: PaginationQuery = {}, app: AppName = "reeltime") {
+  return apiFetch<PaginatedResponse<ApiContent>>(
+    withApp(`/admin/movies${paginationQuery(query)}`, app),
+  );
 }
 
-export async function listAllAdminMovies() {
-  return fetchAllPages((page, pageSize) => listAdminMovies({ page, pageSize }));
+export async function listAllAdminMovies(app: AppName = "reeltime") {
+  return fetchAllPages((page, pageSize) => listAdminMovies({ page, pageSize }, app));
 }
 
 export async function getAdminMovie(id: string): Promise<ApiContent> {
@@ -613,6 +639,8 @@ export async function createAdminMovieDraft(input: {
   priceUsd: string;
   trailerUrl?: string;
   sortOrder?: number;
+  app?: AppName;
+  match?: ApiMatchDetails;
 }) {
   return apiFetch<ApiContent>("/admin/movies", {
     method: "POST",
@@ -629,6 +657,8 @@ export async function createAdminMovieDraft(input: {
       price_usd: input.priceUsd,
       trailer_url: input.trailerUrl || null,
       sort_order: input.sortOrder ?? 0,
+      ...(input.app ? { app: input.app } : {}),
+      ...(input.match ? { match: input.match } : {}),
     }),
   });
 }
@@ -791,6 +821,9 @@ export async function updateAdminMovie(
     publishAt?: string | null;
     trailerUrl?: string | null;
     sortOrder?: number;
+    /** TV5 matches only. */
+    match?: ApiMatchDetails;
+    isFree?: boolean;
   },
 ) {
   return apiFetch<ApiContent>(`/admin/movies/${id}`, {
@@ -810,6 +843,8 @@ export async function updateAdminMovie(
       publish_at: input.publishAt ?? null,
       trailer_url: input.trailerUrl || null,
       ...(input.sortOrder !== undefined ? { sort_order: input.sortOrder } : {}),
+      ...(input.match ? { match: input.match } : {}),
+      ...(input.isFree !== undefined ? { is_free: input.isFree } : {}),
     }),
   });
 }
@@ -1232,12 +1267,15 @@ export async function listSeriesEpisodesApi(slug: string): Promise<ApiSeasonRead
 
 export async function listAdminSeries(
   query: PaginationQuery = {},
+  app: AppName = "reeltime",
 ): Promise<PaginatedResponse<ApiSeries>> {
-  return apiFetch<PaginatedResponse<ApiSeries>>(`/admin/series${paginationQuery(query)}`);
+  return apiFetch<PaginatedResponse<ApiSeries>>(
+    withApp(`/admin/series${paginationQuery(query)}`, app),
+  );
 }
 
-export async function listAllAdminSeries(): Promise<ApiSeries[]> {
-  return fetchAllPages((page, pageSize) => listAdminSeries({ page, pageSize }));
+export async function listAllAdminSeries(app: AppName = "reeltime"): Promise<ApiSeries[]> {
+  return fetchAllPages((page, pageSize) => listAdminSeries({ page, pageSize }, app));
 }
 
 export async function getAdminSeriesById(id: string): Promise<ApiSeries> {
@@ -1256,6 +1294,7 @@ export async function createSeries(input: {
   isShortMovie?: boolean;
   status?: string;
   publishAt?: string | null;
+  app?: AppName;
 }): Promise<ApiSeries> {
   return apiFetch<ApiSeries>("/series/", {
     method: "POST",
@@ -1272,6 +1311,7 @@ export async function createSeries(input: {
       is_short_movie: Boolean(input.isShortMovie),
       status: input.status ?? "draft",
       publish_at: input.publishAt ?? null,
+      ...(input.app ? { app: input.app } : {}),
     }),
   });
 }
@@ -1727,8 +1767,10 @@ export async function fulfillAdminPayment(intentId: string): Promise<{
   });
 }
 
-export async function listAdminSubscriptionPlans(): Promise<ApiSubscriptionPlan[]> {
-  return apiFetch<ApiSubscriptionPlan[]>("/admin/subscription-plans");
+export async function listAdminSubscriptionPlans(
+  app: AppName = "reeltime",
+): Promise<ApiSubscriptionPlan[]> {
+  return apiFetch<ApiSubscriptionPlan[]>(withApp("/admin/subscription-plans", app));
 }
 
 export async function createAdminSubscriptionPlan(input: {
@@ -1739,6 +1781,7 @@ export async function createAdminSubscriptionPlan(input: {
   billingIntervalDays?: number;
   isActive?: boolean;
   sortOrder?: number;
+  app?: AppName;
 }): Promise<ApiSubscriptionPlan> {
   return apiFetch<ApiSubscriptionPlan>("/admin/subscription-plans", {
     method: "POST",
@@ -1751,6 +1794,7 @@ export async function createAdminSubscriptionPlan(input: {
       billing_interval_days: input.billingIntervalDays ?? 30,
       is_active: input.isActive ?? true,
       sort_order: input.sortOrder ?? 0,
+      ...(input.app ? { app: input.app } : {}),
     }),
   });
 }

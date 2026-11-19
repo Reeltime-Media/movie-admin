@@ -13,6 +13,7 @@ import {
   type ApiContent,
   type ApiSeasonRead,
   type ApiSeries,
+  type AppName,
 } from "./api";
 import { formatGenres, parseGenresFromStored } from "./genres";
 import { mediaUrl } from "./media";
@@ -111,6 +112,7 @@ export function apiSeriesToCatalogEntry(series: ApiSeries, apiSeasons: ApiSeason
       : "Draft";
   return {
     id: series.id,
+    app: series.app ?? "reeltime",
     slug: series.slug,
     title: series.title,
     titleKm: series.title_km ?? null,
@@ -144,9 +146,15 @@ export function apiSeriesToCatalogEntry(series: ApiSeries, apiSeasons: ApiSeason
   };
 }
 
-export async function fetchCatalog(): Promise<CatalogEntry[]> {
+export async function fetchCatalog(app: AppName = "reeltime"): Promise<CatalogEntry[]> {
   if (!getAdminToken()) {
     return [];
+  }
+
+  if (app !== "reeltime") {
+    // TV5 single titles are Kun Khmer matches, which have their own screens.
+    const apiSeries = await listAllAdminSeries(app);
+    return apiSeries.map((s) => apiSeriesToCatalogEntry(s, []));
   }
 
   // Do not swallow series failures — that made Series / Short series look empty

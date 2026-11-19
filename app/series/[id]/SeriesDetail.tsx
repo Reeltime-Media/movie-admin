@@ -17,6 +17,7 @@ import { statusClasses } from "../../lib/adminData";
 import { formatIctLabel } from "../../lib/datetimeIct";
 import { seriesStructureSummary, totalEpisodesInEntry } from "../../lib/seriesHelpers";
 import { useAdminSeries } from "../../hooks/adminQueries";
+import { seriesRoutes } from "../seriesRoutes";
 
 type SeriesTab = "overview" | "media" | "episodes";
 
@@ -137,9 +138,9 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
     );
   }
 
-  const isShort = Boolean(series.isShortMovie);
-  const listHref = isShort ? "/short-series" : "/series";
-  const noun = isShort ? "short series" : "series";
+  const routes = seriesRoutes(series.app ?? "reeltime", Boolean(series.isShortMovie));
+  const listHref = routes.list;
+  const noun = routes.noun;
   const episodeCount = totalEpisodesInEntry(series);
   const tabs = [
     { key: "overview", label: "Overview" },
@@ -163,7 +164,7 @@ export function SeriesDetail({ seriesId }: { seriesId: string }) {
           />
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2 pb-2">
-          <Button href={`/series/${series.id}/edit`} size="sm">
+          <Button href={routes.edit(series.id)} size="sm">
             Edit {noun}
           </Button>
         </div>

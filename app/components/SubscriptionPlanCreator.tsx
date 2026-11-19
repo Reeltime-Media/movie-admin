@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { AdminCard } from "./AdminCard";
 import { InlineLoading } from "./InlineLoading";
 import { useSubscriptionPlans } from "../hooks/adminQueries";
+import type { AppName } from "../lib/api";
 import {
   createAdminSubscriptionPlan,
   deleteAdminSubscriptionPlan,
@@ -42,8 +43,8 @@ function formatPrice(value: string) {
   return parsed.toFixed(2);
 }
 
-export function SubscriptionPlanCreator() {
-  const { plansQuery, invalidate } = useSubscriptionPlans();
+export function SubscriptionPlanCreator({ app = "reeltime" }: { app?: AppName }) {
+  const { plansQuery, invalidate } = useSubscriptionPlans(app);
   const [isSaving, setIsSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingPlan, setEditingPlan] = useState<ApiSubscriptionPlan | null>(null);
@@ -134,6 +135,7 @@ export function SubscriptionPlanCreator() {
         toast.success("Plan updated.");
       } else {
         await createAdminSubscriptionPlan({
+          app,
           code: form.code.trim().toLowerCase().replace(/\s+/g, "_"),
           name: form.name.trim(),
           description: form.description.trim() || null,
@@ -174,14 +176,15 @@ export function SubscriptionPlanCreator() {
   return (
     <>
     <AdminCard
-      title="Subscription plans"
+      title={app === "tv5" ? "TV5 plans" : "Subscription plans"}
       action="Add plan"
       actionIcon="plus"
       actionOnClick={openCreateForm}
     >
       <p className="mb-4 text-sm leading-relaxed text-text-muted">
-        Manage Reeltime Plus and other subscription tiers. The first active plan (by sort order) is
-        used for new checkouts.
+        {app === "tv5"
+          ? "Plans for the TV5 app. A TV5 plan unlocks TV5 series and Kun Khmer matches only, not Reeltime."
+          : "Manage Reeltime Plus and other subscription tiers. The first active plan (by sort order) is used for new checkouts."}
       </p>
 
       {isLoading && !plans.length ? (
@@ -319,7 +322,7 @@ export function SubscriptionPlanCreator() {
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="Reeltime Plus"
+                placeholder={app === "tv5" ? "TV5 Monthly" : "Reeltime Plus"}
                 className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
                 required
               />

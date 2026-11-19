@@ -1,3 +1,4 @@
+import type { AppName } from "./api";
 export type Status = "Published" | "Draft" | "Scheduled" | "Review";
 export type RevenueKind = "Rental" | "Subscription" | "Ownership";
 
@@ -30,6 +31,8 @@ export type Season = {
 
 export type CatalogEntry = {
   id: string;
+  /** Series only: which app lists it. */
+  app?: AppName;
   /** API slug — used for series PATCH/DELETE since those endpoints are slug-based */
   slug?: string;
   title: string;

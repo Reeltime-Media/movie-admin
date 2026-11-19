@@ -6,6 +6,8 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { AdminMediaThumb } from "../components/AdminMediaThumb";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
+import type { AppName } from "../lib/api";
+import { seriesRoutes } from "./seriesRoutes";
 import { statusClasses, type CatalogEntry } from "../lib/adminData";
 import { Button } from "../components/ui/Button";
 import { seriesStructureSummary } from "../lib/seriesHelpers";
@@ -16,33 +18,32 @@ export function SeriesManagementTable({
   listFilter = "all",
   shortForm = false,
   footer,
+  app = "reeltime",
 }: {
   entries: CatalogEntry[];
   listFilter?: SeriesListFilter;
   shortForm?: boolean;
   footer?: React.ReactNode;
+  app?: AppName;
 }) {
   const router = useRouter();
-  const { movies, deleteMovie } = useMovieCatalog();
+  const { movies, deleteMovie } = useMovieCatalog(app);
   const [confirmDelete, setConfirmDelete] = useState<CatalogEntry | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const noun = shortForm ? "short series" : "series";
-  const newHref = shortForm ? "/short-series/new" : "/series/new";
+  const routes = seriesRoutes(app, shortForm);
+  const noun = routes.noun;
+  const newHref = routes.create;
 
   const confirmRemove = async () => {
     if (!confirmDelete) return;
     setIsDeleting(true);
     try {
       await deleteMovie(confirmDelete.id);
-      toast.success(shortForm ? "Short series deleted" : "Series deleted");
+      toast.success(`${noun[0]!.toUpperCase()}${noun.slice(1)} deleted`);
       setConfirmDelete(null);
     } catch (err) {
       toast.error(
-        err instanceof Error
-          ? err.message
-          : shortForm
-            ? "Could not delete short series"
-            : "Could not delete series",
+        err instanceof Error ? err.message : `Could not delete ${noun}`,
       );
     } finally {
       setIsDeleting(false);
@@ -55,7 +56,15 @@ export function SeriesManagementTable({
   const otherHref = shortForm ? "/series" : "/short-series";
   const otherLabel = shortForm ? "Series" : "Short series";
   const emptyHint =
-    seriesCount === 0 ? (
+    seriesCount === 0 && app !== "reeltime" ? (
+      <>
+        No {noun} yet.{" "}
+        <Link href={newHref} className="font-semibold text-brand hover:underline">
+          Add the first one
+        </Link>
+        .
+      </>
+    ) : seriesCount === 0 ? (
       <>
         No {noun} yet. Regular and short titles are split in the sidebar — check{" "}
         <Link href={otherHref} className="font-semibold text-brand hover:underline">
@@ -88,7 +97,7 @@ export function SeriesManagementTable({
                   <button
                     type="button"
                     className="relative block w-full cursor-pointer text-left"
-                    onClick={() => router.push(`/series/${item.id}`)}
+                    onClick={() => router.push(routes.detail(item.id))}
                   >
                     <AdminMediaThumb
                       objectKey={item.posterKey}
@@ -114,7 +123,7 @@ export function SeriesManagementTable({
                     <button
                       type="button"
                       className="min-w-0 cursor-pointer text-left"
-                      onClick={() => router.push(`/series/${item.id}`)}
+                      onClick={() => router.push(routes.detail(item.id))}
                     >
                       <h3 className="truncate text-sm font-semibold text-text transition-colors group-hover:text-brand">
                         {item.title}
@@ -129,7 +138,7 @@ export function SeriesManagementTable({
 
                     <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
                       <Button
-                        href={`/series/${item.id}/edit`}
+                        href={routes.edit(item.id)}
                         variant="secondary"
                         size="sm"
                         className="flex-1"

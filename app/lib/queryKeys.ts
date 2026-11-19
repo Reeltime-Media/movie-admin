@@ -1,5 +1,9 @@
 export const queryKeys = {
   catalog: ["catalog"] as const,
+  /** Reeltime keeps the original key; other apps get their own cache under it. */
+  catalogFor: (app: string) => (app === "reeltime" ? ["catalog"] : ["catalog", "app", app]),
+  tv5Matches: ["catalog", "app", "tv5", "matches"] as const,
+  tv5Match: (id: string) => ["catalog", "app", "tv5", "matches", id] as const,
   catalogMovies: ["catalog", "movies"] as const,
   catalogSeries: ["catalog", "series"] as const,
   movie: (id: string) => ["movie", id] as const,

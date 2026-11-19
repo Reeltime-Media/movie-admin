@@ -11,6 +11,8 @@ import { matchesCatalogSearch } from "../lib/catalogSearch";
 import { Button } from "../components/ui/Button";
 import { SeriesCatalogReorder } from "./SeriesCatalogReorder";
 import { SeriesManagementTable } from "./SeriesManagementTable";
+import { seriesRoutes } from "./seriesRoutes";
+import type { AppName } from "../lib/api";
 import type { SeriesListFilter } from "./seriesListTypes";
 import { ADMIN_PAGE_SIZE } from "../lib/pagination";
 
@@ -22,18 +24,21 @@ const filterOptions: { key: SeriesListFilter; label: string }[] = [
 
 export function SeriesManagementSection({
   shortForm = false,
+  app = "reeltime",
 }: {
   shortForm?: boolean;
+  app?: AppName;
 }) {
-  const { movies, isLoading, error, refreshMovies } = useMovieCatalog();
+  const { movies, isLoading, error, refreshMovies } = useMovieCatalog(app);
   const [listFilter, setListFilter] = useState<SeriesListFilter>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [isReordering, setIsReordering] = useState(false);
 
-  const noun = shortForm ? "short series" : "series";
-  const newHref = shortForm ? "/short-series/new" : "/series/new";
-  const addLabel = shortForm ? "Add short series" : "Add series";
+  const routes = seriesRoutes(app, shortForm);
+  const noun = routes.noun;
+  const newHref = routes.create;
+  const addLabel = `Add ${noun}`;
 
   const seriesOnly = useMemo(
     () =>
@@ -154,6 +159,7 @@ export function SeriesManagementSection({
             entries={paginatedEntries}
             listFilter={listFilter}
             shortForm={shortForm}
+            app={app}
             footer={
               entries.length > 0 ? (
                 <AdminPagination

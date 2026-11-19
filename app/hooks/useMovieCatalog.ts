@@ -7,19 +7,21 @@ import {
   updateCatalogEntry,
   type MovieDraft,
 } from "../lib/catalog";
-import { getAdminToken } from "../lib/api";
+import { getAdminToken, type AppName } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
 import { useClientAuthReady } from "./adminQueries";
 
 export type { MovieDraft } from "../lib/catalog";
 
-export function useMovieCatalog() {
+/** The admin catalog for one app. Reeltime screens use the default; TV5 screens pass "tv5". */
+export function useMovieCatalog(app: AppName = "reeltime") {
   const queryClient = useQueryClient();
   const isAuthReady = useClientAuthReady();
+  const catalogKey = queryKeys.catalogFor(app);
 
   const catalogQuery = useQuery({
-    queryKey: queryKeys.catalog,
-    queryFn: fetchCatalog,
+    queryKey: catalogKey,
+    queryFn: () => fetchCatalog(app),
     enabled: isAuthReady && Boolean(getAdminToken()),
     staleTime: 30_000,
   });
@@ -28,7 +30,7 @@ export function useMovieCatalog() {
     mutationFn: ({ id, entry }: { id: string; entry: MovieDraft }) =>
       updateCatalogEntry(catalogQuery.data ?? [], id, entry),
     onSuccess: (movies) => {
-      queryClient.setQueryData(queryKeys.catalog, movies);
+      queryClient.setQueryData(catalogKey, movies);
       void queryClient.invalidateQueries({ queryKey: queryKeys.dashboardSummary });
     },
   });
@@ -36,7 +38,7 @@ export function useMovieCatalog() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteCatalogEntry(catalogQuery.data ?? [], id),
     onSuccess: (movies) => {
-      queryClient.setQueryData(queryKeys.catalog, movies);
+      queryClient.setQueryData(catalogKey, movies);
       void queryClient.invalidateQueries({ queryKey: queryKeys.dashboardSummary });
     },
   });

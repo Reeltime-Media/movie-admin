@@ -14,6 +14,8 @@ import { InlineLoading } from "../components/InlineLoading";
 import { SeasonsEpisodesEditor } from "../components/SeasonsEpisodesEditor";
 import { TrailerPreview } from "../components/TrailerPreview";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
+import type { AppName } from "../lib/api";
+import { seriesRoutes } from "./seriesRoutes";
 import { useDeleteGenre, useGenres } from "../hooks/adminQueries";
 import {
   listSeriesEpisodesApi,
@@ -126,9 +128,15 @@ function ArtworkField({
   );
 }
 
-export function SeriesEditForm({ seriesId }: { seriesId: string }) {
+export function SeriesEditForm({
+  seriesId,
+  app = "reeltime",
+}: {
+  seriesId: string;
+  app?: AppName;
+}) {
   const router = useRouter();
-  const { movies, isLoading, error, updateMovie, refreshMovies } = useMovieCatalog();
+  const { movies, isLoading, error, updateMovie, refreshMovies } = useMovieCatalog(app);
   const series = movies.find((item) => item.id === seriesId && item.type === "Series");
 
   const [editDraft, setEditDraft] = useState<Omit<CatalogEntry, "id"> | null>(null);
@@ -360,7 +368,7 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
           ? `Series updated · ${newEpisodes.length} new episode${newEpisodes.length === 1 ? "" : "s"} uploaded`
           : "Series updated successfully",
       );
-      router.push(`/series/${series.id}`);
+      router.push(seriesRoutes(app, Boolean(editDraft.isShortMovie)).detail(series.id));
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not save changes.";
       setEditSaveError(message);
@@ -399,8 +407,14 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
       <AdminCard title="Series not found">
         <p className="text-sm text-text-muted">This series is not in the admin catalog.</p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <BackButton href="/series" label="Back to series" size="md" />
-          <BackButton href="/short-series" label="Back to short series" size="md" />
+          {app === "reeltime" ? (
+            <>
+              <BackButton href="/series" label="Back to series" size="md" />
+              <BackButton href="/short-series" label="Back to short series" size="md" />
+            </>
+          ) : (
+            <BackButton href={seriesRoutes(app, false).list} label="Back to TV5 series" size="md" />
+          )}
         </div>
       </AdminCard>
     );
@@ -412,8 +426,9 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
     { key: "episodes", label: "Seasons & episodes" },
   ];
 
-  const listHref = editDraft.isShortMovie ? "/short-series" : "/series";
-  const noun = editDraft.isShortMovie ? "short series" : "series";
+  const routes = seriesRoutes(app, Boolean(editDraft.isShortMovie));
+  const listHref = routes.list;
+  const noun = routes.noun;
 
   return (
     <form onSubmit={saveEdit} className="space-y-5">
@@ -430,7 +445,7 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
           />
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2 pb-2">
-          <Button href={`/series/${series.id}`} variant="secondary" size="sm">
+          <Button href={routes.detail(series.id)} variant="secondary" size="sm">
             Cancel
           </Button>
           <Button type="submit" size="sm" loading={isSaving}>
@@ -498,6 +513,8 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
                       </p>
                     </EditRow>
                   ) : null}
+                  {app === "reeltime" ? (
+                    <>
                   <EditRow label="Monthly price (USD)">
                     <input
                       className={movieEditInputClass}
@@ -524,6 +541,8 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
                       Short series appear in the short-form / vertical catalog.
                     </p>
                   </EditRow>
+                    </>
+                  ) : null}
                   <EditRow label="Rating">
                     <input
                       className={movieEditInputClass}
@@ -562,7 +581,7 @@ export function SeriesEditForm({ seriesId }: { seriesId: string }) {
                       placeholder="0"
                     />
                     <p className="mt-1 text-2xs text-text-disabled">
-                      Position on {editDraft.isShortMovie ? "/short-movies" : "/series"} catalog (lower numbers appear first)
+                      Position on {routes.catalogPath} catalog (lower numbers appear first)
                     </p>
                   </EditRow>
                   <EditRow label="Genres">

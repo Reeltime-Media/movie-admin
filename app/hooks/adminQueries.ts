@@ -33,6 +33,7 @@ import {
   listUsers,
   retryTranscodeJob,
   type ApiGenre,
+  type AppName,
   type ApiPaymentIntent,
   type ApiSeasonRead,
   type ApiSubscriptionPlan,
@@ -53,7 +54,7 @@ const CATALOG_PICKER_STALE_MS = 2 * 60_000;
 export function fetchCatalogMovies(queryClient: QueryClient) {
   return queryClient.fetchQuery({
     queryKey: queryKeys.catalogMovies,
-    queryFn: listAllAdminMovies,
+    queryFn: () => listAllAdminMovies(),
     staleTime: CATALOG_PICKER_STALE_MS,
   });
 }
@@ -61,7 +62,7 @@ export function fetchCatalogMovies(queryClient: QueryClient) {
 export function fetchCatalogSeries(queryClient: QueryClient) {
   return queryClient.fetchQuery({
     queryKey: queryKeys.catalogSeries,
-    queryFn: listAllAdminSeries,
+    queryFn: () => listAllAdminSeries(),
     staleTime: CATALOG_PICKER_STALE_MS,
   });
 }
@@ -246,13 +247,13 @@ export function useTranscodeJobs(params: {
   return { jobsQuery, countsQuery, retryMutation, isAuthReady };
 }
 
-export function useSubscriptionPlans() {
+export function useSubscriptionPlans(app: AppName = "reeltime") {
   const queryClient = useQueryClient();
   const isAuthReady = useClientAuthReady();
 
   const plansQuery = useQuery({
-    queryKey: queryKeys.subscriptionPlans,
-    queryFn: listAdminSubscriptionPlans,
+    queryKey: [...queryKeys.subscriptionPlans, app],
+    queryFn: () => listAdminSubscriptionPlans(app),
     enabled: isAuthReady && Boolean(getAdminToken()),
     staleTime: 5 * 60_000,
   });

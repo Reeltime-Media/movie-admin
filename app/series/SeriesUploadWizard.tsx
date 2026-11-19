@@ -12,12 +12,14 @@ import { Button } from "../components/ui/Button";
 import { AdminSelect } from "../components/AdminSelect";
 import { GenreMultiSelect } from "../components/GenreMultiSelect";
 import { useMovieCatalog } from "../components/MovieCatalogProvider";
+import { seriesRoutes } from "./seriesRoutes";
 import { WizardSteps } from "../components/WizardSteps";
 import { useCreateGenre, useDeleteGenre, useGenres } from "../hooks/adminQueries";
 import { SeasonsEpisodesEditor } from "../components/SeasonsEpisodesEditor";
 import type { Season, Status } from "../lib/adminData";
 import {
   createSeries,
+  type AppName,
   EPISODE_UPLOAD_CONCURRENCY,
   runPool,
   updateSeriesApi,
@@ -80,13 +82,17 @@ function Field({
 
 export function SeriesUploadWizard({
   isShortMovie = false,
+  app = "reeltime",
 }: {
   isShortMovie?: boolean;
+  app?: AppName;
 }) {
   const router = useRouter();
-  const { refreshMovies } = useMovieCatalog();
-  const listHref = isShortMovie ? "/short-series" : "/series";
-  const noun = isShortMovie ? "short series" : "series";
+  const { refreshMovies } = useMovieCatalog(app);
+  const routes = seriesRoutes(app, isShortMovie);
+  const listHref = routes.list;
+  const noun = routes.noun;
+  const Noun = `${noun[0]!.toUpperCase()}${noun.slice(1)}`;
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState("Published");
   const [publishAtLocal, setPublishAtLocal] = useState("");
@@ -152,7 +158,8 @@ export function SeriesUploadWizard({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
-    const fd = new FormData(form);
+    // The clicked button carries the intent; FormData only includes it when passed as submitter.
+    const fd = new FormData(form, (e.nativeEvent as SubmitEvent).submitter);
     const intent = String(fd.get("intent") || "");
 
     // Enter on earlier steps just advances — required fields are checked on Save/Upload.
@@ -230,6 +237,7 @@ export function SeriesUploadWizard({
           rating: String(fd.get("rating") || "").trim() || undefined,
           trailerUrl: String(fd.get("trailerUrl") || "").trim() || undefined,
           isShortMovie,
+          app,
           status: "draft",
         });
 
@@ -276,14 +284,14 @@ export function SeriesUploadWizard({
         await refreshMovies();
         toast.success(
           intent === "draft"
-            ? `${isShortMovie ? "Short series" : "Series"} saved as draft`
-            : `${isShortMovie ? "Short series" : "Series"} created successfully`,
+            ? `${Noun} saved as draft`
+            : `${Noun} created successfully`,
         );
       } catch (err) {
         const message =
           err instanceof Error
             ? err.message
-            : `${isShortMovie ? "Short series" : "Series"} creation failed`;
+            : `${Noun} creation failed`;
         failJob(seriesJobId, message);
         toast.error(message);
       } finally {
@@ -295,7 +303,7 @@ export function SeriesUploadWizard({
   const currentJob = activeJobId ? (jobs.find((j) => j.id === activeJobId) ?? null) : null;
 
   return (
-    <AdminShell title={isShortMovie ? "Upload new short series" : "Upload new series"}>
+    <AdminShell title={`Upload new ${noun}`}>
       <WizardSteps
         labels={stepLabels}
         step={step}
@@ -303,14 +311,14 @@ export function SeriesUploadWizard({
         leading={
           <BackButton
             href={listHref}
-            label={isShortMovie ? "Back to short series" : "Back to series"}
+            label={`Back to ${noun}`}
           />
         }
       />
 
       <form id="series-wizard-form" onSubmit={handleSubmit} noValidate className="w-full space-y-6">
         <div className={step === 0 ? "block" : "hidden"} aria-hidden={step !== 0}>
-          <AdminCard title={isShortMovie ? "Short series details" : "Series details"}>
+          <AdminCard title={`${Noun} details`}>
             <p className="mb-5 text-sm text-text-muted">
               Set the title, genres, and listing fields first. Next you&apos;ll add seasons,
               episode videos, and {noun} artwork.
@@ -395,13 +403,15 @@ export function SeriesUploadWizard({
                 />
               </Field>
 
-              <Field label="Monthly price (USD)" hint={ADMIN_PRICE_HINT}>
-                <input
-                  name="monthlyPriceUsd"
-                  placeholder="0 or 6.99"
-                  className={textInputClass}
-                />
-              </Field>
+              {app === "reeltime" ? (
+                <Field label="Monthly price (USD)" hint={ADMIN_PRICE_HINT}>
+                  <input
+                    name="monthlyPriceUsd"
+                    placeholder="0 or 6.99"
+                    className={textInputClass}
+                  />
+                </Field>
+              ) : null}
 
               <Field
                 label="Status"
@@ -501,7 +511,7 @@ export function SeriesUploadWizard({
             <div className="mb-8 grid gap-4 md:grid-cols-2">
               <AssetPicker
                 accept="image/*"
-                label={isShortMovie ? "Short series poster" : "Series poster"}
+                label={`${Noun} poster`}
                 hint="Portrait key art for catalog cards."
                 previewAspect="poster"
                 icon={<ImageIcon size={20} aria-hidden />}
@@ -510,7 +520,7 @@ export function SeriesUploadWizard({
               />
               <AssetPicker
                 accept="image/*"
-                label={isShortMovie ? "Short series banner" : "Series banner"}
+                label={`${Noun} banner`}
                 hint="Wide cinematic hero image. Optional."
                 previewAspect="banner"
                 icon={<ImagePlus size={20} aria-hidden />}
@@ -570,9 +580,7 @@ export function SeriesUploadWizard({
                 >
                   {isSubmitting
                     ? "Uploading…"
-                    : isShortMovie
-                      ? "Upload short series"
-                      : "Upload series"}
+                    : `Upload ${noun}`}
                 </Button>
               </div>
             </div>
