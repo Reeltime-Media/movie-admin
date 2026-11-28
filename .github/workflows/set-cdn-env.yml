@@ -1,0 +1,54 @@
+name: Set CDN public URL env
+
+# One-shot / manual: bake cdn.reeltime.fun into Vercel Production for movie-admin.
+on:
+  workflow_dispatch:
+
+jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upsert NEXT_PUBLIC_R2_PUBLIC_URL on Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "${VERCEL_TOKEN:-}" ]; then
+            echo "VERCEL_TOKEN secret missing"
+            exit 1
+          fi
+          # Prefer explicit project/org secrets; fall back to known Reeltime admin IDs.
+          ORG="${VERCEL_ORG_ID:-team_HhDSFMTKOA1DGb8Cp6OHL4ry}"
+          PROJECT="${VERCEL_PROJECT_ID:-prj_2cJ07khtmbRgIeK9AzRe7rLdFN5O}"
+          VALUE="https://cdn.reeltime.fun"
+
+          echo "Listing existing NEXT_PUBLIC_R2_PUBLIC_URL envs..."
+          curl -fsS -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v9/projects/${PROJECT}/env?teamId=${ORG}" \
+            | jq -r '.envs[]? | select(.key=="NEXT_PUBLIC_R2_PUBLIC_URL") | "\(.id) \(.target|join(",")) \(.value)"'
+
+          # Remove old production entries for this key so we don't leave stale r2.dev.
+          IDS=$(curl -fsS -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v9/projects/${PROJECT}/env?teamId=${ORG}" \
+            | jq -r '.envs[]? | select(.key=="NEXT_PUBLIC_R2_PUBLIC_URL") | select((.target|index("production"))!=null) | .id')
+          for id in $IDS; do
+            echo "Deleting env $id"
+            curl -fsS -X DELETE -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v9/projects/${PROJECT}/env/${id}?teamId=${ORG}" >/dev/null
+          done
+
+          echo "Creating production NEXT_PUBLIC_R2_PUBLIC_URL=$VALUE"
+          curl -fsS -X POST -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            "https://api.vercel.com/v10/projects/${PROJECT}/env?teamId=${ORG}" \
+            -d "$(jq -n --arg v "$VALUE" '{key:"NEXT_PUBLIC_R2_PUBLIC_URL",value:$v,type:"plain",target:["production","preview","development"]}')" \
+            | jq '{key:.created.key, target:.created.target, value:.created.value}'
+
+          echo "Triggering production redeploy..."
+          curl -fsS -X POST -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            "https://api.vercel.com/v13/deployments?teamId=${ORG}&forceNew=1" \
+            -d "$(jq -n --arg project "$PROJECT" '{name:"reeltime-movie-admin",project:$project,target:"production",gitSource:{type:"github",org:"Reeltime-Media",repo:"movie-admin",ref:"main"}}')" \
+            | jq '{id:.id, url:.url, readyState:.readyState}'
