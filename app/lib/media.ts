@@ -1,5 +1,38 @@
-const MEDIA_BASE_URL =
-  process.env.NEXT_PUBLIC_R2_PUBLIC_URL ?? process.env.NEXT_PUBLIC_MEDIA_BASE_URL ?? "";
+/** Custom CDN after Cloudflare/R2 migration. Public `*.r2.dev` hosts now 403. */
+const CANONICAL_MEDIA_BASE = "https://cdn.reeltime.fun";
+
+function resolveMediaBaseUrl(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_R2_PUBLIC_URL ??
+    process.env.NEXT_PUBLIC_MEDIA_BASE_URL ??
+    "";
+  if (!raw) return CANONICAL_MEDIA_BASE;
+  try {
+    const host = new URL(raw).hostname;
+    // Vercel still has the old pub-*.r2.dev value baked into some deploys.
+    if (host.endsWith(".r2.dev")) return CANONICAL_MEDIA_BASE;
+  } catch {
+    // ignore invalid env and fall through
+  }
+  return raw.replace(/\/$/, "");
+}
+
+const MEDIA_BASE_URL = resolveMediaBaseUrl();
+
+/** Rewrite absolute keys that still point at retired public R2 hosts. */
+function rewriteLegacyMediaHost(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.endsWith(".r2.dev")) {
+      parsed.protocol = "https:";
+      parsed.hostname = "cdn.reeltime.fun";
+      return parsed.toString();
+    }
+  } catch {
+    // leave non-URL strings alone
+  }
+  return url;
+}
 
 function extensionFromFilename(filename: string) {
   return filename.split(".").pop()?.toLowerCase() ?? "";
@@ -74,7 +107,7 @@ export function posterThumbKey(key?: string | null) {
 
 export function mediaUrl(key?: string | null, version?: string | null) {
   if (!key) return null;
-  if (/^https?:\/\//i.test(key)) return key;
+  if (/^https?:\/\//i.test(key)) return rewriteLegacyMediaHost(key);
   if (!MEDIA_BASE_URL) return null;
   const url = `${MEDIA_BASE_URL.replace(/\/$/, "")}/${key.replace(/^\//, "")}`;
   return version ? `${url}?v=${encodeURIComponent(version)}` : url;
